@@ -1,0 +1,156 @@
+---
+/**
+ * Opiniones de la ficha.
+ * Se muestran las de 3 y 4 estrellas junto con las de 5. Un listado
+ * donde todo es perfecto se lee como comprado, y el comprador atento
+ * lo detecta — el daño a la confianza cuesta más que la venta ganada.
+ */
+import Rating from '@componentes/Rating.astro';
+import { foto } from '@lib/imagenes';
+import { fechaLarga, numero, decimal } from '@lib/formato';
+import type { Opinion } from '@tipos/catalogo';
+
+interface Props {
+  opiniones: Opinion[];
+  rating?: number;
+  cantidad: number;
+}
+const { opiniones, rating, cantidad } = Astro.props;
+
+/* Distribución real de las opiniones cargadas. */
+const distribucion = [5, 4, 3, 2, 1].map((estrellas) => ({
+  estrellas,
+  cuantas: opiniones.filter((o) => o.puntaje === estrellas).length,
+}));
+const totalCargadas = opiniones.length || 1;
+---
+
+<section class="opiniones" id="opiniones" aria-labelledby="tit-opiniones">
+  <h2 class="t-seccion" id="tit-opiniones">Opiniones</h2>
+
+  {cantidad === 0 ? (
+    <p class="opiniones__sin">
+      Este producto todavía no tiene opiniones. Cuando alguien lo compre y quiera
+      contar cómo le fue, va a aparecer acá — no publicamos reseñas escritas por nosotros.
+    </p>
+  ) : (
+    <>
+      <div class="opiniones__resumen">
+        <div class="opiniones__nota">
+          <p class="opiniones__promedio tabular">{decimal(rating ?? 0)}</p>
+          <Rating puntaje={rating} cantidad={cantidad} />
+          <p class="t-meta">{numero(cantidad)} opiniones en total</p>
+        </div>
+
+        <ul class="barras">
+          {distribucion.map((d) => (
+            <li class="barra">
+              <span class="barra__rotulo tabular">{d.estrellas}</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" aria-hidden="true" class="barra__estrella">
+                <path d="M12 2.5l2.9 6.1 6.6.9-4.8 4.6 1.2 6.6-5.9-3.2-5.9 3.2 1.2-6.6L2.5 9.5l6.6-.9z" />
+              </svg>
+              <span class="barra__via">
+                <span class="barra__relleno" style={`width:${Math.round((d.cuantas / totalCargadas) * 100)}%`}></span>
+              </span>
+              <span class="barra__cuenta tabular">{d.cuantas}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <ul class="opiniones__lista">
+        {opiniones.map((o) => (
+          <li class="opinion-ficha">
+            <div class="opinion-ficha__cabeza">
+              <Rating puntaje={o.puntaje} cantidad={1} soloEstrellas />
+              <p class="opinion-ficha__autor">
+                {o.autor}
+                {o.compraVerificada && (
+                  <span class="opinion-ficha__sello">
+                    <svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true" fill="currentColor">
+                      <path d="M6.2 11.4 3.3 8.5l-1.1 1.1 4 4 7.6-7.6-1.1-1.1z" />
+                    </svg>
+                    Compra verificada
+                  </span>
+                )}
+              </p>
+              <p class="t-meta">{fechaLarga(o.fecha)}</p>
+            </div>
+            <p class="opinion-ficha__texto">{o.texto}</p>
+            {o.foto && (
+              <img
+                class="opinion-ficha__foto"
+                src={foto(o.foto.src, 400)}
+                alt={o.foto.alt}
+                width="300" height="225"
+                loading="lazy" decoding="async"
+              />
+            )}
+          </li>
+        ))}
+      </ul>
+
+      <p class="opiniones__nota-honestidad">
+        Se muestran todas las opiniones recibidas, incluidas las de tres estrellas.
+        No hay filtro por puntaje.
+      </p>
+    </>
+  )}
+</section>
+
+<style>
+  .opiniones { padding-top: var(--e-12); border-top: 1px solid var(--gris-200); }
+  .opiniones > h2 { margin-bottom: var(--e-6); }
+  .opiniones__sin {
+    padding: var(--e-6);
+    background: var(--gris-050);
+    border: 1px dashed var(--gris-200);
+    border-radius: var(--r-modal);
+    color: var(--gris-800);
+    max-width: 62ch;
+    line-height: 1.6;
+  }
+
+  .opiniones__resumen {
+    display: grid;
+    gap: var(--e-8);
+    padding-bottom: var(--e-8);
+    margin-bottom: var(--e-6);
+    border-bottom: 1px solid var(--gris-200);
+  }
+  @media (min-width: 640px) { .opiniones__resumen { grid-template-columns: auto minmax(0, 320px); } }
+
+  .opiniones__nota { display: flex; flex-direction: column; gap: var(--e-1); }
+  .opiniones__promedio { font-size: 2.75rem; font-weight: 500; line-height: 1; letter-spacing: -0.02em; }
+
+  .barras { display: flex; flex-direction: column; gap: var(--e-2); }
+  .barra { display: flex; align-items: center; gap: var(--e-2); font-size: var(--t-meta); }
+  .barra__rotulo { color: var(--gris-800); }
+  .barra__estrella { fill: var(--amarillo); stroke: var(--amarillo-borde); stroke-width: 1; }
+  .barra__via { flex: 1; height: 6px; background: var(--gris-200); border-radius: 999px; overflow: hidden; }
+  .barra__relleno { display: block; height: 100%; background: var(--amarillo); }
+  .barra__cuenta { color: var(--gris-texto); min-width: 16px; text-align: right; }
+
+  .opiniones__lista { display: flex; flex-direction: column; gap: var(--e-6); list-style: none; }
+  .opinion-ficha { padding-bottom: var(--e-6); border-bottom: 1px solid var(--gris-200); }
+  .opinion-ficha:last-child { border-bottom: 0; }
+  .opinion-ficha__cabeza { display: flex; flex-wrap: wrap; align-items: center; gap: var(--e-3); margin-bottom: var(--e-3); }
+  .opinion-ficha__autor { font-weight: 600; font-size: 0.875rem; display: flex; align-items: center; gap: var(--e-2); }
+  .opinion-ficha__sello {
+    display: inline-flex; align-items: center; gap: 3px;
+    font-size: var(--t-meta); font-weight: 500; color: var(--verde);
+  }
+  .opinion-ficha__texto { font-size: 0.9375rem; line-height: 1.6; color: var(--gris-800); max-width: 68ch; }
+  .opinion-ficha__foto {
+    margin-top: var(--e-3);
+    width: 220px; height: auto;
+    border-radius: var(--r-tarjeta);
+    border: 1px solid var(--gris-200);
+  }
+
+  .opiniones__nota-honestidad {
+    margin-top: var(--e-6);
+    font-size: var(--t-meta);
+    color: var(--gris-texto);
+  }
+</style>

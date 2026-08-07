@@ -1,0 +1,23 @@
+{
+  "name": "acentta",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "acentta — marketplace de dropshipping. Pieza de portafolio.",
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "astro check",
+    "vista-previa": "astro build && node generar-vista-previa.mjs"
+  },
+  "dependencies": {
+    "astro": "^7.1.6"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.4",
+    "typescript": "^5.7.0",
+    "esbuild": "^0.28.1"
+  }
+}

@@ -1,0 +1,67 @@
+---
+import '@estilos/fuentes.css';
+import '@estilos/tokens.css';
+import '@estilos/base.css';
+import '@estilos/componentes.css';
+import MiniCarrito from '@componentes/MiniCarrito.astro';
+
+interface Props {
+  titulo: string;
+  descripcion: string;
+  /** Deja la página fuera del índice de buscadores. */
+  sinIndexar?: boolean;
+  /** Datos estructurados de la página. Van en el head, que es donde
+   *  corresponde: colgados después de </html> el HTML deja de validar. */
+  esquema?: unknown;
+}
+
+const { titulo, descripcion, sinIndexar = false, esquema } = Astro.props;
+const canonica = new URL(Astro.url.pathname, Astro.site);
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{titulo}</title>
+    <meta name="description" content={descripcion} />
+    <link rel="canonical" href={canonica} />
+    {sinIndexar && <meta name="robots" content="noindex" />}
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+
+    {/* La fuente se precarga: es el recurso que bloquea el primer texto útil. */}
+    <link
+      rel="preload"
+      href="/fuentes/inter-variable-latin.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <meta name="theme-color" content="#C8431A" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={titulo} />
+    <meta property="og:description" content={descripcion} />
+    <meta property="og:locale" content="es_AR" />
+
+    {esquema && (
+      <script type="application/ld+json" set:html={JSON.stringify(esquema)} is:inline />
+    )}
+  </head>
+  <body>
+    <a class="saltar" href="#contenido">Saltar al contenido</a>
+    <slot name="encabezado" />
+    <main id="contenido">
+      <slot />
+    </main>
+    <slot name="pie" />
+
+    <MiniCarrito />
+
+    <script>
+      import '../scripts/base';
+      import '../scripts/marquesina';
+      import '../scripts/carrito';
+    </script>
+  </body>
+</html>

@@ -1,0 +1,87 @@
+---
+import Documento from '@layouts/Documento.astro';
+---
+
+<Documento
+  titulo="Cambios y devoluciones"
+  bajada="Treinta días para decidir si te quedás con lo que compraste. Sin explicar por qué, y sin que te cueste plata."
+  descripcion="Política de cambios y devoluciones de acentta: 30 días, sin cargo, sin justificar el motivo."
+  actualizado="1 de agosto de 2026"
+  indice={[
+    { id: 'plazo', nombre: 'El plazo' },
+    { id: 'como', nombre: 'Cómo se hace' },
+    { id: 'costo', nombre: 'Quién paga' },
+    { id: 'reintegro', nombre: 'El reintegro' },
+    { id: 'excepciones', nombre: 'Qué no se devuelve' },
+    { id: 'arrepentimiento', nombre: 'Botón de arrepentimiento' },
+  ]}
+>
+  <div class="destacado">
+    <p>
+      <strong>30 días corridos desde que recibís el pedido.</strong> No preguntamos el
+      motivo, no pedimos que el producto esté sin abrir, y el costo de la devolución lo
+      pagamos nosotros.
+    </p>
+  </div>
+
+  <h2 id="plazo">El plazo</h2>
+  <p>
+    Treinta días corridos desde la fecha de entrega. Es más del doble de los diez días que
+    exige la ley argentina para el derecho de arrepentimiento, y la razón es simple: una
+    lámpara o una alfombra se juzgan viviendo con ellas, no sacándolas de la caja. Diez días
+    alcanzan para probar un celular; no para saber si una alfombra funciona en tu living.
+  </p>
+
+  <h2 id="como">Cómo se hace</h2>
+  <ol>
+    <li>Escribinos a <strong>hola@acentta.com.ar</strong> con tu número de pedido, o usá el <a href="/contacto">formulario de contacto</a>.</li>
+    <li>Te respondemos dentro de las 24 h hábiles con una etiqueta de devolución prepaga.</li>
+    <li>Empacás el producto —sirve la caja original, pero si no la tenés, cualquiera sirve— y lo despachás en la sucursal del correo.</li>
+    <li>Cuando el paquete llega al depósito, procesamos el reintegro.</li>
+  </ol>
+  <p>
+    No hay formularios de justificación ni cuestionarios de salida. Si querés contarnos qué
+    falló, lo leemos con atención; si no, tampoco pasa nada.
+  </p>
+
+  <h2 id="costo">Quién paga la devolución</h2>
+  <p>
+    <strong>Nosotros.</strong> La etiqueta de devolución es prepaga en todos los casos,
+    incluso cuando el producto está perfecto y simplemente no te gustó.
+  </p>
+  <p>
+    Es una decisión comercial, no un gesto: cobrar la devolución ahorra unos pesos por
+    caso y cuesta la compra siguiente. Quien devolvió gratis vuelve; quien pagó por
+    devolver, no.
+  </p>
+
+  <h2 id="reintegro">El reintegro</h2>
+  <p>
+    Se hace por el mismo medio con el que pagaste, dentro de los <strong>5 días
+    hábiles</strong> de recibido el producto en el depósito.
+  </p>
+  <ul>
+    <li><strong>Tarjeta de crédito:</strong> el reintegro aparece en el resumen siguiente o el subsiguiente, según el cierre de tu banco. Ese tiempo lo maneja la tarjeta, no nosotros.</li>
+    <li><strong>Transferencia:</strong> devolvemos a la misma cuenta de origen dentro de las 48 h.</li>
+  </ul>
+  <p>Se reintegra el total pagado por el producto, incluido el envío original si lo hubo.</p>
+
+  <h2 id="excepciones">Qué no se devuelve</h2>
+  <p>Sólo dos casos, y los dos son de sentido común:</p>
+  <ul>
+    <li><strong>Productos hechos a medida</strong> o personalizados a pedido, porque no se pueden volver a vender.</li>
+    <li><strong>Productos dañados por uso indebido</strong> — no por uso normal. Una alfombra usada durante tres semanas se devuelve; una alfombra cortada, no.</li>
+  </ul>
+  <p>
+    Fuera de eso, no hay letra chica. Si dudás de si tu caso entra, escribinos antes de
+    despachar y te lo confirmamos por escrito.
+  </p>
+
+  <h2 id="arrepentimiento">Botón de arrepentimiento</h2>
+  <p>
+    Si te arrepentiste y el pedido <strong>todavía no llegó</strong>, podés cancelarlo con
+    el <a href="/arrepentimiento">botón de arrepentimiento</a>. Es un trámite distinto y
+    más rápido que la devolución, y está disponible por ley durante los primeros 10 días
+    corridos desde la compra.
+  </p>
+</Documento>

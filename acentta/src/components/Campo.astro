@@ -1,0 +1,87 @@
+---
+/**
+ * Campo de formulario con validación.
+ * El error explica qué hacer, no sólo qué falló, y se enlaza al input
+ * con aria-describedby para que el lector de pantalla lo lea.
+ */
+/** Tipos de input que este sitio usa. Lista cerrada: si alguien pide
+ *  un `type` que el sistema no contempla, el build lo rechaza. */
+type TipoCampo = 'text' | 'email' | 'tel' | 'password' | 'search' | 'number' | 'url';
+
+interface Props {
+  id: string;
+  etiqueta: string;
+  tipo?: TipoCampo;
+  nombre?: string;
+  valor?: string;
+  marcador?: string;
+  ayuda?: string;
+  error?: string;
+  exito?: boolean;
+  requerido?: boolean;
+  deshabilitado?: boolean;
+  autocompletar?: string;
+  /** Teclado correcto en móvil: 'numeric' para CP y tarjeta. */
+  modoEntrada?: 'text' | 'numeric' | 'tel' | 'email' | 'decimal';
+  patron?: string;
+  maxlargo?: number;
+  areaTexto?: boolean;
+  class?: string;
+}
+
+const {
+  id, etiqueta, tipo = 'text', nombre, valor, marcador, ayuda, error,
+  exito = false, requerido = false, deshabilitado = false,
+  autocompletar, modoEntrada, patron, maxlargo, areaTexto = false,
+  class: clase,
+} = Astro.props;
+
+const estado = error ? 'error' : exito ? 'exito' : 'normal';
+const idAyuda = ayuda ? `${id}-ayuda` : undefined;
+const idError = error ? `${id}-error` : undefined;
+const descrito = [idAyuda, idError].filter(Boolean).join(' ') || undefined;
+const Control = areaTexto ? 'textarea' : 'input';
+---
+
+<div class={['campo', clase].filter(Boolean).join(' ')} data-estado={estado}>
+  <label class="campo__etiqueta" for={id}>
+    {etiqueta}
+    {!requerido && <span class="campo__opcional"> (opcional)</span>}
+  </label>
+
+  <div class="campo__envoltorio">
+    <Control
+      class="campo__control"
+      id={id}
+      name={nombre ?? id}
+      type={areaTexto ? undefined : tipo}
+      value={areaTexto ? undefined : valor}
+      placeholder={marcador}
+      required={requerido}
+      disabled={deshabilitado}
+      autocomplete={autocompletar}
+      inputmode={modoEntrada}
+      pattern={patron}
+      maxlength={maxlargo}
+      aria-invalid={error ? 'true' : undefined}
+      aria-describedby={descrito}
+    >{areaTexto ? valor : undefined}</Control>
+
+    {estado === 'exito' && !areaTexto && (
+      <svg class="campo__tilde" width="18" height="18" viewBox="0 0 16 16" aria-hidden="true" fill="currentColor">
+        <path d="M6.2 11.4 3.3 8.5l-1.1 1.1 4 4 7.6-7.6-1.1-1.1z" />
+      </svg>
+    )}
+  </div>
+
+  {ayuda && !error && <p class="campo__ayuda" id={idAyuda}>{ayuda}</p>}
+
+  {error && (
+    <p class="campo__error" id={idError} role="alert">
+      <svg viewBox="0 0 16 16" aria-hidden="true" fill="currentColor">
+        <path d="M8 1.5 15 14H1L8 1.5Zm0 4.2a.8.8 0 0 0-.8.9l.25 3.1a.55.55 0 0 0 1.1 0l.25-3.1a.8.8 0 0 0-.8-.9Zm0 5.4a.85.85 0 1 0 0 1.7.85.85 0 0 0 0-1.7Z"/>
+      </svg>
+      <span>{error}</span>
+    </p>
+  )}
+</div>

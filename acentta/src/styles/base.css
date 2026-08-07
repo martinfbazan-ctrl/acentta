@@ -1,0 +1,237 @@
+/* ============================================================
+   acentta · reset, tipografía y layout
+   ============================================================ */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body, h1, h2, h3, h4, p, figure, blockquote, dl, dd, ul, ol { margin: 0; }
+
+/* Reset de listas · dos correcciones sobre la versión anterior.
+   ------------------------------------------------------------
+   1. Antes decía `ul[class], ol[class]`, así que una lista sin clase
+      conservaba la sangría de 40 px del navegador. Las migas de pan y
+      las listas del pie quedaban corridas respecto del resto de la
+      página. En este sitio casi todas las listas son estructura, no
+      prosa: el reset aplica a todas y la sangría se pide, no se hereda.
+
+   2. `ul[class]` pesa (0,1,1) y le ganaba a `.contenedor` (0,1,0), así
+      que la navegación de categorías perdía el padding del contenedor
+      y arrancaba pegada al borde, desalineada del logo y del titular.
+      Envuelto en :where() el reset pesa cero y cualquier clase lo
+      corrige. Es la diferencia entre un reset que ordena y uno que
+      pelea con el resto de la hoja. */
+:where(ul, ol) { list-style: none; padding: 0; }
+
+/* Para listas de prosa, donde el marcador sí aporta. */
+.lista-texto { list-style: disc; padding-left: var(--e-5); }
+.lista-texto ol,
+ol.lista-texto { list-style: decimal; }
+
+/* El atributo hidden significa "esto no se muestra", y el navegador lo
+   aplica con `[hidden] { display: none }` en su hoja por defecto — la
+   de menor prioridad que existe. Cualquier `display: flex` o `grid`
+   puesto en una clase le gana, y el elemento sigue en pantalla aunque
+   el JavaScript lo haya marcado como oculto.
+   Así quedaban visibles a la vez el carrito con productos y el bloque
+   "todavía no agregaste nada". Es de los pocos casos donde !important
+   es la respuesta correcta: hidden es una decisión semántica, no una
+   sugerencia de maquetado. */
+[hidden] { display: none !important; }
+
+html:focus-within { scroll-behavior: smooth; }
+
+body {
+  min-height: 100vh;
+  font-family: var(--fuente);
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--tinta);
+  background: var(--arena);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+img, picture, svg, video { max-width: 100%; display: block; }
+input, button, textarea, select { font: inherit; color: inherit; }
+
+/* Sin scroll horizontal accidental.
+   ------------------------------------------------------------
+   Va en <html> y con `clip`, no en <body> y con `hidden`.
+   `overflow: hidden` convierte al elemento en contenedor de scroll,
+   y eso rompe el backdrop-filter del encabezado: el navegador deja
+   de tener un "fondo" contra el cual desenfocar y el panel se ve
+   translúcido pero nítido. Era exactamente el síntoma.
+   `clip` recorta igual pero no crea contenedor de scroll, así que
+   el desenfoque vuelve a funcionar. */
+html { overflow-x: clip; }
+
+/* ---------- FOCO VISIBLE · uno solo para todo el sitio ---------- */
+:focus-visible {
+  outline: 3px solid var(--foco-color);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+:focus:not(:focus-visible) { outline: none; }
+
+/* ---------- SALTAR AL CONTENIDO ---------- */
+.saltar {
+  position: absolute;
+  left: var(--e-4);
+  top: var(--e-4);
+  z-index: 999;
+  padding: var(--e-3) var(--e-4);
+  background: var(--tinta);
+  color: var(--blanco);
+  border-radius: var(--r-tarjeta);
+  text-decoration: none;
+  transform: translateY(-200%);
+  transition: transform var(--v-rapido) var(--curva);
+}
+.saltar:focus { transform: translateY(0); }
+
+/* ---------- SOLO PARA LECTORES DE PANTALLA ---------- */
+.vo {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ============================================================
+   TIPOGRAFÍA · escala del brief §5
+   ============================================================ */
+
+.t-titular {
+  font-size: var(--t-titular);
+  font-weight: var(--peso-titular);
+  letter-spacing: var(--tracking-titular);
+  line-height: 1.06;
+  text-wrap: balance;
+}
+
+.t-seccion {
+  font-size: var(--t-seccion);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  text-wrap: balance;
+}
+
+.t-producto {
+  font-size: var(--t-producto);
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.t-precio {
+  font-size: var(--t-precio);
+  font-weight: 700;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+.t-precio-anterior {
+  font-size: var(--t-precio-ant);
+  font-weight: 400;
+  text-decoration: line-through;
+  color: var(--gris-texto);
+  font-variant-numeric: tabular-nums;
+}
+
+.t-cuotas {
+  font-size: var(--t-cuotas);
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.t-meta {
+  font-size: var(--t-meta);
+  font-weight: 400;
+  line-height: 1.4;
+  color: var(--gris-texto);
+}
+
+.t-texto {
+  font-size: var(--t-texto);
+  font-weight: 400;
+  line-height: var(--interlinea-texto);
+  max-width: 68ch;
+}
+
+/* Todo número que se compara en columna usa cifras tabulares */
+.tabular { font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
+
+/* ============================================================
+   LAYOUT · 4 columnas en móvil, 12 en escritorio
+   ============================================================ */
+
+.contenedor {
+  width: 100%;
+  max-width: var(--ancho-max);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+.grilla {
+  display: grid;
+  grid-template-columns: repeat(var(--columnas), minmax(0, 1fr));
+  gap: var(--gutter);
+}
+
+/* Tarjetas: 2 columnas en móvil (brief §5) */
+.grilla-productos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--e-3);
+}
+@media (min-width: 640px)  { .grilla-productos { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--e-4); } }
+@media (min-width: 1024px) { .grilla-productos { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--e-5); } }
+
+.pila { display: flex; flex-direction: column; }
+.fila { display: flex; align-items: center; }
+.envuelve { flex-wrap: wrap; }
+
+.g-1 { gap: var(--e-1); } .g-2 { gap: var(--e-2); } .g-3 { gap: var(--e-3); }
+.g-4 { gap: var(--e-4); } .g-6 { gap: var(--e-6); } .g-8 { gap: var(--e-8); }
+
+.seccion { padding-block: var(--e-12); }
+@media (min-width: 768px) { .seccion { padding-block: var(--e-20); } }
+
+.regla { height: 1px; background: var(--gris-200); border: 0; }
+
+/* (El gesto de acento salió del sistema junto con la versión
+   anterior del logo. Ver la nota en tokens.css.) */
+
+/* ============================================================
+   CONTEXTO DE SUPERFICIE
+   Redefinen los tokens que dependen del fondo. Se aplican al
+   contenedor y todo lo de adentro se corrige solo — nadie tiene
+   que acordarse de cambiar un color a mano.
+   ============================================================ */
+.sobre-oscuro {
+  --naranja-texto: var(--naranja-texto-oscuro);
+  --gris-texto: #C9BBAB;   /* 7,9:1 sobre tinta */
+  --gris-800: #E0D4C4;
+}
+.sobre-oliva {
+  --naranja-texto: var(--naranja-texto-oliva);
+}
+
+/* ============================================================
+   MOVIMIENTO REDUCIDO · brief §7
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  html:focus-within { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

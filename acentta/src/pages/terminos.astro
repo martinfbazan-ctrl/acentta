@@ -1,0 +1,96 @@
+---
+import Documento from '@layouts/Documento.astro';
+import { precio } from '@lib/formato';
+import { UMBRAL_ENVIO_GRATIS } from '@tipos/catalogo';
+---
+
+<Documento
+  titulo="Términos y condiciones"
+  bajada="Las reglas de la compra, escritas para leerse. Si algo no se entiende, escribinos y lo aclaramos."
+  descripcion="Términos y condiciones de uso y compra en acentta."
+  actualizado="1 de agosto de 2026"
+  indice={[
+    { id: 'proyecto', nombre: 'Sobre este sitio' },
+    { id: 'compra', nombre: 'La compra' },
+    { id: 'precios', nombre: 'Precios' },
+    { id: 'entrega', nombre: 'Entrega' },
+    { id: 'garantia', nombre: 'Garantía' },
+    { id: 'consumidor', nombre: 'Defensa del consumidor' },
+  ]}
+>
+  <div class="destacado">
+    <p>
+      <strong>acentta es un proyecto conceptual de portafolio.</strong> No es una tienda en
+      operación: no procesa pagos, no despacha productos y no recoge datos personales. Estos
+      términos describen cómo funcionaría la tienda y forman parte de la pieza de diseño.
+    </p>
+  </div>
+
+  <h2 id="proyecto">Sobre este sitio</h2>
+  <p>
+    acentta es un marketplace de decoración e iluminación diseñado y construido como pieza
+    de portafolio. Los productos, precios, opiniones y plazos son contenido de
+    demostración. Ningún formulario envía información a ningún servidor.
+  </p>
+
+  <h2 id="compra">La compra</h2>
+  <p>
+    La compra se realiza sin necesidad de crear una cuenta. Los datos que se piden en el
+    checkout son los mínimos necesarios para emitir la factura y coordinar la entrega:
+    nombre, DNI, correo, teléfono y dirección.
+  </p>
+  <p>
+    El pedido se considera confirmado cuando se acredita el pago. A partir de ese momento
+    corre el plazo de preparación y envío informado en la ficha del producto.
+  </p>
+
+  <h2 id="precios">Precios</h2>
+  <p>
+    Todos los precios están expresados en <strong>pesos argentinos</strong> e incluyen IVA.
+  </p>
+  <p>
+    Cuando un producto muestra un precio tachado, ese es el precio al que efectivamente se
+    ofreció antes, no un precio de referencia inflado para que el descuento parezca mayor.
+  </p>
+  <p>
+    Las cuotas sin interés dependen del banco emisor y de las promociones vigentes al
+    momento de pagar. El costo del envío se informa antes de finalizar la compra: el total
+    del carrito ya lo incluye, y no cambia en el checkout.
+  </p>
+
+  <h2 id="entrega">Entrega</h2>
+  <p>
+    Los plazos se cuentan en días hábiles desde la acreditación del pago. La fecha estimada
+    aparece en la ficha del producto y en el resumen del pedido. Ver
+    <a href="/envios">envíos y plazos</a> para el detalle por zona.
+  </p>
+  <p>
+    El envío es gratuito superando {precio(UMBRAL_ENVIO_GRATIS)} de subtotal.
+  </p>
+
+  <h2 id="garantia">Garantía</h2>
+  <p>
+    Todos los productos tienen la garantía legal de 6 meses prevista en la Ley 24.240 de
+    Defensa del Consumidor, y en muchos casos garantía extendida del fabricante.
+  </p>
+  <p>
+    Además, acentta ofrece <strong>30 días de devolución sin cargo y sin justificar el
+    motivo</strong>, más del doble de lo que exige la ley. Ver
+    <a href="/devoluciones">cambios y devoluciones</a>.
+  </p>
+
+  <h2 id="consumidor">Defensa del consumidor</h2>
+  <p>
+    Ante cualquier inconveniente podés comunicarte con nosotros a
+    <strong>hola@acentta.com.ar</strong>. También tenés derecho a presentar un reclamo ante
+    la autoridad de aplicación:
+  </p>
+  <ul>
+    <li><a href="https://autogestion.produccion.gob.ar/consumidores" rel="noopener">Ventanilla Única Federal de Defensa de las y los Consumidores</a></li>
+    <li>Línea gratuita 0800-666-1518</li>
+  </ul>
+  <p>
+    El <a href="/arrepentimiento">botón de arrepentimiento</a> está disponible según la
+    Resolución 424/2020 de la Secretaría de Comercio Interior.
+  </p>
+</Documento>

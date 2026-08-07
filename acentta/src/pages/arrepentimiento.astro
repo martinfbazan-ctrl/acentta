@@ -1,0 +1,169 @@
+---
+/**
+ * Botón de arrepentimiento.
+ * Exigible por la Resolución 424/2020 de Comercio Interior: tiene que
+ * estar accesible desde el inicio, sin registro previo, y con la
+ * misma facilidad con la que se compró.
+ */
+import Base from '@layouts/Base.astro';
+import Encabezado from '@componentes/Encabezado.astro';
+import Pie from '@componentes/Pie.astro';
+import Migas from '@componentes/Migas.astro';
+import Campo from '@componentes/Campo.astro';
+import Boton from '@componentes/Boton.astro';
+---
+
+<Base
+  titulo="Botón de arrepentimiento · acentta"
+  descripcion="Cancelá tu compra dentro de los 10 días corridos, sin dar explicaciones."
+>
+  <Encabezado slot="encabezado" />
+
+  <div class="contenedor arrepentimiento">
+    <Migas pasos={[{ nombre: 'Inicio', href: '/' }, { nombre: 'Botón de arrepentimiento' }]} class="arrepentimiento__migas" />
+
+    <h1 class="t-titular">Botón de arrepentimiento</h1>
+
+    <p class="t-texto arrepentimiento__bajada">
+      Si te arrepentiste de una compra, podés cancelarla dentro de los
+      <b>10 días corridos</b> desde que la hiciste o desde que recibiste el producto,
+      lo que ocurra último. No hace falta que expliques el motivo.
+    </p>
+
+    <div class="arrepentimiento__marco">
+      <form class="arrepentimiento__forma" data-arrepentimiento novalidate>
+        <h2 class="arrepentimiento__titulo">Datos de la compra</h2>
+
+        <Campo id="ar-pedido" etiqueta="Número de pedido" requerido marcador="AC-12345678"
+               ayuda="Está en el correo de confirmación y empieza con AC." />
+        <Campo id="ar-email" etiqueta="Correo con el que compraste" tipo="email" requerido
+               autocompletar="email" />
+        <Campo id="ar-nombre" etiqueta="Nombre y apellido" requerido autocompletar="name" />
+        <Campo id="ar-motivo" etiqueta="Motivo" areaTexto
+               marcador="Opcional. Nos sirve para mejorar, pero no es obligatorio." />
+
+        <Boton tipo="submit" tamano="grande" ancho>Solicitar la cancelación</Boton>
+
+        <p class="arrepentimiento__aviso" data-arrepentimiento-aviso hidden></p>
+      </form>
+
+      <aside class="arrepentimiento__lado">
+        <h2 class="arrepentimiento__titulo">Qué pasa después</h2>
+        <ol class="arrepentimiento__pasos">
+          <li><b>Recibimos la solicitud</b> y te confirmamos por correo dentro de las 24 h hábiles.</li>
+          <li><b>Si el pedido no salió</b>, lo frenamos y devolvemos el total. Nada que despachar.</li>
+          <li><b>Si ya salió o ya llegó</b>, te mandamos una etiqueta de devolución prepaga.</li>
+          <li><b>El reintegro</b> se procesa dentro de los 5 días hábiles, por el mismo medio de pago.</li>
+        </ol>
+
+        <div class="arrepentimiento__nota">
+          <p>
+            <b>El costo de la devolución lo pagamos nosotros</b>, tanto en el
+            arrepentimiento como en la devolución común.
+          </p>
+        </div>
+
+        <p class="arrepentimiento__legal">
+          Este botón cumple con la Resolución 424/2020 de la Secretaría de Comercio
+          Interior y con el artículo 34 de la Ley 24.240 de Defensa del Consumidor.
+          Si preferís otro canal, escribinos a <b>hola@acentta.com.ar</b>.
+        </p>
+
+        <p class="arrepentimiento__legal">
+          ¿Pasaron más de 10 días? Igual tenés
+          <a href="/devoluciones">30 días para devolver sin cargo</a>.
+        </p>
+      </aside>
+    </div>
+  </div>
+
+  <Pie slot="pie" />
+</Base>
+
+<script>
+  import '../scripts/arrepentimiento';
+</script>
+
+<style>
+  .arrepentimiento { padding-block: var(--e-6) var(--e-16); }
+  .arrepentimiento__migas { margin-bottom: var(--e-6); }
+  .arrepentimiento__bajada { margin: var(--e-4) 0 var(--e-10); }
+
+  .arrepentimiento__marco { display: grid; gap: var(--e-8); align-items: start; }
+  /* Mitad y mitad. El formulario y la explicación pesan lo mismo:
+     nadie completa un trámite de cancelación sin leer antes qué va a
+     pasar. Con la columna lateral fija en 400 px el texto quedaba
+     comprimido en pantallas anchas mientras el formulario sobraba
+     de espacio. */
+  @media (min-width: 900px) {
+    .arrepentimiento__marco {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: var(--e-12);
+    }
+  }
+
+  .arrepentimiento__forma {
+    display: flex;
+    flex-direction: column;
+    gap: var(--e-5);
+    padding: var(--e-6);
+    background: var(--papel);
+    border: 1px solid var(--gris-200);
+    border-radius: var(--r-modal);
+  }
+  @media (min-width: 900px) { .arrepentimiento__forma { padding: var(--e-8); } }
+
+  .arrepentimiento__titulo { font-size: 1.0625rem; font-weight: 700; }
+
+  .arrepentimiento__lado {
+    display: flex;
+    flex-direction: column;
+    gap: var(--e-5);
+    padding: var(--e-6) 0;
+  }
+  @media (min-width: 900px) { .arrepentimiento__lado { padding: var(--e-8) 0; } }
+  .arrepentimiento__pasos { display: flex; flex-direction: column; gap: var(--e-3); counter-reset: p; }
+  .arrepentimiento__pasos li {
+    display: flex;
+    gap: var(--e-3);
+    font-size: 1rem;
+    line-height: 1.6;
+    color: var(--gris-800);
+    counter-increment: p;
+  }
+  .arrepentimiento__pasos li::before {
+    content: counter(p);
+    flex: none;
+    width: 24px; height: 24px;
+    display: grid; place-items: center;
+    background: var(--arena-honda);
+    border-radius: 50%;
+    font-size: 12px; font-weight: 700; color: var(--tinta);
+  }
+  .arrepentimiento__pasos b { color: var(--tinta); }
+
+  .arrepentimiento__nota {
+    padding: var(--e-5);
+    background: var(--verde-wash);
+    border-left: 3px solid var(--verde);
+    border-radius: var(--r-tarjeta);
+    font-size: 0.9375rem;
+    line-height: 1.55;
+    color: var(--gris-800);
+  }
+  .arrepentimiento__nota b { color: var(--tinta); }
+
+  .arrepentimiento__legal { font-size: 0.875rem; color: var(--gris-texto); line-height: 1.6; }
+  .arrepentimiento__legal b { color: var(--gris-800); }
+  .arrepentimiento__legal a { color: var(--naranja-texto); font-weight: 600; }
+
+  .arrepentimiento__aviso {
+    padding: var(--e-4);
+    background: var(--verde-wash);
+    border-left: 3px solid var(--verde);
+    border-radius: var(--r-tarjeta);
+    font-size: 0.9375rem;
+    line-height: 1.55;
+    color: var(--gris-800);
+  }
+</style>

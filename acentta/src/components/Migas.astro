@@ -1,0 +1,60 @@
+---
+/**
+ * Migas de pan.
+ * Además de orientar, generan el rastro estructurado que el buscador
+ * usa para mostrar la ruta debajo del resultado en vez de la URL cruda.
+ */
+interface Paso { nombre: string; href?: string }
+interface Props {
+  pasos: Paso[];
+  /** Agrega la línea que separa la ruta del titular. */
+  separada?: boolean;
+  class?: string;
+}
+const { pasos, separada = true, class: clase } = Astro.props;
+
+const esquema = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: pasos.map((p, i) => ({
+    '@type': 'ListItem',
+    position: i + 1,
+    name: p.nombre,
+    ...(p.href ? { item: new URL(p.href, Astro.site).toString() } : {}),
+  })),
+};
+---
+
+<nav class={['migas', separada && 'migas--separada', clase].filter(Boolean).join(' ')} aria-label="Ruta de navegación">
+  <ol>
+    {pasos.map((p, i) => (
+      <li>
+        {p.href ? <a href={p.href}>{p.nombre}</a> : <span aria-current="page">{p.nombre}</span>}
+        {i < pasos.length - 1 && (
+          <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M4.5 2.5 8 6l-3.5 3.5" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        )}
+      </li>
+    ))}
+  </ol>
+</nav>
+
+<script type="application/ld+json" set:html={JSON.stringify(esquema)} is:inline />
+
+<style>
+  .migas { font-size: var(--t-meta); }
+  /* La misma línea que separa la navegación de categorías. Sin ella,
+     la ruta y el titular flotan a la misma distancia de todo y la
+     jerarquía entre "dónde estoy" y "qué es esto" se pierde. */
+  .migas--separada {
+    padding-bottom: var(--e-4);
+    border-bottom: 1px solid var(--gris-200);
+  }
+  .migas ol { display: flex; flex-wrap: wrap; align-items: center; gap: var(--e-1); list-style: none; }
+  .migas li { display: flex; align-items: center; gap: var(--e-1); color: var(--gris-texto); }
+  .migas a { color: var(--gris-texto); text-decoration: none; }
+  .migas a:hover { color: var(--tinta); text-decoration: underline; text-underline-offset: 3px; }
+  .migas svg { color: var(--gris-500); }
+  .migas [aria-current] { color: var(--tinta); font-weight: 600; }
+</style>

@@ -1,0 +1,840 @@
+/* ============================================================
+   acentta · componentes base
+   Cada componente documenta todos sus estados. Esa documentación
+   es material directo del caso de estudio (brief §6).
+   ============================================================ */
+
+/* ============================================================
+   BOTÓN · 3 jerarquías × 4 estados + cargando
+   ============================================================ */
+
+.boton {
+  --alto: 44px;
+  --pad-x: var(--e-5);
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--e-2);
+  min-height: var(--alto);
+  padding-inline: var(--pad-x);
+  border: 1px solid transparent;
+  border-radius: var(--r-tarjeta);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  position: relative;
+  isolation: isolate;
+  transition:
+    background-color var(--v-rapido) var(--curva),
+    border-color var(--v-rapido) var(--curva),
+    color var(--v-rapido) var(--curva),
+    box-shadow var(--v-medio) var(--curva),
+    transform var(--v-rapido) var(--curva);
+}
+
+.boton:active:not(:disabled) { transform: translateY(1px); }
+
+.boton:disabled,
+.boton[aria-disabled='true'] {
+  cursor: not-allowed;
+  opacity: 1; /* no se baja la opacidad: rompería el contraste */
+}
+
+/* ---- Jerarquía 1 · primario: la acción que cuesta dinero ---- */
+.boton--primario {
+  background: var(--naranja-accion);
+  color: var(--blanco);
+}
+
+/* Resplandor cálido (ver DESVÍO 1 en tokens).
+   El naranja de marca vuelve como luz alrededor del botón, no como contorno.
+
+   La clave de que no se lea como anillo está en el spread negativo: las dos
+   capas se achican antes de desenfocarse, así que la luz nunca queda apretada
+   contra la silueta. Un spread positivo con poco desenfoque produce un canto
+   nítido; uno negativo con desenfoque amplio produce luz.
+
+   El desplazamiento hacia abajo es deliberado: una fuente de luz cenital es
+   lo que el ojo espera, y sin ese offset el resplandor parece un aura.
+
+   Va en un pseudo-elemento animado por opacidad: animar box-shadow repinta
+   en cada cuadro, y en una grilla de 24 botones eso se nota. */
+.boton--primario::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  box-shadow:
+    0 6px 22px -4px rgba(255, 106, 61, .75),
+    0 2px 8px -2px rgba(255, 106, 61, .5);
+  transition: opacity var(--v-medio) var(--curva), box-shadow var(--v-rapido) var(--curva);
+}
+
+@media (hover: hover) {
+  .boton--primario:hover:not(:disabled) { background: var(--naranja-accion-hover); }
+  .boton--primario:hover:not(:disabled)::after { opacity: 1; }
+}
+
+/* La luz también aparece al presionar, y es el único aviso táctil que
+   existe en móvil, donde el hover no ocurre. Se achica y baja: el botón
+   se acercó a la superficie. */
+.boton--primario:active:not(:disabled) { background: var(--naranja-accion-activo); }
+.boton--primario:active:not(:disabled)::after {
+  opacity: 1;
+  box-shadow:
+    0 3px 13px -4px rgba(255, 106, 61, .8),
+    0 1px 5px -2px rgba(255, 106, 61, .55);
+}
+
+.boton--primario:disabled,
+.boton--primario[aria-disabled='true'] {
+  background: var(--gris-200);
+  color: var(--gris-texto);
+}
+.boton--primario:disabled::after,
+.boton--primario[aria-disabled='true']::after { display: none; }
+
+/* ---- Jerarquía 2 · secundario: alternativa legítima ---- */
+.boton--secundario {
+  background: var(--papel);
+  color: var(--tinta);
+  border-color: var(--gris-500);
+}
+.boton--secundario:hover:not(:disabled) {
+  background: var(--gris-050);
+  border-color: var(--tinta);
+}
+.boton--secundario:active:not(:disabled) { background: var(--gris-200); }
+.boton--secundario:disabled,
+.boton--secundario[aria-disabled='true'] {
+  color: var(--gris-texto);
+  border-color: var(--gris-200);
+  background: var(--papel);
+}
+
+/* ---- Jerarquía 3 · fantasma: acción de bajo compromiso ---- */
+.boton--fantasma {
+  background: transparent;
+  color: var(--naranja-texto);
+  padding-inline: var(--e-3);
+}
+.boton--fantasma:hover:not(:disabled) {
+  background: var(--oferta-wash);
+  color: var(--naranja-accion-activo);
+}
+.boton--fantasma:active:not(:disabled) { background: #FFE4DA; }
+.boton--fantasma:disabled,
+.boton--fantasma[aria-disabled='true'] { color: var(--gris-texto); background: transparent; }
+
+/* ---- Tamaños ---- */
+.boton--grande { --alto: 52px; --pad-x: var(--e-8); font-size: 1rem; }
+.boton--chico  { --alto: 36px; --pad-x: var(--e-4); font-size: 0.875rem; }
+
+.boton--ancho { width: 100%; }
+
+/* ---- Estado cargando ---- */
+.boton[data-cargando='true'] { pointer-events: none; }
+.boton[data-cargando='true'] .boton__texto { visibility: hidden; }
+.boton__girador {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 18px;
+  height: 18px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: girar 700ms linear infinite;
+}
+@keyframes girar { to { transform: rotate(360deg); } }
+
+/* ============================================================
+   BADGE · descuento (etiqueta colgada) y estado
+   ============================================================ */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--e-1);
+  padding: 3px var(--e-2);
+  border-radius: var(--r-badge);
+  font-size: var(--t-meta);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+/* Chip sólido y redondeado como el resto del sistema. Antes colgaba
+   del borde superior imitando la barra del logo; ese gesto salió
+   cuando el wordmark dejó de tenerla. */
+.badge--descuento {
+  color: var(--blanco);
+  background: var(--naranja-accion);
+  padding: 4px var(--e-3) 5px;
+  border-radius: var(--r-badge);
+  font-variant-numeric: tabular-nums;
+  box-shadow: var(--sombra-1);
+}
+
+.badge--oferta        { background: var(--oferta-wash); color: var(--naranja-texto); }
+.badge--mas-vendido   { background: var(--tinta);        color: var(--blanco); }
+.badge--nuevo         { background: var(--verde-wash);   color: var(--verde); }
+.badge--ultimas       { background: var(--rojo-wash);    color: var(--rojo); }
+.badge--agotado       { background: var(--gris-200);     color: var(--gris-800); }
+
+/* ============================================================
+   BLOQUE DE PRECIO · anclaje, ahorro y cuotas
+   ============================================================ */
+
+.precio { display: flex; flex-direction: column; gap: 2px; }
+
+.precio__fila {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--e-2);
+}
+
+.precio__actual {
+  font-size: var(--t-precio);
+  font-weight: 700;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+  color: var(--tinta);
+}
+
+.precio__anterior {
+  font-size: var(--t-precio-ant);
+  font-weight: 400;
+  text-decoration: line-through;
+  color: var(--gris-texto);
+  font-variant-numeric: tabular-nums;
+}
+
+/* El monto en pesos va primero: en ticket medio pesa más que el porcentaje. */
+.precio__ahorro {
+  font-size: var(--t-cuotas);
+  font-weight: 600;
+  color: var(--verde);
+  font-variant-numeric: tabular-nums;
+}
+
+.precio__cuotas {
+  font-size: var(--t-cuotas);
+  font-weight: 500;
+  color: var(--gris-800);
+  font-variant-numeric: tabular-nums;
+}
+.precio__cuotas b { color: var(--tinta); font-weight: 700; }
+
+.precio__unitario {
+  font-size: var(--t-meta);
+  color: var(--gris-texto);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Tamaño ficha */
+.precio--ficha .precio__actual { font-size: clamp(1.75rem, 1.4rem + 1.5vw, 2.25rem); }
+
+/* ============================================================
+   RATING
+   Las estrellas son decorativas: el dato accesible es el número.
+   ============================================================ */
+
+.rating { display: inline-flex; align-items: center; gap: var(--e-2); }
+
+.rating__estrellas { display: inline-flex; gap: 1px; }
+.rating__estrella {
+  width: 14px; height: 14px;
+  fill: var(--amarillo);
+  stroke: var(--amarillo-borde);
+  stroke-width: 1;
+}
+.rating__estrella--vacia { fill: var(--gris-200); stroke: var(--gris-500); }
+
+.rating__numero {
+  font-size: var(--t-meta);
+  font-weight: 600;
+  color: var(--tinta);
+  font-variant-numeric: tabular-nums;
+}
+.rating__cantidad { font-size: var(--t-meta); color: var(--gris-texto); }
+
+/* Sin opiniones: se dice, no se esconde ni se inventa un 0,0 */
+.rating--sin-opiniones .rating__cantidad { font-style: normal; }
+
+/* ============================================================
+   CAMPO DE FORMULARIO · con validación en vivo
+   ============================================================ */
+
+.campo { display: flex; flex-direction: column; gap: var(--e-2); }
+
+.campo__etiqueta {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--tinta);
+}
+.campo__opcional { color: var(--gris-texto); font-weight: 400; }
+
+.campo__control {
+  min-height: 48px; /* área táctil cómoda en móvil */
+  padding: var(--e-3) var(--e-4);
+  border: 1px solid var(--gris-500);
+  border-radius: var(--r-tarjeta);
+  background: var(--papel);
+  color: var(--tinta);
+  font-size: 1rem; /* 16px: evita el zoom automático de iOS */
+  transition: border-color var(--v-rapido) var(--curva), box-shadow var(--v-rapido) var(--curva);
+}
+.campo__control::placeholder { color: var(--gris-texto); }
+.campo__control:hover:not(:disabled) { border-color: var(--gris-800); }
+
+/* ---- Foco de campo ----
+   El anillo negro de 3 px del sitio es correcto para botones y enlaces,
+   pero sobre un campo de texto grita. Acá el foco se resuelve en verde:
+   el color que en este sistema significa "esto está bien, seguí".
+
+   Sin salto de layout: el borde nunca cambia de grosor. El segundo píxel
+   verde es un box-shadow de spread 1, y el halo va afuera. Cambiar
+   border-width en :focus mueve el contenido 1 px y en un formulario de
+   checkout eso se siente.
+
+   Contraste: verde #0F7B4F sobre blanco da 5,29:1 y sobre gris-050
+   da 4,89:1 — por encima del 3:1 que exige el criterio 1.4.11 para
+   indicadores no textuales. El anillo suave es refuerzo, no el
+   indicador: el borde sólido alcanza solo. */
+.campo__control:focus {
+  outline: none;
+  border-color: var(--verde);
+  box-shadow:
+    0 0 0 1px var(--verde),
+    0 0 0 4px rgba(15, 123, 79, .16);
+}
+
+.campo__control:disabled {
+  background: var(--gris-050);
+  color: var(--gris-texto);
+  border-color: var(--gris-200);
+  cursor: not-allowed;
+}
+
+/* El error gana sobre el foco: si hay algo mal, eso es lo urgente.
+   Mismo truco de box-shadow para no mover el contenido. */
+.campo[data-estado='error'] .campo__control,
+.campo[data-estado='error'] .campo__control:focus {
+  border-color: var(--rojo);
+  box-shadow: 0 0 0 1px var(--rojo);
+}
+.campo[data-estado='error'] .campo__control:focus {
+  box-shadow: 0 0 0 1px var(--rojo), 0 0 0 4px rgba(192, 57, 43, .16);
+}
+
+/* Éxito: verde tenue de 1 px y tilde adentro del campo.
+   El verde de foco y el de válido serían el mismo color; lo que los
+   distingue es que el foco trae halo y el éxito trae tilde. */
+.campo[data-estado='exito'] .campo__control {
+  border-color: var(--verde);
+  padding-right: var(--e-10);
+}
+.campo__envoltorio { position: relative; display: flex; flex-direction: column; }
+.campo__tilde {
+  position: absolute;
+  right: var(--e-4);
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--verde);
+  pointer-events: none;
+}
+
+.campo__ayuda { font-size: var(--t-meta); color: var(--gris-texto); }
+
+/* El error explica qué hacer, no sólo qué falló. */
+.campo__error {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--e-2);
+  font-size: var(--t-meta);
+  font-weight: 500;
+  color: var(--rojo);
+}
+.campo__error svg { flex: none; width: 14px; height: 14px; margin-top: 2px; }
+
+.campo textarea.campo__control { min-height: 112px; resize: vertical; }
+
+/* ============================================================
+   SELECTOR DE CANTIDAD
+   ============================================================ */
+
+.cantidad {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--gris-500);
+  border-radius: var(--r-tarjeta);
+  overflow: hidden;
+  background: var(--papel);
+}
+.cantidad__boton {
+  width: 44px; height: 44px;
+  display: grid; place-items: center;
+  background: none; border: 0; cursor: pointer;
+  color: var(--tinta);
+  transition: background-color var(--v-rapido) var(--curva);
+}
+.cantidad__boton:hover:not(:disabled) { background: var(--gris-050); }
+.cantidad__boton:disabled { color: var(--gris-500); cursor: not-allowed; }
+.cantidad__valor {
+  width: 48px; height: 44px;
+  border: 0; border-inline: 1px solid var(--gris-200);
+  text-align: center;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  background: none;
+  -moz-appearance: textfield;
+}
+.cantidad__valor::-webkit-outer-spin-button,
+.cantidad__valor::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.cantidad__valor:focus {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--verde);
+  border-radius: 2px;
+}
+
+/* ============================================================
+   CHIP DE FILTRO
+   ============================================================ */
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--e-2);
+  min-height: 36px;
+  padding: 0 var(--e-3);
+  border: 1px solid var(--gris-500);
+  border-radius: var(--r-tarjeta);
+  background: var(--papel);
+  color: var(--gris-800);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--v-rapido) var(--curva);
+}
+.chip:hover { border-color: var(--tinta); color: var(--tinta); }
+
+.chip[aria-pressed='true'],
+.chip--activo {
+  background: var(--tinta);
+  border-color: var(--tinta);
+  color: var(--blanco);
+}
+.chip--activo:hover { background: var(--gris-800); color: var(--blanco); }
+
+.chip__quitar {
+  display: grid; place-items: center;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .22);
+}
+.chip--limpiar { border-style: dashed; color: var(--naranja-texto); border-color: var(--naranja-accion); }
+.chip--limpiar:hover { background: var(--oferta-wash); color: var(--naranja-accion-activo); }
+
+/* ============================================================
+   BARRA DE PROGRESO DE ENVÍO GRATIS
+   La táctica de mayor impacto sobre el ticket promedio (brief §3.1).
+   ============================================================ */
+
+.envio-gratis { display: flex; flex-direction: column; gap: var(--e-2); }
+
+.envio-gratis__texto {
+  display: flex;
+  align-items: center;
+  gap: var(--e-2);
+  font-size: var(--t-cuotas);
+  font-weight: 500;
+  color: var(--gris-800);
+}
+.envio-gratis__texto b { color: var(--tinta); font-weight: 700; font-variant-numeric: tabular-nums; }
+.envio-gratis[data-logrado='true'] .envio-gratis__texto { color: var(--verde); font-weight: 600; }
+
+.envio-gratis__via {
+  position: relative;
+  height: 8px;
+  overflow: visible;
+  border-radius: 999px;
+  background: var(--gris-200);
+}
+.envio-gratis__relleno {
+  height: 100%;
+  width: var(--progreso, 0%);
+  background: var(--verde);
+  border-radius: 999px 0 0 999px;
+  transition: width var(--v-lento) var(--curva);
+}
+/* La cabeza de avance es un trazo vertical que sobresale de la vía:
+   el mismo gesto del logo, marcando cuánto falta para el envío gratis. */
+.envio-gratis__relleno::after {
+  content: '';
+  position: absolute;
+  top: -4px; bottom: -4px;
+  left: calc(var(--progreso, 0%) - 3px);
+  width: 6px;
+  background: var(--verde);
+  border-radius: 999px;
+  transition: left var(--v-lento) var(--curva);
+}
+.envio-gratis[data-logrado='true'] .envio-gratis__relleno { border-radius: 999px; }
+
+/* ============================================================
+   BANNER DE OFERTA · corte diagonal en el ángulo del acento
+   ============================================================ */
+
+.banner-oferta {
+  --alto: 132px;
+
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: var(--alto);
+  border-radius: var(--r-tarjeta);
+  overflow: hidden;
+  background: var(--oferta-wash);
+  isolation: isolate;
+}
+
+
+.banner-oferta__bloque {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: min(52%, 420px);
+  padding: var(--e-5) var(--e-6);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--e-2);
+  background: var(--tinta);
+  color: var(--blanco);
+}
+
+.banner-oferta__contenido {
+  margin-left: min(52%, 420px);
+  padding: var(--e-5) var(--e-6);
+}
+
+/* Barrido de entrada: una sola vez al entrar en viewport (brief §7). */
+.banner-oferta__barrido {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 26%;
+  background: linear-gradient(90deg, transparent, rgba(255, 106, 61, .35), transparent);
+  transform: translateX(-140%);
+  pointer-events: none;
+  z-index: 2;
+}
+.banner-oferta.esta-visible .banner-oferta__barrido {
+  animation: barrido var(--v-lento) var(--curva) 1 forwards;
+}
+@keyframes barrido {
+  from { transform: translateX(-140%); }
+  to   { transform: translateX(520%); }
+}
+
+@media (max-width: 640px) {
+  .banner-oferta { flex-direction: column; --alto: auto; }
+  .banner-oferta__bloque {
+    position: static;
+    width: 100%;
+    padding-right: var(--e-6);
+  }
+  .banner-oferta__contenido { margin-left: 0; }
+}
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+
+.toast {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--e-3);
+  max-width: 380px;
+  padding: var(--e-4);
+  border-radius: var(--r-modal);
+  background: var(--tinta);
+  color: var(--blanco);
+  box-shadow: var(--sombra-2);
+  font-size: 0.9375rem;
+}
+.toast__icono { flex: none; width: 20px; height: 20px; margin-top: 1px; }
+.toast__cuerpo { flex: 1; display: flex; flex-direction: column; gap: var(--e-1); }
+.toast__titulo { font-weight: 600; }
+.toast__detalle { color: var(--gris-200); font-size: var(--t-meta); }
+.toast__accion {
+  align-self: flex-start;
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--naranja-marca); /* sobre tinta da 6,64:1 */
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+.toast--exito .toast__icono { color: #5FD3A0; }
+.toast--error .toast__icono { color: #FF9187; }
+
+/* ============================================================
+   SKELETON · nunca pantalla en blanco (brief §7)
+   ============================================================ */
+
+.skeleton {
+  background: linear-gradient(90deg, var(--gris-050) 25%, var(--gris-200) 37%, var(--gris-050) 63%);
+  background-size: 400% 100%;
+  animation: brillo 1.4s ease-in-out infinite;
+  border-radius: var(--r-tarjeta);
+}
+@keyframes brillo { from { background-position: 100% 50%; } to { background-position: 0 50%; } }
+
+.skeleton--texto { height: 12px; border-radius: 3px; }
+.skeleton--titulo { height: 18px; border-radius: 3px; width: 70%; }
+.skeleton--imagen { aspect-ratio: 4 / 5; width: 100%; }
+.skeleton--boton { height: 44px; width: 140px; }
+
+.skeleton-tarjeta { display: flex; flex-direction: column; gap: var(--e-3); }
+
+/* ============================================================
+   ESTADO VACÍO · con salida, nunca un callejón sin salida
+   ============================================================ */
+
+.vacio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--e-4);
+  padding: var(--e-12) var(--e-6);
+  border: 1px dashed var(--gris-200);
+  border-radius: var(--r-modal);
+  background: var(--gris-050);
+}
+.vacio__icono { color: var(--gris-500); }
+.vacio__titulo { font-size: var(--t-seccion); font-weight: 600; }
+.vacio__texto { color: var(--gris-800); max-width: 46ch; }
+.vacio__acciones { display: flex; flex-wrap: wrap; gap: var(--e-3); justify-content: center; }
+
+/* ============================================================
+   TARJETA · base compartida
+   ============================================================ */
+
+/* Sin overflow: hidden. La tarjeta contiene un botón primario, y su
+   retroiluminación tiene que poder salirse del borde. El recorte de la
+   foto al radio se resuelve en el contenedor de la imagen, no acá. */
+.tarjeta {
+  background: var(--papel);
+  border: 1px solid var(--gris-200);
+  border-radius: var(--r-tarjeta);
+}
+/* Contenedor de imagen: acá sí se recorta. */
+.tarjeta__medio {
+  overflow: hidden;
+  border-radius: calc(var(--r-tarjeta) - 1px) calc(var(--r-tarjeta) - 1px) 0 0;
+}
+.tarjeta--elevada { box-shadow: var(--sombra-1); border-color: transparent; }
+.tarjeta--flotante { box-shadow: var(--sombra-2); border-color: transparent; }
+
+/* ============================================================
+   TARJETA DE PRODUCTO · 3 variantes
+   ============================================================ */
+
+.ficha-prod {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--papel);
+  border: 1px solid var(--gris-200);
+  border-radius: var(--r-tarjeta);
+  /* Sin overflow: hidden. El botón de adentro tiene resplandor y
+     tiene que poder salirse del borde. El recorte de la foto vive
+     en .ficha-prod__medio. */
+  transition: border-color var(--v-medio) var(--curva), box-shadow var(--v-medio) var(--curva);
+}
+
+@media (hover: hover) {
+  .ficha-prod:hover {
+    border-color: transparent;
+    box-shadow: var(--sombra-1);
+  }
+  .ficha-prod:hover .ficha-prod__foto { transform: scale(1.04); }
+}
+
+/* Toda la tarjeta es zona de clic, pero el enlace real es el nombre:
+   así el lector de pantalla anuncia un solo destino y no tres. */
+.ficha-prod__nombre a::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+/* ---- Foto ---- */
+.ficha-prod__medio {
+  position: relative;
+  overflow: hidden;
+  border-radius: calc(var(--r-tarjeta) - 1px) calc(var(--r-tarjeta) - 1px) 0 0;
+  background: var(--gris-050);
+}
+.ficha-prod__enlace-foto { display: block; }
+.ficha-prod__foto {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  transition: transform var(--v-lento) var(--curva);
+}
+
+.ficha-prod__marcas {
+  position: absolute;
+  inset: var(--e-3) var(--e-3) auto var(--e-3);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--e-2);
+  pointer-events: none;
+}
+
+/* Ranking numerado: la posición convierte mejor que la grilla plana. */
+.ficha-prod__puesto {
+  position: absolute;
+  left: 0;
+  bottom: var(--e-3);
+  min-width: 38px;
+  padding: 2px var(--e-2) 2px var(--e-3);
+  background: var(--tinta);
+  color: var(--blanco);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  line-height: 1.4;
+  border-radius: 0 var(--r-badge) var(--r-badge) 0;
+}
+
+/* ---- Cuerpo ---- */
+.ficha-prod__cuerpo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e-2);
+  padding: var(--e-3);
+  flex: 1;
+}
+
+.ficha-prod__nombre {
+  margin: 0;
+  /* Dos líneas y corta. Un nombre de 90 caracteres no puede empujar
+     el precio fuera de la línea de base de la grilla. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 2.7em;
+}
+.ficha-prod__nombre a { color: var(--tinta); text-decoration: none; }
+.ficha-prod__nombre a:hover { text-decoration: underline; text-underline-offset: 2px; }
+
+.ficha-prod__precio { margin-top: auto; padding-top: var(--e-1); }
+
+.ficha-prod__envio {
+  display: flex;
+  align-items: center;
+  gap: var(--e-1);
+  font-size: var(--t-meta);
+  color: var(--gris-texto);
+}
+.ficha-prod__envio.es-gratis { color: var(--verde); font-weight: 600; }
+
+.ficha-prod__accion { margin-top: var(--e-2); position: relative; z-index: 2; }
+
+/* ---- Agotado ---- */
+.ficha-prod--agotado .ficha-prod__foto { filter: grayscale(1); opacity: .55; }
+.ficha-prod--agotado .ficha-prod__precio { opacity: .7; }
+.ficha-prod--agotado:hover .ficha-prod__foto { transform: none; }
+
+/* ---- Variante destacada ---- */
+@media (min-width: 768px) {
+  .ficha-prod--destacada { flex-direction: row; }
+  .ficha-prod--destacada .ficha-prod__medio {
+    flex: 0 0 46%;
+    border-radius: calc(var(--r-tarjeta) - 1px) 0 0 calc(var(--r-tarjeta) - 1px);
+  }
+  .ficha-prod--destacada .ficha-prod__foto { aspect-ratio: 1 / 1; height: 100%; }
+  .ficha-prod--destacada .ficha-prod__cuerpo {
+    padding: var(--e-6);
+    gap: var(--e-3);
+    justify-content: center;
+  }
+  .ficha-prod--destacada .ficha-prod__nombre {
+    font-size: var(--t-seccion);
+    font-weight: 600;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    min-height: 0;
+  }
+  .ficha-prod--destacada .ficha-prod__accion { max-width: 260px; }
+}
+
+/* ---- Variante carrito ---- */
+.ficha-prod--carrito {
+  flex-direction: row;
+  gap: var(--e-3);
+  border: 0;
+  border-bottom: 1px solid var(--gris-200);
+  border-radius: 0;
+  padding-bottom: var(--e-4);
+}
+.ficha-prod--carrito:hover { box-shadow: none; }
+.ficha-prod--carrito .ficha-prod__medio {
+  flex: 0 0 76px;
+  border-radius: var(--r-tarjeta);
+}
+.ficha-prod--carrito .ficha-prod__foto { aspect-ratio: 1 / 1; }
+.ficha-prod--carrito .ficha-prod__cuerpo { padding: 0; gap: var(--e-1); }
+.ficha-prod--carrito .ficha-prod__nombre { font-size: 0.875rem; min-height: 0; }
+.ficha-prod--carrito .ficha-prod__rating,
+.ficha-prod--carrito .ficha-prod__envio,
+.ficha-prod--carrito .ficha-prod__accion { display: none; }
+
+
+/* ============================================================
+   AVISOS · pila de toasts
+   Abajo a la izquierda para no chocar con la barra fija de compra
+   en móvil, que vive abajo a la derecha.
+   ============================================================ */
+.avisos {
+  position: fixed;
+  left: var(--e-4);
+  bottom: var(--e-4);
+  bottom: max(var(--e-4), env(safe-area-inset-bottom));
+  z-index: 80;
+  display: flex;
+  flex-direction: column;
+  gap: var(--e-2);
+  pointer-events: none;
+}
+.avisos .toast {
+  pointer-events: auto;
+  animation: aviso-entra var(--v-medio) var(--curva);
+  transition: opacity var(--v-rapido) var(--curva);
+}
+@keyframes aviso-entra {
+  from { transform: translateY(12px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+@media (max-width: 480px) {
+  .avisos { left: var(--e-3); right: var(--e-3); }
+  .avisos .toast { max-width: none; }
+}

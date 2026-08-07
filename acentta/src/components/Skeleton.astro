@@ -1,0 +1,18 @@
+---
+interface Props {
+  variante?: 'texto' | 'titulo' | 'imagen' | 'boton' | 'tarjeta';
+  ancho?: string;
+  class?: string;
+}
+const { variante = 'texto', ancho, class: clase } = Astro.props;
+---
+{variante === 'tarjeta' ? (
+  <div class={['skeleton-tarjeta', clase].filter(Boolean).join(' ')} aria-hidden="true">
+    <div class="skeleton skeleton--imagen"></div>
+    <div class="skeleton skeleton--texto" style="width:90%"></div>
+    <div class="skeleton skeleton--texto" style="width:55%"></div>
+    <div class="skeleton skeleton--titulo" style="width:40%"></div>
+  </div>
+) : (
+  <div class={['skeleton', `skeleton--${variante}`, clase].filter(Boolean).join(' ')} style={ancho ? `width:${ancho}` : undefined} aria-hidden="true"></div>
+)}

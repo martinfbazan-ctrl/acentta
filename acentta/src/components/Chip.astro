@@ -1,0 +1,23 @@
+---
+interface Props {
+  activo?: boolean;
+  /** Muestra la X para quitar el filtro. */
+  quitable?: boolean;
+  limpiar?: boolean;
+  href?: string;
+  class?: string;
+  [key: string]: unknown;
+}
+const { activo = false, quitable = false, limpiar = false, href, class: clase, ...resto } = Astro.props;
+const clases = ['chip', activo && 'chip--activo', limpiar && 'chip--limpiar', clase].filter(Boolean).join(' ');
+const Etiqueta = href ? 'a' : 'button';
+---
+
+<Etiqueta class={clases} href={href} type={href ? undefined : 'button'} aria-pressed={href ? undefined : activo} {...resto}>
+  <slot />
+  {quitable && (
+    <span class="chip__quitar" aria-hidden="true">
+      <svg width="8" height="8" viewBox="0 0 8 8"><path d="M1 1l6 6M7 1L1 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+    </span>
+  )}
+</Etiqueta>

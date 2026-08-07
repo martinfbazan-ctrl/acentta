@@ -1,0 +1,248 @@
+---
+/**
+ * Hero · carrusel de campañas a ancho completo.
+ * ---------------------------------------------------------------
+ * Tres campañas, no diez. Un carrusel largo es una forma elegante de
+ * no decidir qué es lo más importante: la mayoría de la gente ve la
+ * primera lámina y sigue bajando, así que las láminas 4 a 10 son
+ * trabajo que nadie mira.
+ *
+ * Reglas que se respetan acá y que casi ningún carrusel respeta:
+ * · Se detiene al pasar el mouse y al recibir foco de teclado.
+ * · Se puede recorrer con flechas y con Tab, y los puntos son
+ *   botones de verdad con estado anunciado.
+ * · Con prefers-reduced-motion no gira solo: queda en la primera y
+ *   se avanza a mano.
+ * · La primera lámina carga con prioridad y las otras dos diferidas.
+ *   Es el LCP de la home: si el hero tarda, tarda el sitio.
+ */
+import Boton from '@componentes/Boton.astro';
+import { foto, srcset } from '@lib/imagenes';
+import { precio, rangoDeEntrega } from '@lib/formato';
+import { porSlug, enOferta, ahorroEnPorcentaje } from '@lib/catalogo';
+
+const arco = porSlug('lampara-de-pie-arco')!;
+const alfombra = porSlug('alfombra-bereber-trenzada-160x230')!;
+const maxDescuento = ahorroEnPorcentaje(enOferta(1)[0]!);
+
+const laminas = [
+  {
+    etiqueta: 'Iluminación',
+    titulo: 'Encendé el ambiente,<br />no la habitación',
+    bajada: `Lámparas que arman un rincón en lugar de alumbrar un cuarto entero. Si te llevás la de arco, llega ${rangoDeEntrega(arco.plazoEnvio.min, arco.plazoEnvio.max)}.`,
+    principal: { texto: 'Ver iluminación', href: '/categoria/iluminacion' },
+    secundario: { texto: 'Ver la lámpara de arco', href: `/producto/${arco.slug}` },
+    imagen: arco.imagenes[1]!,
+  },
+  {
+    etiqueta: 'Alfombras y textil',
+    titulo: 'Lo que se pisa<br />también decide',
+    bajada: `Una alfombra delimita un ambiente mejor que una pared, y se puede mover. Lana, kilim y yute desde ${precio(41200)}.`,
+    principal: { texto: 'Ver alfombras', href: '/categoria/alfombras' },
+    secundario: { texto: 'Ver textil', href: '/categoria/textil' },
+    imagen: alfombra.imagenes[1]!,
+  },
+  {
+    etiqueta: 'Ofertas vigentes',
+    titulo: `Hasta ${maxDescuento} % menos,<br />sin letra chica`,
+    bajada: 'El precio tachado es el precio al que se vendió antes, no uno inflado para que el descuento parezca más grande. Y el envío se calcula antes de pagar.',
+    principal: { texto: 'Ver ofertas', href: '/ofertas' },
+    secundario: { texto: 'Cómo funciona el envío', href: '/envios' },
+    imagen: porSlug('puff-tejido-nube')!.imagenes[2]!,
+  },
+];
+---
+
+<section
+  class="hero"
+  data-carrusel
+  aria-roledescription="carrusel"
+  aria-label="Campañas destacadas"
+>
+  <div class="hero__pista" data-hero-pista>
+    {laminas.map((l, i) => (
+      <article
+        class="hero__lamina"
+        data-lamina={i}
+        role="group"
+        aria-roledescription="lámina"
+        aria-label={`${i + 1} de ${laminas.length}: ${l.etiqueta}`}
+        aria-hidden={i !== 0 ? 'true' : undefined}
+      >
+        <img
+          class="hero__foto"
+          src={foto(l.imagen.src, 1800)}
+          srcset={srcset(l.imagen.src)}
+          sizes="100vw"
+          alt={l.imagen.alt}
+          width="1800"
+          height="1000"
+          loading={i === 0 ? 'eager' : 'lazy'}
+          fetchpriority={i === 0 ? 'high' : 'auto'}
+          decoding="async"
+        />
+
+        <div class="contenedor hero__caja">
+          <div class="hero__texto sobre-oscuro">
+            <p class="hero__etiqueta">{l.etiqueta}</p>
+            {i === 0
+              ? <h1 class="t-titular" set:html={l.titulo} />
+              : <p class="t-titular" set:html={l.titulo} />}
+            <p class="hero__bajada">{l.bajada}</p>
+            <div class="hero__acciones">
+              <Boton href={l.principal.href} tamano="grande" tabindex={i === 0 ? undefined : -1}>
+                {l.principal.texto}
+              </Boton>
+              <Boton href={l.secundario.href} jerarquia="secundario" tamano="grande" tabindex={i === 0 ? undefined : -1}>
+                {l.secundario.texto}
+              </Boton>
+            </div>
+          </div>
+        </div>
+      </article>
+    ))}
+  </div>
+
+  <!-- Controles -->
+  <button class="hero__flecha hero__flecha--antes" type="button" data-hero-antes aria-label="Campaña anterior">
+    <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M15 5l-7 7 7 7" stroke-linecap="round" stroke-linejoin="round" />
+    </svg>
+  </button>
+  <button class="hero__flecha hero__flecha--despues" type="button" data-hero-despues aria-label="Campaña siguiente">
+    <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M9 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" />
+    </svg>
+  </button>
+
+  <div class="contenedor hero__pie">
+    <div class="hero__puntos" role="tablist" aria-label="Elegir campaña">
+      {laminas.map((l, i) => (
+        <button
+          class="hero__punto"
+          type="button"
+          role="tab"
+          data-hero-punto={i}
+          aria-selected={i === 0 ? 'true' : 'false'}
+          aria-label={`Ir a la campaña ${i + 1}: ${l.etiqueta}`}
+        >
+          <span class="hero__punto-barra"></span>
+        </button>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  /* Ancho completo, saliéndose del contenedor sin romper el scroll
+     horizontal (100vw incluye la barra de scroll; el cálculo con
+     margin negativo evita el desborde). */
+  .hero {
+    position: relative;
+    width: 100%;
+    margin-inline: 0;
+    overflow: hidden;
+    background: var(--tinta);
+    isolation: isolate;
+  }
+
+  .hero__pista {
+    display: flex;
+    transition: transform var(--v-lento) var(--curva);
+    will-change: transform;
+  }
+
+  .hero__lamina {
+    position: relative;
+    flex: 0 0 100%;
+    min-height: clamp(420px, 62vh, 620px);
+    display: flex;
+    align-items: flex-end;
+    isolation: isolate;
+  }
+
+  .hero__foto {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: -2;
+  }
+  .hero__lamina::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(
+      to top,
+      rgba(28, 24, 20, .92) 0%,
+      rgba(28, 24, 20, .74) 42%,
+      rgba(28, 24, 20, .22) 100%
+    );
+  }
+
+  .hero__caja { width: 100%; padding-block: var(--e-12) var(--e-16); }
+  .hero__texto { max-width: 60ch; display: flex; flex-direction: column; gap: var(--e-3); }
+  .hero__texto :global(.t-titular) { color: var(--blanco); }
+  .hero__etiqueta {
+    font-size: var(--t-meta);
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--naranja-texto);
+  }
+  .hero__bajada { color: var(--gris-200); font-size: 1rem; line-height: 1.6; max-width: 52ch; }
+  .hero__acciones { display: flex; flex-wrap: wrap; gap: var(--e-3); margin-top: var(--e-3); }
+
+  /* ---- Flechas ---- */
+  .hero__flecha {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 3;
+    width: 48px; height: 48px;
+    display: none;
+    place-items: center;
+    background: rgba(255, 255, 255, .14);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, .28);
+    border-radius: 50%;
+    color: var(--blanco);
+    cursor: pointer;
+    transition: background-color var(--v-rapido) var(--curva);
+  }
+  .hero__flecha:hover { background: rgba(255, 255, 255, .26); }
+  .hero__flecha--antes { left: var(--e-4); }
+  .hero__flecha--despues { right: var(--e-4); }
+  @media (min-width: 900px) { .hero__flecha { display: grid; } }
+
+  /* ---- Puntos ---- */
+  .hero__pie {
+    position: absolute;
+    inset: auto 0 var(--e-6) 0;
+    z-index: 3;
+    display: flex;
+    justify-content: flex-start;
+    pointer-events: none;
+  }
+  .hero__puntos { display: flex; gap: var(--e-2); pointer-events: auto; }
+  .hero__punto {
+    width: 44px; height: 24px;
+    display: grid; place-items: center;
+    background: none; border: 0; padding: 0; cursor: pointer;
+  }
+  .hero__punto-barra {
+    display: block;
+    width: 100%; height: 3px;
+    background: rgba(255, 255, 255, .35);
+    border-radius: 999px;
+    transition: background-color var(--v-medio) var(--curva);
+  }
+  .hero__punto[aria-selected='true'] .hero__punto-barra { background: var(--naranja-marca); }
+  .hero__punto:focus-visible { outline: 3px solid var(--blanco); outline-offset: 2px; border-radius: 4px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero__pista { transition: none; }
+  }
+</style>

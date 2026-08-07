@@ -1,0 +1,97 @@
+---
+import Documento from '@layouts/Documento.astro';
+---
+
+<Documento
+  titulo="Política de privacidad"
+  bajada="Qué datos se piden, para qué, y por cuánto tiempo. En una página, no en doce."
+  descripcion="Política de privacidad y tratamiento de datos personales de acentta."
+  actualizado="1 de agosto de 2026"
+  indice={[
+    { id: 'proyecto', nombre: 'Aviso importante' },
+    { id: 'datos', nombre: 'Qué datos' },
+    { id: 'uso', nombre: 'Para qué' },
+    { id: 'terceros', nombre: 'Con quién se comparten' },
+    { id: 'navegador', nombre: 'Datos en tu navegador' },
+    { id: 'derechos', nombre: 'Tus derechos' },
+  ]}
+>
+  <div class="destacado">
+    <p>
+      <strong>Este sitio no recoge ningún dato personal.</strong> acentta es un proyecto
+      conceptual de portafolio: los formularios no envían nada a ningún servidor y no hay
+      base de datos detrás. Lo que sigue describe cómo trataría los datos la tienda si
+      estuviera en operación.
+    </p>
+  </div>
+
+  <h2 id="proyecto">Aviso importante</h2>
+  <p>
+    No hay analítica, ni píxeles de seguimiento, ni cookies de terceros. La única
+    información que se guarda vive en tu propio navegador y no sale de tu computadora
+    — ver <a href="#navegador">datos en tu navegador</a>.
+  </p>
+
+  <h2 id="datos">Qué datos se piden</h2>
+  <p>Sólo los necesarios para facturar y entregar un pedido:</p>
+  <ul>
+    <li><strong>Nombre, apellido y DNI</strong> — los exige la factura.</li>
+    <li><strong>Correo electrónico</strong> — para enviar el número de pedido y el seguimiento.</li>
+    <li><strong>Teléfono</strong> — para que el correo pueda coordinar la entrega.</li>
+    <li><strong>Dirección de entrega</strong> — para llevarlo.</li>
+  </ul>
+  <p>
+    No se piden datos que no se usan. No hay campo de fecha de nacimiento, ni de género,
+    ni de "cómo nos conociste".
+  </p>
+
+  <h3>Datos de pago</h3>
+  <p>
+    Los datos de la tarjeta no se guardan ni pasan por nuestros servidores: los procesa
+    directamente la pasarela de pago. Nosotros recibimos únicamente la confirmación de que
+    la operación se aprobó.
+  </p>
+
+  <h2 id="uso">Para qué se usan</h2>
+  <ul>
+    <li>Emitir la factura y despachar el pedido.</li>
+    <li>Informar el estado del envío.</li>
+    <li>Responder consultas y gestionar devoluciones.</li>
+  </ul>
+  <p>
+    <strong>No se usan para publicidad.</strong> Si te suscribís al aviso de bajas de
+    precio, eso es una acción separada y explícita, con baja en un clic desde cualquier
+    correo.
+  </p>
+
+  <h2 id="terceros">Con quién se comparten</h2>
+  <p>Con dos actores, y sólo con lo mínimo que cada uno necesita:</p>
+  <ul>
+    <li><strong>El correo o la empresa de logística</strong>, para poder entregar: nombre, dirección y teléfono.</li>
+    <li><strong>La pasarela de pago</strong>, para procesar la operación.</li>
+  </ul>
+  <p>No se venden ni ceden datos a terceros con fines comerciales. Nunca.</p>
+
+  <h2 id="navegador">Datos en tu navegador</h2>
+  <p>
+    El carrito y el código postal se guardan en el almacenamiento local de tu navegador
+    para que no tengas que armar el pedido de nuevo si cerrás la pestaña. Esa información
+    <strong>no sale de tu computadora</strong> y podés borrarla vaciando el carrito o
+    limpiando los datos del sitio desde tu navegador.
+  </p>
+  <p>No se usan cookies de seguimiento ni herramientas de analítica de terceros.</p>
+
+  <h2 id="derechos">Tus derechos</h2>
+  <p>
+    Según la Ley 25.326 de Protección de Datos Personales, podés solicitar en cualquier
+    momento el acceso, la rectificación, la actualización o la supresión de tus datos
+    escribiendo a <strong>hola@acentta.com.ar</strong>. La respuesta llega dentro de los
+    10 días corridos.
+  </p>
+  <p>
+    La <strong>Agencia de Acceso a la Información Pública</strong>, en su carácter de
+    órgano de control de la Ley 25.326, tiene la atribución de atender las denuncias y
+    reclamos que interpongan quienes resulten afectados en sus derechos por incumplimiento
+    de las normas vigentes en materia de protección de datos personales.
+  </p>
+</Documento>

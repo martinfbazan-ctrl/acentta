@@ -1,0 +1,111 @@
+---
+/**
+ * Calculadora de envío por código postal, en la ficha.
+ * El costo y el plazo se muestran acá y no recién en el checkout.
+ * Es la decisión más incómoda del brief: mostrar un envío caro
+ * espanta visitas. Ocultarlo espanta carritos armados en el último
+ * paso, que sale mucho más caro.
+ */
+import { precio } from '@lib/formato';
+import { UMBRAL_ENVIO_GRATIS } from '@tipos/catalogo';
+
+interface Props {
+  peso: number;
+  precioProducto: number;
+  plazoMin: number;
+  plazoMax: number;
+}
+const { peso, precioProducto, plazoMin, plazoMax } = Astro.props;
+const yaEsGratis = precioProducto >= UMBRAL_ENVIO_GRATIS;
+---
+
+<section
+  class="calc"
+  data-calculadora
+  data-peso={peso}
+  data-plazo-min={plazoMin}
+  data-plazo-max={plazoMax}
+  aria-labelledby="tit-envio"
+>
+  <h2 class="calc__titulo" id="tit-envio">Envío</h2>
+
+  {yaEsGratis ? (
+    <p class="calc__gratis">
+      <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" fill="currentColor">
+        <path d="M6.2 11.4 3.3 8.5l-1.1 1.1 4 4 7.6-7.6-1.1-1.1z" />
+      </svg>
+      Envío gratis a todo el país — este producto supera {precio(UMBRAL_ENVIO_GRATIS)}
+    </p>
+  ) : (
+    <p class="calc__aviso">
+      Sumando {precio(UMBRAL_ENVIO_GRATIS)} en el carrito el envío es gratis.
+      Mientras tanto, calculalo acá.
+    </p>
+  )}
+
+  <form class="calc__forma" data-calc-forma novalidate>
+    <div class="campo calc__campo" data-estado="normal" data-campo-cp>
+      <label class="campo__etiqueta" for="cp">Tu código postal</label>
+      <div class="campo__envoltorio">
+        <input
+          class="campo__control"
+          id="cp"
+          name="cp"
+          type="text"
+          inputmode="numeric"
+          autocomplete="postal-code"
+          maxlength="8"
+          placeholder="1425"
+          aria-describedby="cp-ayuda"
+        />
+      </div>
+      <p class="campo__ayuda" id="cp-ayuda">Cuatro números, o el formato nuevo tipo C1425DKE.</p>
+    </div>
+    <button class="boton boton--secundario" type="submit">
+      <span class="boton__texto">Calcular</span>
+    </button>
+  </form>
+
+  <output class="calc__salida" data-calc-salida hidden></output>
+
+  <p class="calc__plazo">
+    Se despacha en {plazoMin} a {plazoMax} días hábiles. La fecha exacta
+    depende de tu zona y aparece al calcular.
+  </p>
+</section>
+
+<style>
+  .calc {
+    padding: var(--e-5);
+    background: var(--gris-050);
+    border: 1px solid var(--gris-200);
+    border-radius: var(--r-modal);
+  }
+  .calc__titulo { font-size: 1rem; font-weight: 700; margin-bottom: var(--e-3); }
+
+  .calc__gratis {
+    display: flex; align-items: center; gap: var(--e-2);
+    font-size: 0.9375rem; font-weight: 600; color: var(--verde);
+    margin-bottom: var(--e-4);
+  }
+  .calc__aviso { font-size: 0.875rem; color: var(--gris-800); margin-bottom: var(--e-4); line-height: 1.5; }
+
+  .calc__forma { display: flex; gap: var(--e-3); align-items: flex-start; }
+  .calc__campo { flex: 1; }
+  .calc__forma .boton { margin-top: 26px; }
+
+  .calc__salida {
+    display: block;
+    margin-top: var(--e-4);
+    padding: var(--e-4);
+    background: var(--papel);
+    border: 1px solid var(--gris-200);
+    border-radius: var(--r-tarjeta);
+    font-size: 0.9375rem;
+    line-height: 1.55;
+  }
+  .calc__salida b { font-variant-numeric: tabular-nums; }
+  .calc__salida[data-error='true'] { border-color: var(--rojo); color: var(--rojo); }
+
+  .calc__plazo { margin-top: var(--e-3); font-size: var(--t-meta); color: var(--gris-texto); }
+</style>

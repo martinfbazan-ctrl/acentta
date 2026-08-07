@@ -1,0 +1,37 @@
+---
+import Base from '@layouts/Base.astro';
+import Encabezado from '@componentes/Encabezado.astro';
+import Pie from '@componentes/Pie.astro';
+import Listado from '@componentes/Listado.astro';
+import { porCategoria, NOMBRE_CATEGORIA, DESCRIPCION_CATEGORIA } from '@lib/catalogo';
+import type { Categoria } from '@tipos/catalogo';
+
+/* Una plantilla, todas las categorías. Cuando el catálogo pase de 14
+   a 36 productos y sumemos el segundo rubro, esta página no cambia. */
+export function getStaticPaths() {
+  const claves: Categoria[] = ['iluminacion', 'textil', 'alfombras', 'muebles-chicos'];
+  return claves.map((clave) => ({ params: { clave } }));
+}
+
+const { clave } = Astro.params;
+const categoria = clave as Categoria;
+const productos = porCategoria(categoria);
+const nombre = NOMBRE_CATEGORIA[categoria]!;
+const descripcion = DESCRIPCION_CATEGORIA[categoria]!;
+---
+
+<Base titulo={`${nombre} · acentta`} descripcion={descripcion}>
+  <Encabezado slot="encabezado" />
+  <Listado
+    titulo={nombre}
+    descripcion={descripcion}
+    productos={productos}
+    migas={[{ nombre: 'Inicio', href: '/' }, { nombre: nombre }]}
+    sinCategoria
+  />
+  <Pie slot="pie" />
+</Base>
+
+<script>
+  import '../../scripts/listado';
+</script>

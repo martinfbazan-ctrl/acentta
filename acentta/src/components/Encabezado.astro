@@ -1,0 +1,340 @@
+---
+/**
+ * Encabezado del sitio.
+ * El buscador vive en la barra fija porque es el componente de mayor
+ * intención de compra del sitio: quien busca ya sabe qué quiere.
+ * La franja de envío gratis va arriba de todo — es la palanca de
+ * ticket promedio y tiene que verse antes de elegir el primer producto.
+ */
+import Logo from '@componentes/Logo.astro';
+import Marquesina from '@componentes/Marquesina.astro';
+
+interface Props {
+  /** Cantidad de ítems en el carrito. */
+  items?: number;
+}
+const { items = 0 } = Astro.props;
+
+const categorias = [
+  { nombre: 'Iluminación', href: '/categoria/iluminacion' },
+  { nombre: 'Textil', href: '/categoria/textil' },
+  { nombre: 'Alfombras', href: '/categoria/alfombras' },
+  { nombre: 'Muebles chicos', href: '/categoria/muebles-chicos' },
+  { nombre: 'Ofertas', href: '/ofertas', destacado: true },
+];
+---
+
+<Marquesina />
+
+<header class="cabecera">
+  <div class="contenedor cabecera__fila">
+    <a class="cabecera__logo" href="/" aria-label="acentta, ir al inicio">
+      <Logo alto={44} class="cabecera__wordmark" />
+    </a>
+
+    <form class="buscador" role="search" action="/buscar">
+      <label class="vo" for="q">Buscar productos</label>
+      <svg class="buscador__lupa" width="17" height="17" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="8.5" cy="8.5" r="6" />
+        <path d="M13 13l4.5 4.5" stroke-linecap="round" />
+      </svg>
+      <input
+        class="buscador__campo"
+        id="q"
+        name="q"
+        type="search"
+        placeholder="Buscar lámparas, alfombras, almohadones…"
+        autocomplete="off"
+      />
+    </form>
+
+    <div class="cabecera__acciones">
+      <a class="cabecera__icono cabecera__icono--solo-movil" href="/buscar" aria-label="Buscar">
+        <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="8.5" cy="8.5" r="6" /><path d="M13 13l4.5 4.5" stroke-linecap="round" />
+        </svg>
+      </a>
+      <a class="cabecera__icono cabecera__bolsa" href="/carrito" data-carrito-enlace aria-label={`Carrito, ${items} ${items === 1 ? 'producto' : 'productos'}`}>
+        <span class="bolsa-marco">
+          <svg class="bolsa" width="34" height="34" viewBox="0 0 32 32" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9">
+            <path class="bolsa__asa" d="M11 11V8.5a5 5 0 0 1 10 0V11" stroke-linecap="round" />
+            <path class="bolsa__cuerpo" d="M5.6 11h20.8l-1.3 14.2a2.6 2.6 0 0 1-2.6 2.4H9.5a2.6 2.6 0 0 1-2.6-2.4z" stroke-linejoin="round" />
+          </svg>
+          <span class="bolsa__cuenta tabular" data-bolsa-cuenta>{items > 0 ? items : ''}</span>
+        </span>
+      </a>
+    </div>
+  </div>
+
+  <nav class="cabecera__nav" aria-label="Categorías">
+    <ul class="contenedor cabecera__lista">
+      {categorias.map((c) => (
+        <li>
+          <a class={`cabecera__vinculo ${c.destacado ? 'es-destacado' : ''}`} href={c.href}>
+            {c.nombre}
+          </a>
+        </li>
+      ))}
+    </ul>
+  </nav>
+</header>
+
+<style>
+  .franja {
+    background: var(--tinta);
+    color: var(--blanco);
+    font-size: var(--t-meta);
+  }
+  .franja__texto {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--e-2);
+    min-height: 34px;
+    text-align: center;
+    font-weight: 500;
+  }
+  .franja svg { color: #5FD3A0; flex: none; }
+
+  /* Vidrio satinado.
+     ------------------------------------------------------------
+     Tres cosas hicieron falta para que se viera, y sólo una era de
+     diseño:
+
+     1. `body { overflow-x: hidden }` convertía al body en contenedor
+        de scroll y anulaba el backdrop-filter por completo. Arreglado
+        en base.css con `html { overflow-x: clip }`.
+
+     2. El minificador se comía la propiedad sin prefijo y dejaba sólo
+        `-webkit-backdrop-filter`. Chrome la acepta como alias, pero
+        Firefox no: ahí no había desenfoque de ningún tipo. Escribir
+        primero la versión con prefijo y después la estándar hace que
+        sobrevivan las dos.
+
+     3. Un panel translúcido sobre un fondo plano no puede verse
+        satinado: desenfocar un color liso devuelve el mismo color
+        liso. El efecto sólo aparecía al pasar una foto por debajo.
+        Por eso el panel suma material propio: un degradado vertical
+        y una capa de grano finísimo. Con eso se lee como vidrio
+        también antes de hacer scroll, que es cuando más se mira. */
+  .cabecera {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    background:
+      linear-gradient(
+        to bottom,
+        rgba(255, 253, 250, .82),
+        rgba(249, 245, 239, .72)
+      );
+    backdrop-filter: blur(20px) saturate(190%);
+    border-bottom: 1px solid rgba(227, 211, 188, .9);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, .85) inset;
+  }
+
+  /* La versión con prefijo va en su propia regla. Dentro del mismo
+     bloque el minificador la considera duplicada y elimina una de las
+     dos — se quedaba con la de prefijo y descartaba la estándar, que
+     es la única que entiende Firefox. Separadas sobreviven ambas. */
+  @supports (-webkit-backdrop-filter: blur(1px)) {
+    .cabecera { -webkit-backdrop-filter: blur(20px) saturate(190%); }
+  }
+
+  /* El grano: es lo que separa "translúcido" de "esmerilado". Un SVG
+     de ruido de 40 px que se repite, a opacidad muy baja. Pesa menos
+     de 300 bytes y no necesita ninguna petición. */
+  .cabecera::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: .5;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Cfilter id='r'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='40' height='40' filter='url(%23r)' opacity='.28'/%3E%3C/svg%3E");
+  }
+  .cabecera > * { position: relative; z-index: 1; }
+
+  /* Sin backdrop-filter no hay satinado posible: se vuelve opaco.
+     Mejor sólido que ilegible. */
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .cabecera { background: rgb(249, 245, 239); }
+    .cabecera::after { display: none; }
+  }
+
+  .cabecera__fila {
+    display: flex;
+    align-items: center;
+    gap: var(--e-4);
+    min-height: 76px;
+  }
+  @media (min-width: 768px) { .cabecera__fila { min-height: 88px; } }
+  .cabecera__logo { display: inline-flex; flex: none; }
+
+  /* La pastilla del logo y la barra de búsqueda salen del mismo token.
+     No hay dos números que mantener sincronizados: hay uno. */
+  :global(.cabecera__wordmark) { --logo-alto: var(--alto-control); }
+
+  /* ---- Buscador ---- */
+  .buscador {
+    position: relative;
+    flex: 1;
+    max-width: 520px;
+    margin-inline: auto;
+    display: none;
+  }
+  @media (min-width: 768px) { .buscador { display: block; } }
+
+  .buscador__lupa {
+    position: absolute;
+    left: var(--e-3);
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--gris-texto);
+    pointer-events: none;
+  }
+  .buscador__campo {
+    width: 100%;
+    height: var(--alto-control);
+    padding: 0 var(--e-4) 0 var(--e-10);
+    border: 1px solid var(--gris-500);
+    border-radius: var(--r-tarjeta);
+    background: rgba(255, 255, 255, .82);
+    font-size: 0.9375rem;
+    transition: border-color var(--v-rapido) var(--curva), background-color var(--v-rapido) var(--curva);
+  }
+  .buscador__campo::placeholder { color: var(--gris-texto); }
+  .buscador__campo:hover { border-color: var(--gris-800); }
+  /* Mismo criterio que los campos del formulario: el foco de texto es
+     verde y suave, no el anillo negro de los botones. */
+  .buscador__campo:focus {
+    outline: none;
+    background: var(--papel);
+    border-color: var(--verde);
+    box-shadow: 0 0 0 1px var(--verde), 0 0 0 4px rgba(15, 123, 79, .16);
+  }
+
+  /* ---- Acciones ---- */
+  .cabecera__acciones { display: flex; align-items: center; gap: var(--e-1); margin-left: auto; }
+  .cabecera__icono {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    color: var(--tinta);
+    border-radius: var(--r-tarjeta);
+    transition: background-color var(--v-rapido) var(--curva);
+  }
+  .cabecera__icono:hover { background: var(--gris-050); }
+  .cabecera__icono--solo-movil { display: grid; }
+  @media (min-width: 768px) { .cabecera__icono--solo-movil { display: none; } }
+
+  /* ============================================================
+     BOLSA DEL CARRITO
+     ------------------------------------------------------------
+     [DESVÍO] Se pidió el naranja del wordmark, #FF6A3D. A escala de
+     ícono no se puede: sobre el fondo del encabezado da 2,62:1 y el
+     criterio 1.4.11 exige 3:1 para un elemento de interfaz. Un trazo
+     de 2 px con ese contraste desaparece para mucha gente.
+     Se usa #B8431C —el naranja de acción, misma familia, 5,01:1—,
+     que es en lo que se convierte el naranja de marca cuando tiene
+     que cumplir una función y no sólo decorar. El wordmark conserva
+     el original porque ahí es texto grande y no un control.
+
+     El contador va DENTRO de la bolsa, no colgado en una esquina.
+     Entra hasta 99 sin desbordar; de ahí en más muestra 99+.
+     ============================================================ */
+  .cabecera__bolsa { width: 52px; height: 52px; color: var(--naranja-accion); }
+  .cabecera__bolsa:hover { background: rgba(184, 67, 28, .09); }
+
+  .bolsa-marco { position: relative; display: grid; place-items: center; }
+  .bolsa { overflow: visible; display: block; }
+
+  .bolsa__asa {
+    transform-origin: 16px 11px;
+    transition: transform var(--v-medio) var(--curva);
+  }
+
+  /* El número se apoya en el cuerpo de la bolsa, no en su centro
+     geométrico: el asa ocupa el tercio de arriba. */
+  .bolsa__cuenta {
+    position: absolute;
+    top: 58%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--naranja-accion);
+    letter-spacing: -0.03em;
+    pointer-events: none;
+    min-width: 1ch;
+    text-align: center;
+  }
+  /* Con dos dígitos el número se achica en vez de estirar la bolsa. */
+  .bolsa__cuenta[data-largo='2'] { font-size: 11px; letter-spacing: -0.06em; }
+  .bolsa__cuenta[data-largo='3'] { font-size: 9px; letter-spacing: -0.07em; }
+
+  /* Con contenido, la bolsa se rellena: el estado se lee de un
+     vistazo aunque no se llegue a leer el número. */
+  .cabecera__bolsa[data-con-items] .bolsa__cuerpo {
+    fill: var(--naranja-accion);
+  }
+  .cabecera__bolsa[data-con-items] .bolsa__cuenta { color: var(--blanco); }
+
+  @media (hover: hover) {
+    .cabecera__bolsa:hover .bolsa__asa { transform: translateY(-2px) scaleY(1.14); }
+  }
+
+  /* Llamada a pagar lo guardado: un balanceo de medio segundo cada
+     siete, no un movimiento permanente. Algo que se mueve todo el
+     tiempo deja de mirarse a los diez segundos; algo que se mueve
+     cada tanto se vuelve a mirar cada vez. */
+  @keyframes bolsa-llama {
+    0%, 82%, 100% { transform: rotate(0deg); }
+    86%  { transform: rotate(-9deg); }
+    90%  { transform: rotate(7deg); }
+    94%  { transform: rotate(-4deg); }
+    97%  { transform: rotate(1.5deg); }
+  }
+  .cabecera__bolsa[data-con-items] .bolsa-marco {
+    animation: bolsa-llama 7s var(--curva) infinite;
+    transform-origin: 16px 4px; /* cuelga del asa, como una bolsa real */
+  }
+  .cabecera__bolsa:hover .bolsa-marco,
+  .cabecera__bolsa:focus-visible .bolsa-marco { animation-play-state: paused; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cabecera__bolsa[data-con-items] .bolsa-marco { animation: none; }
+    .cabecera__bolsa:hover .bolsa__asa { transform: none; }
+  }
+
+  /* ---- Navegación ---- */
+  .cabecera__nav { border-top: 1px solid rgba(227, 211, 188, .8); }
+  .cabecera__lista {
+    display: flex;
+    gap: var(--e-1);
+    overflow-x: auto;
+    scrollbar-width: none;
+    list-style: none;
+    padding-block: 0;
+  }
+  .cabecera__lista::-webkit-scrollbar { display: none; }
+
+  .cabecera__vinculo {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding-inline: var(--e-3);
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--gris-800);
+    text-decoration: none;
+    white-space: nowrap;
+    border-bottom: 2px solid transparent;
+    transition: color var(--v-rapido) var(--curva), border-color var(--v-rapido) var(--curva);
+  }
+  .cabecera__vinculo:hover { color: var(--tinta); border-bottom-color: var(--tinta); }
+  .cabecera__vinculo.es-destacado { color: var(--naranja-texto); font-weight: 600; }
+  .cabecera__vinculo.es-destacado:hover { border-bottom-color: var(--naranja-accion); }
+</style>

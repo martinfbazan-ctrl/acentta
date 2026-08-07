@@ -1,0 +1,23 @@
+---
+interface Props {
+  id: string;
+  valor?: number;
+  min?: number;
+  /** Tope real de stock: no se deja pedir más de lo que hay. */
+  max?: number;
+  etiqueta?: string;
+  class?: string;
+}
+const { id, valor = 1, min = 1, max = 99, etiqueta = 'Cantidad', class: clase } = Astro.props;
+---
+
+<div class={['cantidad', clase].filter(Boolean).join(' ')} data-cantidad data-min={min} data-max={max}>
+  <button class="cantidad__boton" type="button" data-accion="restar" aria-label="Quitar uno" disabled={valor <= min}>
+    <svg width="14" height="2" viewBox="0 0 14 2" aria-hidden="true"><rect width="14" height="2" rx="1" fill="currentColor"/></svg>
+  </button>
+  <label class="vo" for={id}>{etiqueta}</label>
+  <input class="cantidad__valor tabular" id={id} type="number" value={valor} min={min} max={max} inputmode="numeric" />
+  <button class="cantidad__boton" type="button" data-accion="sumar" aria-label="Agregar uno" disabled={valor >= max}>
+    <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M6 0h2v14H6z M0 6h14v2H0z" fill="currentColor"/></svg>
+  </button>
+</div>

@@ -1,0 +1,42 @@
+---
+/**
+ * Barra de progreso de envío gratis.
+ * Es la táctica de mayor impacto sobre el ticket promedio (brief §3.1):
+ * convierte "me falta poco" en un motivo concreto para sumar un producto.
+ */
+import { estadoEnvioGratis } from '@lib/formato';
+import { UMBRAL_ENVIO_GRATIS } from '@tipos/catalogo';
+
+interface Props {
+  subtotal: number;
+  umbral?: number;
+  class?: string;
+}
+const { subtotal, umbral = UMBRAL_ENVIO_GRATIS, class: clase } = Astro.props;
+const estado = estadoEnvioGratis(subtotal, umbral);
+---
+
+<div class={['envio-gratis', clase].filter(Boolean).join(' ')} data-logrado={String(estado.logrado)}>
+  <p class="envio-gratis__texto">
+    {estado.logrado ? (
+      <>
+        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" fill="currentColor">
+          <path d="M6.2 11.4 3.3 8.5l-1.1 1.1 4 4 7.6-7.6-1.1-1.1z"/>
+        </svg>
+        Tenés envío gratis
+      </>
+    ) : (
+      <>Te faltan <b>{estado.mensaje.replace('Te faltan ', '').replace(' para el envío gratis', '')}</b> para el envío gratis</>
+    )}
+  </p>
+  <div
+    class="envio-gratis__via"
+    role="progressbar"
+    aria-valuenow={estado.progreso}
+    aria-valuemin="0"
+    aria-valuemax="100"
+    aria-label="Progreso hacia el envío gratis"
+  >
+    <div class="envio-gratis__relleno" style={`--progreso:${estado.progreso}%`}></div>
+  </div>
+</div>

@@ -1,0 +1,366 @@
+---
+/**
+ * Ficha de producto (PDP).
+ * ---------------------------------------------------------------
+ * Una sola plantilla genera las catorce páginas de producto, y va a
+ * generar las treinta y seis sin cambiar una línea. Ese es el motivo
+ * concreto por el que este proyecto usa Astro y no HTML a mano.
+ *
+ * El orden de la columna de compra sigue el orden de las preguntas
+ * que se hace quien está por gastar plata:
+ *   qué es → cuánto sale → en cuántas cuotas → cuál elijo →
+ *   ¿hay stock? → ¿cuánto tarda y cuánto cuesta traerlo? →
+ *   ¿qué pasa si no me gusta?
+ * El botón de comprar está antes de las tres últimas a propósito:
+ * quien ya decidió no debería tener que pasar por todo el argumento.
+ */
+import Base from '@layouts/Base.astro';
+import Encabezado from '@componentes/Encabezado.astro';
+import Pie from '@componentes/Pie.astro';
+import Migas from '@componentes/Migas.astro';
+import Galeria from '@componentes/Galeria.astro';
+import SelectorVariantes from '@componentes/SelectorVariantes.astro';
+import CalculadoraEnvio from '@componentes/CalculadoraEnvio.astro';
+import OpinionesProducto from '@componentes/OpinionesProducto.astro';
+import TarjetaProducto from '@componentes/TarjetaProducto.astro';
+import Precio from '@componentes/Precio.astro';
+import Badge from '@componentes/Badge.astro';
+import Rating from '@componentes/Rating.astro';
+import Boton from '@componentes/Boton.astro';
+import SelectorCantidad from '@componentes/SelectorCantidad.astro';
+import {
+  todos, porSlug, complementos, badgeDeEstado, estaAgotado,
+  esUltimasUnidades, tieneDescuento, ahorroEnPorcentaje, stockTotal,
+  NOMBRE_CATEGORIA, datosParaCarrito,
+} from '@lib/catalogo';
+import { opinionesDe } from '../../data/opiniones-productos';
+import { precio as fPrecio, rangoDeEntrega } from '@lib/formato';
+import { foto } from '@lib/imagenes';
+
+export function getStaticPaths() {
+  return todos().map((p) => ({ params: { slug: p.slug } }));
+}
+
+const { slug } = Astro.params;
+const p = porSlug(slug!)!;
+
+const agotado = estaAgotado(p);
+const estado = badgeDeEstado(p);
+const stock = stockTotal(p);
+const opiniones = opinionesDe(p.slug);
+const relacionados = complementos(p, 4);
+const entrega = rangoDeEntrega(p.plazoEnvio.min, p.plazoEnvio.max);
+const categoriaNombre = NOMBRE_CATEGORIA[p.categoria]!;
+const datosCarrito = JSON.stringify(datosParaCarrito(p));
+
+/* Datos estructurados. Es lo que hace que el buscador muestre precio,
+   disponibilidad y estrellas debajo del resultado en vez de una línea
+   de texto suelta. En un marketplace eso vale más que cualquier meta. */
+const esquema = {
+  '@context': 'https://schema.org',
+  '@type': 'Product',
+  name: p.nombre,
+  description: p.descripcion,
+  image: p.imagenes.map((i) => foto(i.src, 1200)),
+  sku: p.id,
+  category: categoriaNombre,
+  offers: {
+    '@type': 'Offer',
+    url: new URL(`/producto/${p.slug}`, Astro.site).toString(),
+    priceCurrency: 'ARS',
+    price: p.precio,
+    availability: agotado
+      ? 'https://schema.org/OutOfStock'
+      : 'https://schema.org/InStock',
+    itemCondition: 'https://schema.org/NewCondition',
+  },
+  ...(p.rating !== undefined && {
+    aggregateRating: {
+      '@type': 'AggregateRating',
+      ratingValue: p.rating,
+      reviewCount: p.cantidadOpiniones,
+    },
+  }),
+  ...(opiniones.length > 0 && {
+    review: opiniones.map((o) => ({
+      '@type': 'Review',
+      author: { '@type': 'Person', name: o.autor },
+      datePublished: o.fecha,
+      reviewBody: o.texto,
+      reviewRating: { '@type': 'Rating', ratingValue: o.puntaje, bestRating: 5 },
+    })),
+  }),
+};
+---
+
+<Base titulo={`${p.nombre} · acentta`} descripcion={p.descripcion} esquema={esquema}>
+  <Encabezado slot="encabezado" />
+
+  <div class="contenedor ficha">
+    <Migas
+      pasos={[
+        { nombre: 'Inicio', href: '/' },
+        { nombre: categoriaNombre, href: `/categoria/${p.categoria}` },
+        { nombre: p.nombre },
+      ]}
+      class="ficha__migas"
+    />
+
+    <div class="ficha__cuerpo">
+      <div class="ficha__galeria">
+        <Galeria imagenes={p.imagenes} nombre={p.nombre} />
+      </div>
+
+      <div class="ficha__compra" data-compra>
+        <div class="ficha__marcas">
+          {tieneDescuento(p) && !agotado && (
+            <Badge variante="descuento" porcentaje={ahorroEnPorcentaje(p)} class="badge--suelto" />
+          )}
+          {estado && <Badge variante={estado} />}
+        </div>
+
+        <h1 class="ficha__nombre">{p.nombre}</h1>
+
+        <a class="ficha__rating" href="#opiniones">
+          <Rating puntaje={p.rating} cantidad={p.cantidadOpiniones} />
+        </a>
+
+        <Precio
+          precio={p.precio}
+          precioAnterior={p.precioAnterior}
+          cuotas={p.precio >= 30000 ? 12 : 6}
+          tamano="ficha"
+          class="ficha__precio"
+        />
+
+        <SelectorVariantes producto={p} />
+
+        <!-- Stock real. Sólo se avisa cuando queda poco de verdad. -->
+        <p class="ficha__stock" data-stock-aviso>
+          {agotado ? (
+            <span class="es-agotado">Sin stock por ahora</span>
+          ) : esUltimasUnidades(p) ? (
+            <span class="es-poco">Quedan {stock} unidades</span>
+          ) : (
+            <span class="es-hay">Disponible para envío inmediato</span>
+          )}
+        </p>
+
+        <div class="ficha__acciones">
+          <SelectorCantidad id="cantidad" valor={1} max={Math.max(1, stock)} />
+          {agotado ? (
+            <Boton jerarquia="secundario" tamano="grande" deshabilitado ancho>Sin stock</Boton>
+          ) : (
+            <Boton tamano="grande" ancho data-agregar data-producto={datosCarrito}>Agregar al carrito</Boton>
+          )}
+        </div>
+
+        {agotado && (
+          <p class="ficha__avisame">
+            ¿Querés que te avisemos cuando vuelva? Dejá tu correo en el
+            <a href="/contacto">formulario de contacto</a> y te escribimos.
+          </p>
+        )}
+
+        <!-- Riesgo · lo que frena la compra en una tienda desconocida -->
+        <ul class="garantias">
+          <li>
+            <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6">
+              <path d="M12 3l7 3v6c0 4.2-2.9 7.6-7 9-4.1-1.4-7-4.8-7-9V6z" stroke-linejoin="round" />
+              <path d="M9 12l2 2 4-4" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <span><b>30 días para devolverlo</b>, sin tener que explicar por qué. El costo de la devolución lo pagamos nosotros.</span>
+          </li>
+          <li>
+            <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6">
+              <rect x="2.5" y="5.5" width="19" height="13" rx="2" /><path d="M2.5 10h19" />
+            </svg>
+            <span>Hasta 12 cuotas sin interés. Visa, Mastercard, Amex, Cabal y Mercado Pago.</span>
+          </li>
+          <li>
+            <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6">
+              <circle cx="12" cy="12" r="9" /><path d="M12 7.5v5l3 2" stroke-linecap="round" />
+            </svg>
+            <span>Si comprás hoy, llega <b>{entrega}</b>.</span>
+          </li>
+        </ul>
+
+        <CalculadoraEnvio
+          peso={p.peso}
+          precioProducto={p.precio}
+          plazoMin={p.plazoEnvio.min}
+          plazoMax={p.plazoEnvio.max}
+        />
+
+        <!-- Las medidas van acá y no más abajo: son parte de la
+             decisión de compra, no de la lectura posterior. Quien
+             mira una mesa auxiliar necesita saber si entra al lado
+             del sillón antes de agregarla, no después. -->
+          <div class="ficha__specs">
+            <h2 class="ficha__specs-titulo">Especificaciones</h2>
+          <dl class="specs">
+            {p.especificaciones.map((e) => (
+              <div class="specs__fila">
+                <dt>{e.clave}</dt>
+                <dd>{e.valor}</dd>
+              </div>
+            ))}
+            <div class="specs__fila">
+              <dt>Medidas</dt>
+              <dd class="tabular">{p.dimensiones.alto} × {p.dimensiones.ancho} × {p.dimensiones.profundidad} cm</dd>
+            </div>
+            <div class="specs__fila">
+              <dt>Peso</dt>
+              <dd class="tabular">{p.peso} kg</dd>
+            </div>
+          </dl>
+        </div>
+      </div>
+    </div>
+
+    <!-- Descripción -->
+    <section class="detalle" aria-labelledby="tit-detalle">
+      <div class="detalle__texto">
+        <h2 class="t-seccion" id="tit-detalle">Sobre este producto</h2>
+        <p class="t-texto">{p.descripcion}</p>
+      </div>
+    </section>
+
+    <OpinionesProducto opiniones={opiniones} rating={p.rating} cantidad={p.cantidadOpiniones} />
+
+    {relacionados.length > 0 && (
+      <section class="cross" aria-labelledby="tit-cross">
+        <h2 class="t-seccion" id="tit-cross">Completá el ambiente</h2>
+        <p class="t-meta cross__bajada">
+          Lo que suele elegirse junto con esto. Aparece después de que ya decidiste,
+          nunca antes.
+        </p>
+        <div class="grilla-productos">
+          {relacionados.map((r) => <TarjetaProducto producto={r} />)}
+        </div>
+      </section>
+    )}
+  </div>
+
+  <!-- Barra fija de compra en móvil -->
+  {!agotado && (
+    <div class="barra-movil" data-barra-movil hidden>
+      <div class="barra-movil__datos">
+        <p class="barra-movil__precio tabular">{fPrecio(p.precio)}</p>
+        <p class="barra-movil__cuotas">{p.precio >= 30000 ? 12 : 6} cuotas sin interés</p>
+      </div>
+      <Boton data-agregar data-producto={datosCarrito}>Agregar</Boton>
+    </div>
+  )}
+
+  <Pie slot="pie" />
+</Base>
+
+<script>
+  import '../../scripts/ficha';
+</script>
+
+<style>
+  .ficha { padding-block: var(--e-6) var(--e-16); }
+  .ficha__migas { margin-bottom: var(--e-6); }
+
+  .ficha__cuerpo { display: grid; gap: var(--e-8); }
+  @media (min-width: 900px) {
+    .ficha__cuerpo { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: var(--e-16); }
+    .ficha__galeria { position: sticky; top: var(--e-24); align-self: start; }
+  }
+
+  /* ---- Columna de compra ---- */
+  .ficha__compra { display: flex; flex-direction: column; gap: var(--e-4); min-width: 0; }
+  .ficha__marcas { display: flex; flex-wrap: wrap; gap: var(--e-2); }
+  .ficha__nombre {
+    font-size: clamp(1.5rem, 1.2rem + 1.3vw, 2rem);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    text-wrap: balance;
+  }
+  .ficha__rating { text-decoration: none; width: fit-content; }
+  .ficha__rating:hover { text-decoration: underline; text-underline-offset: 3px; }
+  .ficha__precio { margin-block: var(--e-2); }
+
+  .ficha__stock { font-size: 0.9375rem; font-weight: 600; }
+  .ficha__stock .es-hay { color: var(--verde); }
+  .ficha__stock .es-poco { color: var(--rojo); }
+  .ficha__stock .es-agotado { color: var(--gris-texto); }
+
+  .ficha__acciones { display: flex; gap: var(--e-3); align-items: stretch; }
+  .ficha__acciones > :last-child { flex: 1; }
+
+  .ficha__avisame {
+    font-size: 0.875rem;
+    color: var(--gris-800);
+    padding: var(--e-3) var(--e-4);
+    background: var(--gris-050);
+    border-radius: var(--r-tarjeta);
+  }
+
+  .garantias { display: flex; flex-direction: column; gap: var(--e-3); list-style: none; }
+  .garantias li { display: flex; gap: var(--e-3); font-size: 0.875rem; line-height: 1.5; color: var(--gris-800); }
+  .garantias svg { flex: none; margin-top: 1px; color: var(--verde); }
+  .garantias b { color: var(--tinta); }
+
+  /* ---- Especificaciones, en la columna de compra ---- */
+  .ficha__specs {
+    padding-top: var(--e-5);
+    border-top: 1px solid var(--gris-200);
+  }
+  .ficha__specs-titulo { font-size: 1.0625rem; font-weight: 700; margin-bottom: var(--e-3); }
+
+  /* ---- Detalle ----
+     Una sola columna, no dos. La descripción son cuatro líneas y las
+     especificaciones son ocho filas: puestas en columnas paralelas,
+     la izquierda terminaba enseguida y dejaba un hueco vertical del
+     alto de la tabla. Apiladas se leen en el orden natural —qué es,
+     después cuánto mide— y no queda aire muerto.
+     Las especificaciones sí se abren en dos columnas cuando hay
+     ancho: una lista de ocho filas de 60 px es una tira flaca y
+     larga que obliga a bajar por nada. */
+  .detalle { padding-block: var(--e-16) var(--e-12); }
+  .detalle__texto .t-texto { margin-top: var(--e-4); }
+  .detalle__subtitulo { font-size: 1.0625rem; font-weight: 700; margin-bottom: var(--e-4); }
+
+  .specs { border-top: 1px solid var(--gris-200); }
+  .specs__fila {
+    display: grid;
+    grid-template-columns: minmax(0, 150px) minmax(0, 1fr);
+    gap: var(--e-4);
+    padding: var(--e-3) 0;
+    border-bottom: 1px solid var(--gris-200);
+    font-size: 0.9375rem;
+    align-items: baseline;
+  }
+  .specs dt { color: var(--gris-texto); }
+  .specs dd { margin: 0; color: var(--tinta); font-weight: 500; }
+
+  /* ---- Cross-sell ---- */
+  .cross { padding-top: var(--e-16); }
+  .cross__bajada { margin: var(--e-2) 0 var(--e-6); max-width: 56ch; }
+
+  /* ---- Barra fija de móvil ---- */
+  .barra-movil {
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    gap: var(--e-4);
+    padding: var(--e-3) var(--e-4);
+    padding-bottom: max(var(--e-3), env(safe-area-inset-bottom));
+    background: var(--papel);
+    border-top: 1px solid var(--gris-200);
+    box-shadow: var(--sombra-2);
+    transform: translateY(100%);
+    transition: transform var(--v-medio) var(--curva);
+  }
+  .barra-movil[data-visible='true'] { transform: translateY(0); }
+  .barra-movil__datos { flex: 1; min-width: 0; }
+  .barra-movil__precio { font-size: var(--t-precio); font-weight: 700; line-height: 1.1; }
+  .barra-movil__cuotas { font-size: var(--t-meta); color: var(--gris-texto); }
+  @media (min-width: 900px) { .barra-movil { display: none; } }
+</style>

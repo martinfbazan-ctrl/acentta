@@ -1,0 +1,24 @@
+---
+/**
+ * Estado vacío · nunca un callejón sin salida (brief §3.8).
+ * Siempre sale con al menos una acción concreta.
+ */
+interface Props {
+  titulo: string;
+  texto?: string;
+  class?: string;
+}
+const { titulo, texto, class: clase } = Astro.props;
+---
+
+<div class={['vacio', clase].filter(Boolean).join(' ')}>
+  <svg class="vacio__icono" width="44" height="44" viewBox="0 0 44 44" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2">
+    <circle cx="19" cy="19" r="12"/>
+    <path d="M28 28l8 8" stroke-linecap="round"/>
+  </svg>
+  <div>
+    <p class="vacio__titulo">{titulo}</p>
+    {texto && <p class="vacio__texto t-meta" style="margin-top:8px">{texto}</p>}
+  </div>
+  <div class="vacio__acciones"><slot /></div>
+</div>

@@ -1,0 +1,448 @@
+---
+import Base from '@layouts/Base.astro';
+import Logo from '@componentes/Logo.astro';
+import Precio from '@componentes/Precio.astro';
+import Badge from '@componentes/Badge.astro';
+
+const variantes = [
+  {
+    id: 'anillo',
+    nombre: 'A · Anillo (descartada)',
+    resumen: 'La primera propuesta. Un contorno de 2 px en el naranja de marca.',
+    aFavor: 'Neutro, no envejece, cero riesgo de contraste.',
+    enContra: 'No dice nada. Es la respuesta correcta, no la memorable.',
+  },
+  {
+    id: 'resplandor',
+    nombre: 'B · Resplandor cálido (elegida)',
+    resumen: 'El naranja se convierte en luz alrededor del botón. Es la que quedó aplicada en todo el sitio.',
+    aFavor: 'La tienda vende lámparas: el botón se comporta como el producto. Nunca toca el texto, así que el contraste ni se discute.',
+    enContra: 'Sobre fondo oscuro casi no se ve. Hay que verificarlo en el footer.',
+  },
+  {
+    id: 'levantar',
+    nombre: 'C · Levantar + resplandor',
+    resumen: 'B, y además el botón sube 2 px.',
+    aFavor: 'La sombra crece porque el botón se acercó: la física cierra. Se siente táctil sin ser un juguete.',
+    enContra: 'Movimiento vertical en la grilla; con 24 tarjetas puede marear si el usuario barre rápido.',
+  },
+  {
+    id: 'solida',
+    nombre: 'D · Sombra sólida (3D presionable)',
+    resumen: 'Sombra dura de 4 px. Al presionar, el botón baja y la sombra desaparece.',
+    aFavor: 'El clic más satisfactorio de los seis. La affordance es obvia: esto se hunde.',
+    enContra: 'Muestra naranja en reposo, así que en una grilla de 24 productos hay 24 barras naranjas compitiendo. Y es un estilo con fecha de vencimiento.',
+  },
+  {
+    id: 'barrido',
+    nombre: 'E · Barrido diagonal',
+    resumen: 'Una luz cruza el botón en diagonal. Nota: se evaluó con el logo anterior, cuyo acento era una diagonal de 21°.',
+    aFavor: 'Era el vínculo más directo con la marca cuando el acento del logo era diagonal.',
+    enContra: 'La luz pasa por encima del texto blanco. Durante esos milisegundos el contraste baja. Reservarlo para un solo botón por pantalla.',
+  },
+  {
+    id: 'retro',
+    nombre: 'G · Retroiluminación (descartada)',
+    resumen: 'Tres capas de luz encendidas detrás del botón. La versión intensa de B.',
+    aFavor: 'Es B llevado al extremo: la luz no rodea el botón, sale de atrás. Sigue sin tocar el texto, así que el contraste se mantiene intacto. Sobre superficie oscura es la más fuerte de las siete.',
+    enContra: 'Sobre blanco puro el naranja saturado puede leerse como advertencia. Hay que ver que no compita con el rojo de "agotado" en la misma pantalla.',
+  },
+  {
+    id: 'acento',
+    nombre: 'F · El acento entra',
+    resumen: 'Una barra aparece por el borde izquierdo.',
+    aFavor: 'Marca sin movimiento del botón. Se lee igual en una grilla densa. Sobrevive bien al modo oscuro.',
+    enContra: 'Más sutil: en móvil, donde no hay hover, no aporta nada.',
+  },
+];
+
+const productos = [
+  { nombre: 'Lámpara de pie Arco', precio: 89900, anterior: 129900 },
+  { nombre: 'Alfombra Bereber 160 × 230', precio: 74500 },
+  { nombre: 'Puff tejido Nube', precio: 38900, anterior: 51900 },
+  { nombre: 'Mesa auxiliar Roble', precio: 62400 },
+];
+---
+
+<Base
+  titulo="Variantes de hover del botón · acentta"
+  descripcion="Comparador de siete tratamientos de hover para el botón primario de acentta."
+  sinIndexar={true}
+>
+  <header class="cabecera" slot="encabezado">
+    <div class="contenedor cabecera__caja">
+      <a href="/" class="cabecera__logo"><Logo alto={26} /></a>
+      <span class="badge badge--nuevo">Decisión cerrada · B</span>
+    </div>
+  </header>
+
+  <div class="contenedor doc">
+    <section class="doc__intro">
+      <p class="doc__etiqueta">Sistema de diseño · botón</p>
+      <h1 class="t-titular">Siete maneras de que el naranja vuelva al hover</h1>
+      <p class="t-texto">
+        En las siete, el relleno del botón hace lo mismo: pasa de <code>#C8431A</code> a
+        <code>#A8380F</code> y el texto se mantiene en 6,49:1. Lo que cambia es dónde vuelve
+        a aparecer el <code>#FF6A3D</code>. Ninguna variante toca el contraste del texto:
+        esa parte no está en discusión.
+      </p>
+      <p class="t-texto">
+        Pasá el mouse por cada una. Después recorrelas con Tab, que es como las va a
+        encontrar quien no usa mouse.
+      </p>
+    </section>
+
+    {variantes.map((v) => (
+      <section class="doc__seccion variante">
+        <div class="variante__cabeza">
+          <h2 class="t-seccion">{v.nombre}</h2>
+          <p class="t-meta variante__resumen">{v.resumen}</p>
+        </div>
+
+        <div class="variante__prueba">
+          <button class={`boton boton--primario boton--grande hv hv--${v.id}`} type="button">
+            <span class="boton__texto">Agregar al carrito</span>
+          </button>
+          <button class={`boton boton--primario hv hv--${v.id}`} type="button">
+            <span class="boton__texto">Comprar ahora</span>
+          </button>
+          <button class={`boton boton--primario boton--chico hv hv--${v.id}`} type="button">
+            <span class="boton__texto">Agregar</span>
+          </button>
+          <button class="boton boton--primario" type="button" disabled>
+            <span class="boton__texto">Sin stock</span>
+          </button>
+        </div>
+
+        <dl class="balance">
+          <div class="balance__item balance__item--favor">
+            <dt>A favor</dt><dd>{v.aFavor}</dd>
+          </div>
+          <div class="balance__item balance__item--contra">
+            <dt>En contra</dt><dd>{v.enContra}</dd>
+          </div>
+        </dl>
+      </section>
+    ))}
+
+    <!-- ================= PRUEBA DE ESTRÉS ================= -->
+    <section class="doc__seccion">
+      <h2 class="t-seccion">La prueba que importa: la grilla</h2>
+      <p class="t-texto">
+        Un hover se ve lindo aislado. La pregunta real es cómo se comporta repetido
+        veinticuatro veces, que es donde el usuario va a pasar la mayor parte del tiempo.
+        Pasá el mouse por las tarjetas de abajo.
+      </p>
+
+      {['resplandor', 'retro', 'solida'].map((id) => (
+        <>
+          <h3 class="doc__sub">{variantes.find((v) => v.id === id)!.nombre}</h3>
+          <div class="grilla-productos grilla-prueba">
+            {productos.map((p) => (
+              <article class="tarjeta ficha">
+                <div class="ficha__foto">
+                  {p.anterior && <Badge variante="descuento" porcentaje={Math.round((1 - p.precio / p.anterior) * 100)} />}
+                </div>
+                <div class="ficha__cuerpo">
+                  <p class="t-producto">{p.nombre}</p>
+                  <Precio precio={p.precio} precioAnterior={p.anterior} cuotas={6} />
+                  <button class={`boton boton--primario boton--chico boton--ancho hv hv--${id}`} type="button">
+                    <span class="boton__texto">Agregar</span>
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+        </>
+      ))}
+    </section>
+
+    <!-- ================= LA PRUEBA DE LA LUZ ================= -->
+    <section class="doc__seccion">
+      <h2 class="t-seccion">La prueba del fondo: B contra su versión intensa</h2>
+      <p class="t-texto">
+        Una luz se juzga contra su fondo, y el sitio va a tener las dos superficies: la grilla
+        es blanca, el pie y las franjas de campaña son oscuros. B es la elegida; G es la misma
+        idea subida de intensidad. Pasá el mouse por los cuatro.
+      </p>
+
+      <div class="fondos">
+        <div class="fondo fondo--claro">
+          <span class="fondo__rotulo">Sobre blanco · la grilla</span>
+          <div class="fondo__botones">
+            <button class="boton boton--primario hv hv--resplandor" type="button"><span class="boton__texto">B · resplandor</span></button>
+            <button class="boton boton--primario hv hv--retro" type="button"><span class="boton__texto">G · retroiluminación</span></button>
+          </div>
+        </div>
+        <div class="fondo fondo--oscuro">
+          <span class="fondo__rotulo">Sobre oscuro · el pie y las campañas</span>
+          <div class="fondo__botones">
+            <button class="boton boton--primario hv hv--resplandor" type="button"><span class="boton__texto">B · resplandor</span></button>
+            <button class="boton boton--primario hv hv--retro" type="button"><span class="boton__texto">G · retroiluminación</span></button>
+          </div>
+        </div>
+      </div>
+
+      <p class="t-meta" style="margin-top:16px">
+        Sobre oscuro G tiene más presencia, porque la luz tiene contra qué recortarse. Sobre
+        blanco —que es donde vive la grilla, o sea la mayor parte del sitio— el naranja
+        saturado empieza a pesar y B se lee mejor. Queda anotado para más adelante: si alguna
+        franja oscura pide más fuerza, la salida es un token de intensidad por contexto, no
+        un componente distinto.
+      </p>
+    </section>
+
+    <!-- ================= DECISIÓN ================= -->
+    <section class="doc__seccion recomendacion">
+      <h2 class="t-seccion">Lo que quedó</h2>
+      <p class="t-texto">
+        <b>B · resplandor cálido, al pasar el mouse y al presionar.</b> Ya está aplicado al
+        botón primario de todo el sitio. Los botones de esta página son el registro de las
+        siete que se probaron, no la versión vigente.
+      </p>
+      <p class="t-texto">
+        La razón por la que gana no es estética sino del rubro. La tienda vende iluminación,
+        y el botón se comporta como el producto: se enciende. Es el único de los siete
+        tratamientos que se puede defender en una entrevista sin decir “me gustaba más”.
+      </p>
+      <p class="t-texto">
+        Técnicamente, lo que hace que se lea como luz y no como contorno es el
+        <b>spread negativo</b>: las dos capas se achican antes de desenfocarse, así que la
+        sombra nunca queda apretada contra la silueta del botón. Un spread positivo con poco
+        desenfoque produce un canto nítido —un anillo disimulado—; uno negativo con
+        desenfoque amplio produce luz. Y el desplazamiento hacia abajo es deliberado: una
+        fuente cenital es lo que el ojo espera, y sin ese offset el resplandor parece un aura.
+      </p>
+      <p class="t-texto">
+        Además resuelve el conflicto del §8 mejor que el anillo con el que había arrancado.
+        La luz vive por fuera del relleno, así que el texto blanco se mantiene en 6,49:1 sin
+        excepción, y el <code>#FF6A3D</code> del brief aparece con más presencia que si se
+        hubiera usado como color de fondo.
+      </p>
+      <p class="t-texto">
+        Descartadas por motivos concretos: <b>G</b> es la versión intensa de la misma idea,
+        pero sobre blanco el naranja saturado empieza a leerse como advertencia. <b>D</b>
+        pone naranja en reposo, y con veinticuatro botones encendidos antes de que nadie los
+        toque el precio deja de ser lo más naranja de la pantalla. <b>E</b> cruza el texto con
+        la luz y baja el contraste durante el barrido. <b>C</b> mueve el botón en vertical,
+        que en una grilla densa cansa.
+      </p>
+      <p class="t-meta">
+        Nota de móvil: en pantalla táctil el hover no existe, así que la luz se disparó
+        también con <code>:active</code>. En el teléfono el resplandor es la confirmación de
+        que el toque se registró — pasa a ser funcional, no decorativo.
+      </p>
+      <p class="t-meta">
+        Nota técnica: la luz va en un pseudo-elemento animado por opacidad. Animar
+        <code>box-shadow</code> repinta en cada cuadro; con veinticuatro botones en pantalla
+        eso se siente.
+      </p>
+    </section>
+  </div>
+</Base>
+
+<style>
+  .cabecera {
+    position: sticky; top: 0; z-index: 20;
+    background: rgba(249, 245, 239, .92);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--gris-200);
+  }
+  .cabecera__caja { display: flex; align-items: center; justify-content: space-between; min-height: 60px; }
+  .cabecera__logo { display: inline-flex; }
+
+  .doc { padding-block: var(--e-10) var(--e-24); }
+  .doc__intro { max-width: 72ch; margin-bottom: var(--e-12); }
+  .doc__etiqueta {
+    font-size: var(--t-meta); font-weight: 600; letter-spacing: .08em;
+    text-transform: uppercase; color: var(--naranja-texto); margin-bottom: var(--e-3);
+  }
+  .doc__intro h1 { margin-bottom: var(--e-4); }
+  .doc__intro .t-texto + .t-texto { margin-top: var(--e-4); }
+
+  .doc__seccion { padding-top: var(--e-10); margin-top: var(--e-10); border-top: 1px solid var(--gris-200); }
+  .doc__sub { font-size: 1rem; font-weight: 600; margin: var(--e-10) 0 var(--e-4); color: var(--gris-800); }
+  .recomendacion .t-texto + .t-texto { margin-top: var(--e-4); }
+  .recomendacion { background: var(--gris-050); border-radius: var(--r-modal); padding: var(--e-8); border-top: 0; }
+
+  code {
+    font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    font-size: 0.85em; background: var(--gris-200); padding: 1px 5px; border-radius: 3px;
+  }
+
+  .variante__cabeza { margin-bottom: var(--e-6); }
+  .variante__resumen { margin-top: var(--e-2); font-size: 0.9375rem; }
+  .variante__prueba {
+    display: flex; flex-wrap: wrap; align-items: center; gap: var(--e-5);
+    padding: var(--e-8) var(--e-6);
+    background: var(--gris-050);
+    border-radius: var(--r-modal);
+    margin-bottom: var(--e-5);
+  }
+
+  .balance { display: grid; gap: var(--e-3); grid-template-columns: 1fr; }
+  @media (min-width: 720px) { .balance { grid-template-columns: 1fr 1fr; } }
+  .balance__item { padding: var(--e-4); border-radius: var(--r-tarjeta); border-left: 3px solid; }
+  .balance__item dt {
+    font-size: var(--t-meta); font-weight: 700; text-transform: uppercase;
+    letter-spacing: .06em; margin-bottom: var(--e-2);
+  }
+  .balance__item dd { font-size: 0.9375rem; line-height: 1.55; margin: 0; }
+  .balance__item--favor { background: var(--verde-wash); border-color: var(--verde); }
+  .balance__item--favor dt { color: var(--verde); }
+  .balance__item--contra { background: var(--oferta-wash); border-color: var(--naranja-accion); }
+  .balance__item--contra dt { color: var(--naranja-texto); }
+
+  /* Prueba de fondo claro contra fondo oscuro */
+  .fondos { display: grid; gap: var(--e-4); grid-template-columns: 1fr; }
+  @media (min-width: 720px) { .fondos { grid-template-columns: 1fr 1fr; } }
+  .fondo {
+    padding: var(--e-10) var(--e-6);
+    border-radius: var(--r-modal);
+    display: flex; flex-direction: column; gap: var(--e-6);
+  }
+  .fondo--claro { background: var(--papel); border: 1px solid var(--gris-200); }
+  .fondo--oscuro { background: var(--tinta); }
+  .fondo__rotulo {
+    font-size: var(--t-meta); font-weight: 600; letter-spacing: .06em;
+    text-transform: uppercase; color: var(--gris-texto);
+  }
+  .fondo--oscuro .fondo__rotulo { color: var(--gris-200); }
+  .fondo__botones { display: flex; flex-wrap: wrap; gap: var(--e-5); }
+
+  /* Tarjeta de prueba (la real llega en la etapa 2) */
+  .grilla-prueba { max-width: 900px; }
+  .ficha__foto {
+    position: relative;
+    overflow: hidden;
+    border-radius: calc(var(--r-tarjeta) - 1px) calc(var(--r-tarjeta) - 1px) 0 0;
+    aspect-ratio: 4 / 3;
+    background: linear-gradient(135deg, var(--gris-200), var(--gris-050));
+    display: flex; align-items: flex-start; padding: var(--e-3);
+  }
+  .ficha__cuerpo { padding: var(--e-3); display: flex; flex-direction: column; gap: var(--e-3); }
+</style>
+
+<style is:global>
+  /* ============================================================
+     Las seis variantes. Todas comparten el mismo cambio de relleno;
+     lo único que cambia es dónde reaparece el naranja de marca.
+     Envueltas en (hover: hover) para que en pantalla táctil no queden
+     estados pegados después de un toque.
+     ============================================================ */
+
+  /* El primario ya trae la retroiluminación elegida. Acá se neutraliza
+     para que cada variante se pueda evaluar sola. */
+  .boton--primario.hv { position: relative; isolation: isolate; }
+  .boton--primario.hv::after {
+    content: ''; position: absolute; inset: 0; z-index: -1;
+    border-radius: inherit; pointer-events: none;
+    box-shadow: none; opacity: 0;
+    transition: opacity var(--v-medio) var(--curva);
+  }
+  /* Ojo: acá NO va una regla con :hover. Una neutralización del tipo
+     `.boton--primario.hv:hover::after { box-shadow: none }` pesa (0,3,0) y
+     le gana al `box-shadow` de cada variante, que pesa (0,2,0). El efecto
+     era luz encendida sin luz durante el hover, y un destello al salir
+     —cuando :hover deja de aplicar, el box-shadow vuelve de golpe mientras
+     la opacidad todavía está bajando—. El reset se queda sin pseudo-clases
+     y cada variante gana por orden de aparición. */
+
+  @media (hover: hover) {
+    /* --- A · Anillo (actual) --- */
+    .boton--primario.hv--anillo:hover { background: var(--naranja-accion-hover); box-shadow: 0 0 0 2px var(--naranja-marca); }
+
+    /* --- B · Resplandor cálido ---
+       El glow va en un pseudo-elemento y se anima con opacidad: box-shadow
+       animado repinta en cada cuadro, opacidad no. Con 24 botones se nota. */
+    .boton--primario.hv--resplandor::after {
+      box-shadow: 0 6px 22px -4px rgba(255, 106, 61, .75), 0 2px 8px -2px rgba(255, 106, 61, .5);
+      opacity: 0;
+      transition: opacity var(--v-medio) var(--curva);
+    }
+    .boton--primario.hv--resplandor:hover { background: var(--naranja-accion-hover); }
+    .boton--primario.hv--resplandor:hover::after { opacity: 1; }
+
+    /* --- C · Levantar + resplandor --- */
+    .boton--primario.hv--levantar::after {
+      box-shadow: 0 10px 24px -6px rgba(255, 106, 61, .8);
+      opacity: 0;
+      transition: opacity var(--v-medio) var(--curva);
+    }
+    .boton--primario.hv--levantar { transition: transform var(--v-medio) var(--curva), background-color var(--v-rapido) var(--curva); }
+    .boton--primario.hv--levantar:hover { background: var(--naranja-accion-hover); transform: translateY(-2px); }
+    .boton--primario.hv--levantar:hover::after { opacity: 1; }
+    .boton--primario.hv--levantar:active { transform: translateY(0); }
+
+    /* --- D · Sombra sólida (3D presionable) --- */
+    .boton--primario.hv--solida {
+      box-shadow: 0 4px 0 var(--naranja-marca);
+      transition: transform var(--v-rapido) var(--curva), box-shadow var(--v-rapido) var(--curva), background-color var(--v-rapido) var(--curva);
+    }
+    .boton--primario.hv--solida:hover { background: var(--naranja-accion-hover); transform: translateY(2px); box-shadow: 0 2px 0 var(--naranja-marca); }
+    .boton--primario.hv--solida:active { transform: translateY(4px); box-shadow: 0 0 0 var(--naranja-marca); }
+
+    /* --- E · Barrido diagonal, en los 21° del acento --- */
+    .boton--primario.hv--barrido { overflow: hidden; }
+    .boton--primario.hv--barrido::after {
+      inset: -20% -10%;
+      width: 34%;
+      left: -45%;
+      background: linear-gradient(90deg, transparent, rgba(255, 178, 148, .85), transparent);
+      transform: skewX(-21deg);
+      transition: left var(--v-lento) var(--curva);
+      border-radius: 0;
+    }
+    .boton--primario.hv--barrido:hover { background: var(--naranja-accion-hover); }
+    .boton--primario.hv--barrido:hover::after { left: 115%; }
+
+    /* --- G · Retroiluminación ---
+       No hay anillo. El pseudo-elemento se mete 2 px hacia adentro y toda
+       la luz que se ve es la que escapa por detrás del botón: por eso se
+       lee como retroiluminación y no como halo. Tres capas: el sangrado
+       pegado al borde, el difuso, y el charco que cae hacia abajo. */
+    .boton--primario.hv--retro::after {
+      inset: 6px;
+      box-shadow:
+        0 0 26px 0 rgba(255, 106, 61, .62),
+        0 4px 44px 4px rgba(255, 106, 61, .48),
+        0 18px 54px -10px rgba(255, 106, 61, .58);
+      opacity: 0;
+      transition: opacity var(--v-medio) var(--curva);
+    }
+    .boton--primario.hv--retro:hover { background: var(--naranja-accion-hover); }
+    .boton--primario.hv--retro:hover::after { opacity: 1; }
+    /* Al presionar, la luz baja: el botón se acercó a la superficie. */
+    .boton--primario.hv--retro:active::after {
+      opacity: 1;
+      box-shadow:
+        0 0 20px 0 rgba(255, 106, 61, .68),
+        0 2px 30px 2px rgba(255, 106, 61, .52),
+        0 8px 32px -10px rgba(255, 106, 61, .62);
+    }
+
+    /* --- F · El acento entra por el borde --- */
+    .boton--primario.hv--acento { overflow: hidden; }
+    .boton--primario.hv--acento::after {
+      inset: -10% auto -10% 0;
+      width: 7px;
+      background: var(--naranja-marca);
+      border-radius: 0;
+      transform: skewX(-21deg) translateX(-14px);
+      opacity: 0;
+      transition: transform var(--v-medio) var(--curva), opacity var(--v-rapido) var(--curva);
+    }
+    .boton--primario.hv--acento:hover { background: var(--naranja-accion-hover); }
+    .boton--primario.hv--acento:hover::after { transform: skewX(-21deg) translateX(0); opacity: 1; }
+  }
+
+  /* Sin movimiento: se conserva el cambio de color y el resplandor,
+     se anulan los desplazamientos y el barrido. */
+  @media (prefers-reduced-motion: reduce) {
+    .boton--primario.hv--levantar:hover, .boton--primario.hv--solida:hover, .boton--primario.hv--solida:active { transform: none; }
+    .boton--primario.hv--barrido::after { display: none; }
+  }
+
+  /* El foco de teclado no cambia entre variantes: siempre el mismo anillo. */
+  .hv:focus-visible { outline: 3px solid var(--tinta); outline-offset: 2px; }
+</style>

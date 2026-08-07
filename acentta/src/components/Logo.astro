@@ -1,0 +1,36 @@
+---
+/**
+ * Wordmark.
+ * El alto se pasa como variable CSS y no como estilo fijo, para que
+ * una media query pueda agrandarlo sin pelear con el atributo inline.
+ *
+ * El archivo de public/ tiene el viewBox recortado a la caja de tinta
+ * real (44 119 633 139). El original venía con 743 × 364, o sea casi
+ * dos tercios de aire alrededor. Recortado, el alto que se pide es
+ * exactamente el alto que se ve — que es lo que permite igualarlo a
+ * la barra de búsqueda sin ajustar a ojo.
+ */
+interface Props {
+  alto?: number;
+  class?: string;
+}
+const { alto = 28, class: clase } = Astro.props;
+const ancho = Math.round((633 / 139) * alto);
+---
+<img
+  src="/logo-acentta.svg"
+  alt="acentta"
+  width={ancho}
+  height={alto}
+  class={['logo', clase].filter(Boolean).join(' ')}
+  style={`--logo-base:${alto}px`}
+  decoding="async"
+/>
+
+<style is:global>
+  /* --logo-base viene del prop, como estilo inline. --logo-alto lo puede
+     definir una clase desde afuera y tiene prioridad.
+     No al revés: un custom property inline le gana a la hoja de estilos,
+     y por eso una media query no lograba agrandarlo. */
+  .logo { height: var(--logo-alto, var(--logo-base)); width: auto; }
+</style>

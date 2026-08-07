@@ -1,0 +1,61 @@
+---
+/**
+ * Botón · 3 jerarquías × 4 estados + cargando
+ * El naranja sólo en lo que se toca o en lo que cuesta dinero (brief §5).
+ */
+interface Props {
+  jerarquia?: 'primario' | 'secundario' | 'fantasma';
+  tamano?: 'chico' | 'medio' | 'grande';
+  ancho?: boolean;
+  href?: string;
+  tipo?: 'button' | 'submit' | 'reset';
+  deshabilitado?: boolean;
+  cargando?: boolean;
+  /** Texto que anuncia el lector de pantalla mientras carga. */
+  textoCargando?: string;
+  class?: string;
+  [key: string]: unknown;
+}
+
+const {
+  jerarquia = 'primario',
+  tamano = 'medio',
+  ancho = false,
+  href,
+  tipo = 'button',
+  deshabilitado = false,
+  cargando = false,
+  textoCargando = 'Procesando',
+  class: clase,
+  ...resto
+} = Astro.props;
+
+const clases = [
+  'boton',
+  `boton--${jerarquia}`,
+  tamano !== 'medio' && `boton--${tamano}`,
+  ancho && 'boton--ancho',
+  clase,
+].filter(Boolean).join(' ');
+
+const Etiqueta = href ? 'a' : 'button';
+---
+
+<Etiqueta
+  class={clases}
+  href={href}
+  type={href ? undefined : tipo}
+  disabled={href ? undefined : deshabilitado}
+  aria-disabled={href && deshabilitado ? 'true' : undefined}
+  data-cargando={cargando ? 'true' : undefined}
+  aria-busy={cargando ? 'true' : undefined}
+  {...resto}
+>
+  <span class="boton__texto"><slot /></span>
+  {cargando && (
+    <>
+      <span class="boton__girador" aria-hidden="true"></span>
+      <span class="vo">{textoCargando}</span>
+    </>
+  )}
+</Etiqueta>

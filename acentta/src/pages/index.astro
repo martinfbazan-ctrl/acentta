@@ -1,0 +1,460 @@
+---
+/**
+ * Home · bento comercial
+ * ---------------------------------------------------------------
+ * El orden de las secciones no es estético, es comercial:
+ * 1. Bento — qué vendemos, por dónde entrar y qué se promete
+ * 2. Más vendidos — prueba social antes que catálogo
+ * 3. Franja de oferta — urgencia con fecha real
+ * 4. Ofertas — el descuento después de haber generado confianza
+ * 5. Opiniones — cierre de riesgo
+ * 6. Email — la única captura, al final y con contraprestación clara
+ */
+import Base from '@layouts/Base.astro';
+import Encabezado from '@componentes/Encabezado.astro';
+import HeroCarrusel from '@componentes/HeroCarrusel.astro';
+import Pie from '@componentes/Pie.astro';
+import TarjetaProducto from '@componentes/TarjetaProducto.astro';
+import Boton from '@componentes/Boton.astro';
+import Rating from '@componentes/Rating.astro';
+import Campo from '@componentes/Campo.astro';
+import { foto, srcset } from '@lib/imagenes';
+import { precio, decimal, numero } from '@lib/formato';
+import { UMBRAL_ENVIO_GRATIS } from '@tipos/catalogo';
+import { masVendidos, enOferta, categoriasDeDecoracion, todos, porSlug } from '@lib/catalogo';
+import { opinionesDestacadas } from '../data/opiniones';
+
+const destacado = porSlug('lampara-de-pie-arco')!;
+const ranking = masVendidos(4);
+const ofertas = enOferta(4);
+const categorias = categoriasDeDecoracion();
+
+/* Las cifras de prueba social se calculan del catálogo. Si mañana
+   cambian los datos, cambian solas: no hay ningún número escrito a mano. */
+const catalogo = todos();
+const conOpiniones = catalogo.filter((p) => p.rating !== undefined);
+const totalOpiniones = catalogo.reduce((s, p) => s + p.cantidadOpiniones, 0);
+const promedio =
+  conOpiniones.reduce((s, p) => s + (p.rating ?? 0) * p.cantidadOpiniones, 0) /
+  conOpiniones.reduce((s, p) => s + p.cantidadOpiniones, 0);
+
+---
+
+<Base
+  titulo="acentta · Decoración e iluminación para tu casa"
+  descripcion="Lámparas, alfombras, textil y muebles chicos con envío a todo el país. Envío gratis superando $ 50.000 y 30 días para devolver sin cargo."
+>
+  <Encabezado slot="encabezado" items={0} />
+
+  <!-- ============ 1 · HERO ============ -->
+  <HeroCarrusel />
+
+  <!-- ============ 2 · POR DÓNDE ENTRAR ============ -->
+  <section class="seccion-bento contenedor" aria-label="Categorías">
+    <div class="bento">
+      {categorias.map((c) => (
+        <a class="bento__pieza bento__categoria" href={`/categoria/${c.clave}`}>
+          <img
+            src={foto(c.imagen.src, 700)}
+            srcset={srcset(c.imagen.src)}
+            sizes="(min-width: 1024px) 340px, 50vw"
+            alt=""
+            width="700" height="520" loading="lazy" decoding="async"
+          />
+          <div class="bento__categoria-texto">
+            <h2 class="bento__categoria-nombre">{c.nombre}</h2>
+            <p class="bento__categoria-detalle">{c.descripcion}</p>
+            <p class="bento__categoria-desde tabular">Desde {precio(c.desde)}</p>
+          </div>
+        </a>
+      ))}
+    </div>
+
+    <!-- La promesa de envío y lo más elegido, debajo de las categorías:
+         primero se muestra por dónde entrar, después se refuerza. -->
+    <div class="bento bento--segunda">
+      <article class="bento__pieza bento__envio">
+        <svg width="30" height="30" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6">
+          <path d="M2 7h11v10H2z" stroke-linejoin="round" />
+          <path d="M13 10h4.5l3.5 3.5V17H13z" stroke-linejoin="round" />
+          <circle cx="6.5" cy="18.5" r="1.8" /><circle cx="17" cy="18.5" r="1.8" />
+        </svg>
+        <p class="bento__envio-titulo">Envío gratis superando {precio(UMBRAL_ENVIO_GRATIS)}</p>
+        <p class="bento__envio-texto">
+          A todo el país. Y si no llegás al monto, el costo exacto se calcula en la
+          ficha del producto — no aparece recién en el checkout.
+        </p>
+        <a class="bento__envio-enlace" href="/envios">Cómo funciona el envío</a>
+      </article>
+
+      <article class="bento__pieza bento__destacado">
+        <div class="bento__destacado-marco">
+          <img
+            src={foto(destacado.imagenes[0]!.src, 600)}
+            srcset={srcset(destacado.imagenes[0]!.src)}
+            sizes="(min-width: 1024px) 240px, 40vw"
+            alt={destacado.imagenes[0]!.alt}
+            width="600" height="750" loading="lazy" decoding="async"
+          />
+        </div>
+        <div class="bento__destacado-datos">
+          <p class="etiqueta">Lo más elegido</p>
+          <h2 class="t-producto"><a href={`/producto/${destacado.slug}`}>{destacado.nombre}</a></h2>
+          <Rating puntaje={destacado.rating} cantidad={destacado.cantidadOpiniones} />
+          <p class="bento__destacado-precio tabular">
+            {precio(destacado.precio)}
+            <s>{precio(destacado.precioAnterior!)}</s>
+          </p>
+          <p class="bento__destacado-ahorro">
+            Ahorrás {precio(destacado.precioAnterior! - destacado.precio)}
+          </p>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- ============ 2 · MÁS VENDIDOS ============ -->
+  <section class="seccion contenedor" aria-labelledby="tit-vendidos">
+    <header class="encabezado-seccion">
+      <div>
+        <h2 class="t-seccion" id="tit-vendidos">Lo más vendido</h2>
+        <p class="t-meta">
+          Ordenado por unidades vendidas reales. Si un producto no tiene el dato, no entra.
+        </p>
+      </div>
+      <a class="enlace-seccion" href="/mas-vendidos">Ver todo</a>
+    </header>
+
+    <div class="grilla-productos">
+      {ranking.map((p, i) => (
+        <TarjetaProducto producto={p} posicion={i + 1} prioritaria={i < 2} />
+      ))}
+    </div>
+  </section>
+
+  <!-- ============ 3 · FRANJA DE OFERTA ============ -->
+  <section class="contenedor" aria-label="Promoción vigente">
+    <div class="banner-oferta" data-banner-oferta>
+      <span class="banner-oferta__barrido" aria-hidden="true"></span>
+      <div class="banner-oferta__bloque sobre-oscuro">
+        <p class="t-seccion" style="color:inherit">Semana de iluminación</p>
+        <p class="t-meta" style="color:var(--arena)">Hasta el 10 de agosto</p>
+      </div>
+      <div class="banner-oferta__contenido sobre-oliva">
+        <p style="color:var(--gris-800);font-size:0.9375rem;line-height:1.5">
+          Hasta 31 % en lámparas de pie y colgantes seleccionados. La fecha de fin es
+          real: cuando se cumple, la promoción se cae sola.
+        </p>
+        <div style="margin-top:12px">
+          <Boton href="/ofertas" tamano="chico">Ver la selección</Boton>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 4 · OFERTAS ============ -->
+  <section class="seccion contenedor" aria-labelledby="tit-ofertas">
+    <header class="encabezado-seccion">
+      <div>
+        <h2 class="t-seccion" id="tit-ofertas">En oferta ahora</h2>
+        <p class="t-meta">Ordenadas por descuento real sobre el precio anterior.</p>
+      </div>
+      <a class="enlace-seccion" href="/ofertas">Ver todas</a>
+    </header>
+
+    <div class="grilla-productos">
+      {ofertas.map((p) => <TarjetaProducto producto={p} />)}
+    </div>
+  </section>
+
+  <!-- ============ 5 · PRUEBA SOCIAL ============ -->
+  <section class="seccion-opiniones" aria-labelledby="tit-opiniones">
+    <div class="contenedor">
+      <header class="opiniones__cabeza">
+        <h2 class="t-seccion" id="tit-opiniones">Lo que dicen quienes ya compraron</h2>
+        <div class="opiniones__resumen">
+          <Rating puntaje={promedio} cantidad={totalOpiniones} />
+          <p class="t-meta">
+            {decimal(promedio)} de promedio sobre {numero(totalOpiniones)} opiniones del catálogo
+          </p>
+        </div>
+      </header>
+
+      <ul class="opiniones__lista">
+        {opinionesDestacadas.map((o) => (
+          <li class="opinion">
+            <Rating puntaje={o.puntaje} cantidad={1} soloEstrellas />
+            <blockquote class="opinion__texto">“{o.texto}”</blockquote>
+            <footer class="opinion__pie">
+              <p class="opinion__autor">{o.autor}</p>
+              <p class="t-meta">{o.ciudad}</p>
+              <a class="opinion__producto" href={`/producto/${o.productoSlug}`}>{o.producto}</a>
+            </footer>
+          </li>
+        ))}
+      </ul>
+
+      <p class="opiniones__aclaracion">
+        acentta es un proyecto conceptual de portafolio. Las opiniones son contenido
+        de demostración; el promedio y la cantidad se calculan del catálogo mock.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============ 6 · CAPTURA DE EMAIL ============ -->
+  <section class="seccion contenedor" aria-labelledby="tit-email">
+    <div class="captura">
+      <div class="captura__texto sobre-oliva">
+        <h2 class="t-seccion" id="tit-email">Te avisamos cuando baja</h2>
+        <p class="t-texto">
+          Un correo cada quince días con lo que efectivamente bajó de precio.
+          Sin cuenta regresiva, sin “última oportunidad”. Si en dos semanas no bajó
+          nada, no te escribimos.
+        </p>
+      </div>
+      <form class="captura__forma sobre-oliva">
+        <Campo
+          id="email-nl"
+          etiqueta="Tu correo electrónico"
+          tipo="email"
+          requerido
+          autocompletar="email"
+          marcador="nombre@ejemplo.com"
+        />
+        <Boton tipo="submit" tamano="grande">Avisame</Boton>
+        <p class="captura__legal">
+          Podés darte de baja con un clic desde cualquier correo.
+          No compartimos tu dirección con nadie.
+          <a href="/privacidad">Política de privacidad</a>
+        </p>
+      </form>
+    </div>
+  </section>
+
+  <Pie slot="pie" />
+</Base>
+
+<script>
+  import '../scripts/hero';
+</script>
+
+<style>
+  .etiqueta {
+    font-size: var(--t-meta);
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--naranja-texto);
+  }
+
+  .encabezado-seccion {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--e-4);
+    margin-bottom: var(--e-6);
+  }
+  .encabezado-seccion .t-meta { margin-top: var(--e-2); max-width: 52ch; }
+  .enlace-seccion {
+    flex: none;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--naranja-texto);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .enlace-seccion:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+  /* ============================================================
+     BENTO · categorías y refuerzos
+     ============================================================ */
+  .seccion-bento { padding-block: var(--e-12) var(--e-4); }
+
+  .bento {
+    display: grid;
+    gap: var(--e-3);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  @media (min-width: 768px) { .bento { gap: var(--e-4); } }
+  @media (min-width: 1024px) { .bento { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--e-5); } }
+
+  .bento--segunda {
+    margin-top: var(--e-4);
+    grid-template-columns: minmax(0, 1fr);
+  }
+  @media (min-width: 768px) { .bento--segunda { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (min-width: 1024px) { .bento--segunda { margin-top: var(--e-5); } }
+
+  .bento__pieza {
+    position: relative;
+    border-radius: var(--r-modal);
+    overflow: hidden;
+    background: var(--gris-050);
+  }
+
+  /* --- Envío --- */
+  .bento__envio {
+    display: flex;
+    flex-direction: column;
+    gap: var(--e-2);
+    padding: var(--e-6);
+    background: var(--verde-wash);
+    color: var(--tinta);
+  }
+  .bento__envio svg { color: var(--verde); }
+  .bento__envio-titulo { font-size: 1.0625rem; font-weight: 700; margin-top: var(--e-1); }
+  .bento__envio-texto { font-size: 0.875rem; color: var(--gris-800); line-height: 1.55; }
+  .bento__envio-enlace {
+    margin-top: auto;
+    padding-top: var(--e-3);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--verde);
+    text-underline-offset: 3px;
+  }
+
+  /* --- Producto destacado --- */
+  .bento__destacado {
+    display: flex;
+    gap: var(--e-4);
+    padding: var(--e-4);
+    background: var(--papel);
+    border: 1px solid var(--gris-200);
+  }
+  .bento__destacado-marco {
+    flex: 0 0 108px;
+    border-radius: var(--r-tarjeta);
+    overflow: hidden;
+    background: var(--gris-050);
+  }
+  .bento__destacado-marco img { width: 100%; height: 100%; object-fit: cover; aspect-ratio: 4/5; }
+  .bento__destacado-datos { display: flex; flex-direction: column; gap: var(--e-2); justify-content: center; }
+  .bento__destacado-datos h2 { margin: 0; }
+  .bento__destacado-datos a { color: var(--tinta); text-decoration: none; }
+  .bento__destacado-datos a:hover { text-decoration: underline; text-underline-offset: 2px; }
+  .bento__destacado-precio {
+    display: flex; align-items: baseline; gap: var(--e-2);
+    font-size: var(--t-precio); font-weight: 700;
+  }
+  .bento__destacado-precio s { font-size: var(--t-precio-ant); font-weight: 400; color: var(--gris-texto); }
+  .bento__destacado-ahorro { font-size: var(--t-cuotas); font-weight: 600; color: var(--verde); }
+  @media (min-width: 1024px) { .bento__destacado-marco { flex: 0 0 132px; } }
+
+  /* --- Categorías --- */
+  .bento__categoria {
+    display: block;
+    min-height: 190px;
+    color: var(--blanco);
+    text-decoration: none;
+    isolation: isolate;
+  }
+  @media (min-width: 1024px) { .bento__categoria { min-height: 260px; } }
+  .bento__categoria img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: -2;
+    transition: transform var(--v-lento) var(--curva);
+  }
+  .bento__categoria::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(to top, rgba(28, 24, 20, .90) 10%, rgba(28, 24, 20, .18) 100%);
+  }
+  @media (hover: hover) {
+    .bento__categoria:hover img { transform: scale(1.05); }
+  }
+  .bento__categoria-texto {
+    position: absolute;
+    inset: auto 0 0 0;
+    padding: var(--e-4);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .bento__categoria-nombre { font-size: 1.0625rem; font-weight: 600; }
+  .bento__categoria-detalle { font-size: var(--t-meta); color: var(--gris-200); }
+  .bento__categoria-desde { font-size: var(--t-meta); font-weight: 600; margin-top: var(--e-1); }
+
+  /* ============================================================
+     OPINIONES
+     ============================================================ */
+  .seccion-opiniones {
+    padding-block: var(--e-16);
+    margin-top: var(--e-12);
+    background: var(--arena-honda);
+  }
+  .opiniones__cabeza {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--e-4);
+    margin-bottom: var(--e-8);
+  }
+  .opiniones__resumen { display: flex; flex-direction: column; gap: var(--e-1); }
+
+  .opiniones__lista {
+    display: grid;
+    gap: var(--e-4);
+    grid-template-columns: 1fr;
+    list-style: none;
+  }
+  @media (min-width: 768px) { .opiniones__lista { grid-template-columns: repeat(3, 1fr); } }
+
+  .opinion {
+    display: flex;
+    flex-direction: column;
+    gap: var(--e-3);
+    padding: var(--e-5);
+    background: var(--papel);
+    border-radius: var(--r-tarjeta);
+    border: 1px solid var(--gris-200);
+  }
+  .opinion__texto {
+    margin: 0;
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    color: var(--gris-800);
+    flex: 1;
+  }
+  .opinion__pie { display: flex; flex-direction: column; gap: 2px; }
+  .opinion__autor { font-weight: 600; font-size: 0.875rem; }
+  .opinion__producto {
+    margin-top: var(--e-2);
+    font-size: var(--t-meta);
+    font-weight: 600;
+    color: var(--naranja-texto);
+    text-underline-offset: 3px;
+  }
+  .opiniones__aclaracion {
+    margin-top: var(--e-6);
+    font-size: var(--t-meta);
+    color: var(--gris-texto);
+    max-width: 68ch;
+  }
+
+  /* ============================================================
+     CAPTURA DE EMAIL
+     ============================================================ */
+  /* La captura de correo va sobre oliva: es la única zona del sitio,
+     junto con las ofertas, que usa el wash. */
+  .captura {
+    display: grid;
+    gap: var(--e-8);
+    padding: var(--e-10) var(--e-6);
+    background: var(--oferta-wash);
+    border-radius: var(--r-modal);
+  }
+  @media (min-width: 900px) {
+    .captura { grid-template-columns: 1.1fr 1fr; gap: var(--e-16); padding: var(--e-12); align-items: center; }
+  }
+  .captura__texto .t-texto { margin-top: var(--e-3); }
+  .captura__forma { display: flex; flex-direction: column; gap: var(--e-4); }
+  .captura__legal { font-size: var(--t-meta); color: var(--gris-800); line-height: 1.5; }
+  .captura__legal a { color: var(--naranja-texto); }
+</style>

@@ -1,0 +1,58 @@
+---
+/**
+ * Bloque de precio · anclaje, ahorro y cuotas (brief §3.2).
+ * El ahorro en pesos va antes que el porcentaje: en ticket medio el
+ * monto pesa más que el porcentaje.
+ */
+import { precio as fPrecio, cuota } from '@lib/formato';
+
+interface Props {
+  precio: number;
+  precioAnterior?: number;
+  /** Cantidad de cuotas sin interés. 0 desactiva la línea. */
+  cuotas?: number;
+  /** Para productos de conjunto: "$ 3.400 por unidad". */
+  unidades?: number;
+  tamano?: 'tarjeta' | 'ficha';
+  class?: string;
+}
+
+const {
+  precio: valor,
+  precioAnterior,
+  cuotas = 6,
+  unidades,
+  tamano = 'tarjeta',
+  class: clase,
+} = Astro.props;
+
+const hayDescuento = precioAnterior !== undefined && precioAnterior > valor;
+const ahorro = hayDescuento ? precioAnterior - valor : 0;
+const porcentaje = hayDescuento ? Math.round((ahorro / precioAnterior) * 100) : 0;
+const clases = ['precio', tamano === 'ficha' && 'precio--ficha', clase].filter(Boolean).join(' ');
+---
+
+<div class={clases}>
+  <div class="precio__fila">
+    <span class="precio__actual">{fPrecio(valor)}</span>
+    {hayDescuento && (
+      <s class="precio__anterior">
+        <span class="vo">Precio anterior: </span>{fPrecio(precioAnterior)}
+      </s>
+    )}
+  </div>
+
+  {hayDescuento && (
+    <p class="precio__ahorro">Ahorrás {fPrecio(ahorro)} ({porcentaje} %)</p>
+  )}
+
+  {cuotas > 0 && (
+    <p class="precio__cuotas">
+      {cuotas} cuotas sin interés de <b>{cuota(valor, cuotas)}</b>
+    </p>
+  )}
+
+  {unidades && unidades > 1 && (
+    <p class="precio__unitario">{fPrecio(Math.round(valor / unidades))} por unidad</p>
+  )}
+</div>

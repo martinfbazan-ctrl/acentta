@@ -1,0 +1,153 @@
+---
+/**
+ * Marquesina de promesas.
+ * ---------------------------------------------------------------
+ * Color: verde bosque, no coral. Los dos cumplen contraste con
+ * holgura (7,64:1 el verde, 7,07:1 el coral), así que la decisión no
+ * la define la accesibilidad sino el sistema: el naranja está
+ * reservado para lo que se toca o lo que cuesta dinero, y esta franja
+ * no es ninguna de las dos cosas. Además todo lo que anuncia —envío
+ * gratis, devolución sin cargo, cuotas sin interés— ya es verde en el
+ * resto del sitio. Pintarla de coral gastaría el color de acción en
+ * algo que no se puede clicar.
+ *
+ * Velocidad: 45 px por segundo, calculada en el navegador a partir
+ * del ancho real del contenido. Un texto en movimiento se lee cómodo
+ * por debajo de unos 60 px/s; más rápido obliga a seguirlo con la
+ * cabeza y deja de ser información para pasar a ser ruido.
+ *
+ * El bucle sin costura lo arma scripts/marquesina.ts: clona los
+ * grupos necesarios para que la pista siempre sea más ancha que la
+ * pantalla. Con dos copias fijas quedaba un hueco al final de cada
+ * vuelta en monitores anchos.
+ *
+ * La animación se detiene al pasar el mouse y al recibir foco de
+ * teclado, y no ocurre nunca con prefers-reduced-motion. Un mensaje
+ * que se mueve y no se puede parar es una barrera, no una promesa.
+ */
+import { precio } from '@lib/formato';
+import { UMBRAL_ENVIO_GRATIS } from '@tipos/catalogo';
+
+const mensajes = [
+  `Envío gratis superando ${precio(UMBRAL_ENVIO_GRATIS)}`,
+  '30 días para devolverlo, sin cargo',
+  'Hasta 12 cuotas sin interés',
+  'Enviamos a todo el país',
+  'Comprás sin crear cuenta',
+  'El costo del envío se ve antes de pagar',
+];
+
+/* Se emite un solo grupo. Las copias que hagan falta las agrega el
+   navegador, que es el único que sabe cuánto mide el texto una vez
+   cargada la tipografía y cuán ancha es la pantalla. */
+---
+
+<div class="marquesina" data-marquesina>
+  <div class="marquesina__pista">
+    <ul class="marquesina__grupo">
+      {mensajes.map((m) => (
+        <li class="marquesina__item">
+          <span class="marquesina__marca" aria-hidden="true"></span>
+          {m}
+        </li>
+      ))}
+    </ul>
+  </div>
+</div>
+
+<style>
+  .marquesina {
+    /* Valores de arranque; el guion los recalcula con el ancho real. */
+    --velocidad: 34s;
+    --desplazamiento: 1500px;
+    position: relative;
+    overflow: hidden;
+    background: var(--verde);
+    color: var(--blanco);
+    font-size: var(--t-meta);
+    font-weight: 500;
+    letter-spacing: .01em;
+  }
+
+  /* Los bordes se desvanecen: sin esto, el texto aparece y desaparece
+     de golpe contra el filo de la pantalla y se lee como un corte. */
+  .marquesina::before,
+  .marquesina::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 48px;
+    z-index: 2;
+    pointer-events: none;
+  }
+  .marquesina::before { left: 0; background: linear-gradient(to right, var(--verde), transparent); }
+  .marquesina::after { right: 0; background: linear-gradient(to left, var(--verde), transparent); }
+
+  .marquesina__pista {
+    display: flex;
+    width: max-content;
+    /* Capa propia: sin esto, cada cuadro obliga a repintar la franja
+       entera junto con el desenfoque del encabezado que tiene al lado. */
+    will-change: transform;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+  }
+
+  /* La animación no arranca hasta que el guion terminó de medir. Que
+     empiece con valores provisorios y se corrija después es lo que
+     producía el salto: cambiar la duración de una animación en curso
+     la reinicia. */
+  .marquesina[data-listo] .marquesina__pista {
+    animation: correr var(--velocidad) linear infinite;
+  }
+
+  /* El desplazamiento va en píxeles y no en porcentaje: el porcentaje
+     se mide contra la pista, cuyo ancho cambia con la cantidad de
+     copias que agrega el guion. En píxeles siempre es un grupo exacto. */
+  @keyframes correr {
+    from { transform: translate3d(0, 0, 0); }
+    to   { transform: translate3d(calc(var(--desplazamiento) * -1), 0, 0); }
+  }
+
+  /* Pausas. Todas por CSS, para que puedan convivir: el mouse encima,
+     el foco de teclado, la franja fuera de pantalla y la pestaña en
+     segundo plano. Si una de estas se resolviera con estilo en línea
+     desde el guion, pisaría a las demás. */
+  .marquesina:hover .marquesina__pista,
+  .marquesina:focus-within .marquesina__pista,
+  .marquesina[data-pausa-fuera] .marquesina__pista,
+  .marquesina[data-pausa-oculto] .marquesina__pista {
+    animation-play-state: paused;
+  }
+
+  .marquesina__grupo { display: flex; }
+
+  .marquesina__item {
+    display: flex;
+    align-items: center;
+    gap: var(--e-3);
+    padding-inline: var(--e-5);
+    min-height: 36px;
+    white-space: nowrap;
+  }
+
+  /* El separador es el acento del sistema, a escala de franja. */
+  .marquesina__marca {
+    width: 3px;
+    height: 11px;
+    background: currentColor;
+    opacity: .55;
+    border-radius: 999px;
+    flex: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .marquesina { overflow-x: auto; }
+    .marquesina__pista { animation: none; width: auto; transform: none; will-change: auto; }
+    /* Sin movimiento alcanza con el grupo original: los clones existen
+       sólo para que el bucle no tenga costura. */
+    .marquesina__grupo[aria-hidden='true'] { display: none; }
+    .marquesina::before, .marquesina::after { display: none; }
+  }
+</style>

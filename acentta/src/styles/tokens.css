@@ -1,0 +1,155 @@
+/* ============================================================
+   acentta · tokens del sistema · paleta cálida
+   ------------------------------------------------------------
+   Revisión de paleta: se abandona el blanco puro y los grises fríos.
+   El sitio pasa a apoyarse sobre arena, con neutros cálidos y
+   semánticos terrosos. Motivo comercial, no estético: la tienda no
+   tiene reputación, y el recorrido tiene que dar calma en vez de
+   apuro. Todos los valores están verificados contra los dos fondos
+   reales del sitio (arena y oliva), no sólo contra blanco.
+   ============================================================ */
+
+:root {
+  /* ---------- SUPERFICIES ---------- */
+  --arena: #F9F5EF;        /* fondo general del sitio */
+  --arena-honda: #EFE8DC;  /* secciones alternadas y hover de superficie */
+  --papel: #FFFFFF;        /* tarjetas y superficies elevadas */
+  --oferta-wash: #DCDF9E;  /* zona de oferta · oliva */
+  --blanco: #FFFFFF;       /* texto sobre color */
+
+  /* [NOTA] El fondo se aclaró de #F5E6D3 a #F9F5EF para quitarle peso
+     visual. La consecuencia es que la tarjeta ya casi no se distingue
+     por relleno: contra el fondo anterior el papel cálido daba 1,20:1,
+     contra este da 1,06:1 — plano.
+     Por eso la tarjeta pasa a blanco puro (1,09:1, el máximo posible
+     sobre este fondo) y la separación queda a cargo del borde, que da
+     1,35:1. Con un fondo saturado el blanco puro se veía azulado; con
+     uno tan claro esa diferencia desaparece y el borde hace el trabajo
+     mejor que el relleno. */
+
+  /* ---------- TEXTO · neutros cálidos ---------- */
+  --tinta: #1C1814;      /* principal · 16,3:1 fondo · 12,7:1 oliva */
+  --gris-800: #4A4038;   /* secundario · 9,3:1 fondo · 7,3:1 oliva */
+  --gris-texto: #665A50; /* metadatos y precio tachado · 6,2:1 fondo · 4,8:1 oliva */
+  --gris-500: #9C8C7A;   /* decorativo: íconos y separadores. No apto para texto. */
+  --gris-200: #E3D3BC;   /* bordes · 1,35:1 sobre el fondo, 1,43:1 sobre papel */
+  --gris-050: #F7F3EC;   /* fondo sutil dentro de una tarjeta */
+
+  /* [NOTA] Los grises fríos anteriores (#3D4450, #6B6B6B) tenían tinte
+     azul y sobre arena se veían sucios. Además #6B6B6B caía a 4,35:1
+     sobre arena: por debajo de AA. Los cálidos contrastan mejor. */
+
+  /* ---------- ACCIÓN ---------- */
+  --naranja-marca: #FF6A3D;         /* el del logo · decorativo y resplandor */
+  --naranja-accion: #B8431C;        /* relleno de botón · blanco encima 5,44:1 ✓ */
+  --naranja-accion-hover: #9C3714;  /* blanco encima 7,07:1 ✓ */
+  --naranja-accion-activo: #872F11;
+  /* El naranja de texto cambia según sobre qué se apoya. Un solo valor
+     no puede servir a los tres fondos del sitio: lo que se lee sobre
+     arena desaparece sobre la foto oscura del hero — #9C3714 ahí daba
+     2,59:1. Los tres valores están medidos, no estimados. */
+  --naranja-texto: #B03D14;         /* fondo 5,49:1 · papel 6,15:1 */
+  --naranja-texto-oliva: #9C3714;   /* sobre el wash oliva: 5,08:1 */
+  --naranja-texto-oscuro: #FF6A3D;  /* sobre superficie oscura: 6,42:1 */
+
+  /* [DESVÍO 1] El brief pide hover en --naranja-marca. Con texto blanco
+     da 2,85:1 y rompe la meta de AA sin excepciones. El relleno se
+     oscurece y el naranja de marca vuelve como resplandor cálido
+     alrededor del botón: la luz vive por fuera del relleno, así que el
+     texto nunca pierde contraste. La tienda vende iluminación — el
+     botón se enciende como el producto. */
+
+  /* ---------- SEMÁNTICOS · terrosos ---------- */
+  --verde: #2F5D3A;       /* ahorro, envío gratis, confirmación · 7,0:1 fondo */
+  --verde-wash: #E6EDDD;
+  --rojo: #A8342A;        /* agotado, error, urgencia real · 6,1:1 fondo */
+  --rojo-wash: #F7E7E2;
+  --amarillo: #E0A32B;    /* estrellas · decorativo, el dato vive en el número */
+  --amarillo-borde: #8A6212;
+
+  /* [SIN GESTO DE ACENTO]
+     El logo pasó por tres versiones: diagonal de 21°, barra vertical
+     colgada, y el wordmark actual, que no tiene ninguna de las dos.
+     Las barras verticales que había repartidas por el sitio —hero,
+     banner de oferta, resumen del pedido, captura de correo— salieron
+     con esta versión. Un sistema no puede sostener un gesto que la
+     marca ya no tiene: quedaría como una cita a un logo que nadie vio.
+     Si vuelve un acento gráfico, vuelve como token y se aplica en un
+     solo lugar. */
+
+  /* ---------- ESPACIADO · escala de 4 px ---------- */
+  --e-1: 4px;   --e-2: 8px;   --e-3: 12px;  --e-4: 16px;
+  --e-5: 20px;  --e-6: 24px;  --e-8: 32px;  --e-10: 40px;
+  --e-12: 48px; --e-16: 64px; --e-20: 80px; --e-24: 96px;
+
+  /* ---------- RADIOS ----------
+     Se agrandan respecto de la versión anterior. La pastilla del logo
+     tiene 30 px de radio sobre 243 de alto: es una marca redonda, y
+     unas esquinas de 2 px la contradecían en cada tarjeta. */
+  --r-badge: 4px;
+  --r-tarjeta: 10px;
+  --r-modal: 16px;
+  --r-pastilla: 999px;
+
+  /* ---------- ELEVACIÓN · dos niveles ----------
+     Sombras cálidas: una sombra neutra sobre arena se ve gris sucia. */
+  --sombra-1: 0 1px 2px rgba(60, 42, 22, .07), 0 2px 5px rgba(60, 42, 22, .07);
+  --sombra-2: 0 6px 16px rgba(60, 42, 22, .10), 0 14px 32px rgba(60, 42, 22, .10);
+
+  /* ---------- TIPOGRAFÍA ---------- */
+  --fuente: "Inter Variable", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  /* móvil → escritorio, fluido entre 360 px y 1280 px */
+  --t-titular: clamp(1.75rem, 1.13rem + 2.76vw, 2.75rem);      /* 28 → 44 */
+  --t-seccion: clamp(1.5rem, 1.24rem + 1.18vw, 2.125rem);      /* 24 → 34 */
+  --t-producto: clamp(0.9375rem, 0.91rem + 0.12vw, 1rem);      /* 15 → 16 */
+  --t-precio: clamp(1.0625rem, 1.01rem + 0.24vw, 1.1875rem);   /* 17 → 19 */
+  --t-precio-ant: clamp(0.8125rem, 0.79rem + 0.12vw, 0.875rem);/* 13 → 14 */
+  --t-cuotas: clamp(0.8125rem, 0.79rem + 0.12vw, 0.875rem);    /* 13 → 14 */
+  --t-meta: clamp(0.75rem, 0.73rem + 0.12vw, 0.8125rem);       /* 12 → 13 */
+  --t-texto: clamp(1.0625rem, 1.04rem + 0.12vw, 1.125rem);     /* 17 → 18 */
+
+  /* El titular de campaña baja de 700 a 500. Con la paleta cálida, un
+     display en negrita empuja; en medio 500 el titular sostiene el tamaño
+     sin levantar la voz — que es exactamente el recorrido que se busca.
+     El tracking se cierra a −2,5 % para compensar: menos peso deja más
+     aire entre letras, y sin ajustarlo el titular se desarma. */
+  --peso-titular: 500;
+  --tracking-titular: -0.025em;
+  --interlinea-texto: 1.65;
+
+  /* ---------- CONTROLES ----------
+     Un solo alto para la pastilla del logo y la barra de búsqueda. Dos
+     rectángulos redondeados del mismo alto a los lados del encabezado
+     se leen como un sistema; distintos, como un descuido. Y atados al
+     mismo token no pueden volver a desalinearse. */
+  --alto-control: 44px;
+
+  /* ---------- LAYOUT ----------
+     El contenedor se ensancha de 1280 a 1480 px: más panorámico sin
+     llegar a borde a borde. Full-bleed en un e-commerce estira la
+     grilla hasta que comparar productos obliga a mover la cabeza; a
+     1480 la fila de cuatro sigue entrando en un barrido de ojos.
+     La prosa no acompaña: sigue limitada por medida de lectura. */
+  --ancho-max: 1480px;
+  --ancho-texto: 68ch;
+  --gutter: var(--e-4);
+  --columnas: 4;
+
+  /* ---------- MOVIMIENTO ---------- */
+  --v-rapido: 120ms;
+  --v-medio: 220ms;
+  --v-lento: 420ms;
+  --curva: cubic-bezier(.2, .7, .3, 1);
+
+  /* ---------- FOCO ---------- */
+  --foco-color: var(--tinta);
+}
+
+@media (min-width: 768px) {
+  :root {
+    --gutter: var(--e-6);
+    --columnas: 12;
+    --alto-control: 52px;
+  }
+}

@@ -1,0 +1,130 @@
+---
+/**
+ * Tarjeta de producto · 3 variantes
+ * ---------------------------------------------------------------
+ * grilla     — la del listado y la home
+ * destacada  — horizontal, para el bloque principal del bento
+ * carrito    — fila compacta, para el mini-carrito y el carrito
+ *
+ * Decisiones que valen la pena:
+ * · El rating va en la tarjeta, no sólo en la ficha. La prueba social
+ *   tiene que estar donde se compara, no donde ya se decidió.
+ * · El envío se anuncia acá si es gratis. El costo de envío sorpresa
+ *   es la principal causa de abandono de carrito; adelantarlo cuando
+ *   es buena noticia es gratis y cuando es mala evita el reclamo.
+ * · El badge de estado se calcula del stock real (ver lib/catalogo).
+ */
+import Badge from '@componentes/Badge.astro';
+import Precio from '@componentes/Precio.astro';
+import Rating from '@componentes/Rating.astro';
+import Boton from '@componentes/Boton.astro';
+import { foto, srcset, TAMANOS_GRILLA } from '@lib/imagenes';
+import { badgeDeEstado, estaAgotado, tieneDescuento, ahorroEnPorcentaje, atributosDeFiltro, datosParaCarrito } from '@lib/catalogo';
+import { UMBRAL_ENVIO_GRATIS, type Producto } from '@tipos/catalogo';
+
+interface Props {
+  producto: Producto;
+  variante?: 'grilla' | 'destacada' | 'carrito';
+  /** Número de ranking para "Más vendidos". La posición convierte
+   *  mejor que la grilla plana, pero sólo si el ranking es real. */
+  posicion?: number;
+  /** La primera fila de la home no va diferida: es el LCP. */
+  prioritaria?: boolean;
+  /** Agrega los atributos que lee el filtro del navegador. */
+  filtrable?: boolean;
+  class?: string;
+}
+
+const {
+  producto: p,
+  variante = 'grilla',
+  posicion,
+  prioritaria = false,
+  filtrable = false,
+  class: clase,
+} = Astro.props;
+
+const atributos = filtrable ? atributosDeFiltro(p) : {};
+const datosCarrito = JSON.stringify(datosParaCarrito(p));
+
+const agotado = estaAgotado(p);
+const estado = badgeDeEstado(p);
+const conDescuento = tieneDescuento(p);
+const envioGratis = p.precio >= UMBRAL_ENVIO_GRATIS;
+const portada = p.imagenes[0]!;
+const enlace = `/producto/${p.slug}`;
+
+const clases = [
+  'ficha-prod',
+  `ficha-prod--${variante}`,
+  agotado && 'ficha-prod--agotado',
+  clase,
+].filter(Boolean).join(' ');
+---
+
+<article class={clases} {...atributos}>
+  <div class="ficha-prod__medio">
+    <a class="ficha-prod__enlace-foto" href={enlace} tabindex="-1" aria-hidden="true">
+      <img
+        class="ficha-prod__foto"
+        src={foto(portada.src, 800)}
+        srcset={srcset(portada.src)}
+        sizes={TAMANOS_GRILLA}
+        alt={portada.alt}
+        width={portada.ancho}
+        height={portada.alto}
+        loading={prioritaria ? 'eager' : 'lazy'}
+        fetchpriority={prioritaria ? 'high' : 'auto'}
+        decoding="async"
+      />
+    </a>
+
+    {posicion !== undefined && (
+      <span class="ficha-prod__puesto tabular" aria-hidden="true">{posicion}</span>
+    )}
+
+    <div class="ficha-prod__marcas">
+      {conDescuento && !agotado && <Badge variante="descuento" porcentaje={ahorroEnPorcentaje(p)} />}
+      {estado && <Badge variante={estado} />}
+    </div>
+  </div>
+
+  <div class="ficha-prod__cuerpo">
+    <h3 class="ficha-prod__nombre t-producto">
+      <a href={enlace}>
+        {posicion !== undefined && <span class="vo">Puesto {posicion} en más vendidos. </span>}
+        {p.nombre}
+      </a>
+    </h3>
+
+    <Rating puntaje={p.rating} cantidad={p.cantidadOpiniones} class="ficha-prod__rating" />
+
+    <Precio
+      precio={p.precio}
+      precioAnterior={p.precioAnterior}
+      cuotas={p.precio >= 30000 ? 6 : 3}
+      class="ficha-prod__precio"
+    />
+
+    <p class={`ficha-prod__envio ${envioGratis ? 'es-gratis' : ''}`}>
+      {envioGratis ? (
+        <>
+          <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true" fill="currentColor">
+            <path d="M6.2 11.4 3.3 8.5l-1.1 1.1 4 4 7.6-7.6-1.1-1.1z" />
+          </svg>
+          Envío gratis
+        </>
+      ) : (
+        'Envío calculado por código postal'
+      )}
+    </p>
+
+    <div class="ficha-prod__accion">
+      {agotado ? (
+        <Boton jerarquia="secundario" tamano="chico" ancho deshabilitado>Sin stock</Boton>
+      ) : (
+        <Boton tamano="chico" ancho data-agregar data-producto={datosCarrito}>Agregar</Boton>
+      )}
+    </div>
+  </div>
+</article>

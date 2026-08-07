@@ -1,0 +1,30 @@
+---
+import Base from '@layouts/Base.astro';
+import Encabezado from '@componentes/Encabezado.astro';
+import Pie from '@componentes/Pie.astro';
+import Listado from '@componentes/Listado.astro';
+import { masVendidos } from '@lib/catalogo';
+
+/* El ranking sale de unidades vendidas reales. Un producto sin ese
+   dato no aparece acá, aunque sea bueno: inventar una posición es
+   la manera más barata de mentir en un e-commerce. */
+const productos = masVendidos(12);
+---
+
+<Base
+  titulo="Lo más vendido · acentta"
+  descripcion="Los productos que más se vendieron, ordenados por unidades reales."
+>
+  <Encabezado slot="encabezado" />
+  <Listado
+    titulo="Lo más vendido"
+    descripcion="Ordenado por unidades vendidas reales. Si un producto todavía no tiene ese dato, no entra en el ranking — la posición vale sólo si se ganó."
+    productos={productos}
+    migas={[{ nombre: 'Inicio', href: '/' }, { nombre: 'Lo más vendido' }]}
+  />
+  <Pie slot="pie" />
+</Base>
+
+<script>
+  import '../scripts/listado';
+</script>

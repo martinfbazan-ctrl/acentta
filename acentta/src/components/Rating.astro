@@ -1,0 +1,46 @@
+---
+/**
+ * Rating.
+ * Las estrellas son decorativas (aria-hidden). El dato accesible es el
+ * número, que además cumple contraste sin depender del amarillo.
+ */
+import { decimal, numero } from '@lib/formato';
+
+interface Props {
+  puntaje?: number;
+  cantidad: number;
+  /** Enlaza a las opiniones de la ficha. */
+  href?: string;
+  /** Para testimonios: muestra sólo las estrellas. El puntaje sigue
+   *  anunciándose al lector de pantalla. */
+  soloEstrellas?: boolean;
+  class?: string;
+}
+
+const { puntaje, cantidad, href, soloEstrellas = false, class: clase } = Astro.props;
+const sinOpiniones = cantidad === 0 || puntaje === undefined;
+const llenas = sinOpiniones ? 0 : Math.round(puntaje);
+const clases = ['rating', sinOpiniones && 'rating--sin-opiniones', clase].filter(Boolean).join(' ');
+const Etiqueta = href ? 'a' : 'div';
+---
+
+<Etiqueta class={clases} href={href}>
+  <span class="rating__estrellas" aria-hidden="true">
+    {[1, 2, 3, 4, 5].map((i) => (
+      <svg class={`rating__estrella ${i > llenas ? 'rating__estrella--vacia' : ''}`} viewBox="0 0 24 24">
+        <path d="M12 2.5l2.9 6.1 6.6.9-4.8 4.6 1.2 6.6-5.9-3.2-5.9 3.2 1.2-6.6L2.5 9.5l6.6-.9z" />
+      </svg>
+    ))}
+  </span>
+  {soloEstrellas ? (
+    <span class="vo">{decimal(puntaje ?? 0)} de 5</span>
+  ) : sinOpiniones ? (
+    <span class="rating__cantidad">Todavía sin opiniones</span>
+  ) : (
+    <>
+      <span class="rating__numero">{decimal(puntaje!)}</span>
+      <span class="rating__cantidad">({numero(cantidad)})</span>
+      <span class="vo">de 5, sobre {numero(cantidad)} opiniones</span>
+    </>
+  )}
+</Etiqueta>

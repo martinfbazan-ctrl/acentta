@@ -1,0 +1,34 @@
+---
+import Base from '@layouts/Base.astro';
+import Encabezado from '@componentes/Encabezado.astro';
+import Pie from '@componentes/Pie.astro';
+import Listado from '@componentes/Listado.astro';
+import { todos, tieneDescuento, ahorroEnPorcentaje } from '@lib/catalogo';
+
+/* Sólo entran los que tienen un precio anterior real y mayor.
+   No hay una lista de "productos en promoción" cargada a mano que
+   pueda quedar desactualizada. */
+const productos = todos()
+  .filter(tieneDescuento)
+  .sort((a, b) => ahorroEnPorcentaje(b) - ahorroEnPorcentaje(a));
+
+const maximo = ahorroEnPorcentaje(productos[0]!);
+---
+
+<Base
+  titulo="Ofertas · acentta"
+  descripcion={`Productos con descuento real sobre el precio anterior. Hasta ${maximo} % menos en decoración e iluminación.`}
+>
+  <Encabezado slot="encabezado" />
+  <Listado
+    titulo="En oferta"
+    descripcion={`Hasta ${maximo} % de descuento. El precio tachado es el precio al que se vendió antes, no un precio inventado para que el descuento parezca más grande.`}
+    productos={productos}
+    migas={[{ nombre: 'Inicio', href: '/' }, { nombre: 'Ofertas' }]}
+  />
+  <Pie slot="pie" />
+</Base>
+
+<script>
+  import '../scripts/listado';
+</script>

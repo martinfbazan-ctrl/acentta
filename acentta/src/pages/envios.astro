@@ -1,0 +1,103 @@
+---
+import Documento from '@layouts/Documento.astro';
+import { ZONAS } from '@lib/envio';
+import { precio } from '@lib/formato';
+import { UMBRAL_ENVIO_GRATIS } from '@tipos/catalogo';
+---
+
+<Documento
+  titulo="Envíos y plazos"
+  bajada="Cuánto sale, cuánto tarda y qué pasa si algo se demora. Todo acá, no en letra chica."
+  descripcion="Costos de envío por zona, plazos reales y política de demoras de acentta."
+  actualizado="1 de agosto de 2026"
+  indice={[
+    { id: 'gratis', nombre: 'Envío gratis' },
+    { id: 'costos', nombre: 'Costos por zona' },
+    { id: 'plazos', nombre: 'Plazos reales' },
+    { id: 'demoras', nombre: 'Si se demora' },
+    { id: 'seguimiento', nombre: 'Seguimiento' },
+  ]}
+>
+  <div class="destacado">
+    <p>
+      <strong>Superando {precio(UMBRAL_ENVIO_GRATIS)} el envío es gratis</strong>, a
+      cualquier punto del país. Por debajo de ese monto, el costo exacto aparece en la
+      ficha de cada producto apenas escribís tu código postal — no esperás al último paso
+      del checkout para enterarte.
+    </p>
+  </div>
+
+  <h2 id="gratis">Envío gratis</h2>
+  <p>
+    El umbral se calcula sobre el subtotal de productos, antes del envío. No hay tope de
+    peso ni de cantidad: si el pedido supera {precio(UMBRAL_ENVIO_GRATIS)}, el envío es
+    gratis aunque sean tres alfombras.
+  </p>
+  <p>
+    En el carrito vas a ver una barra que indica cuánto falta para alcanzarlo. Está ahí
+    porque es información útil, no para presionarte: si no llegás, el costo se muestra y
+    listo.
+  </p>
+
+  <h2 id="costos">Costos por zona</h2>
+  <p>
+    El costo depende de la zona y del peso. Estos son los valores base para envíos de
+    hasta 5 kg; por encima se suma un adicional por kilo.
+  </p>
+  <table>
+    <thead>
+      <tr><th>Zona</th><th>Desde</th><th>Kilo adicional</th></tr>
+    </thead>
+    <tbody>
+      {ZONAS.map((z) => (
+        <tr>
+          <td><b>{z.nombre}</b></td>
+          <td class="tabular">{precio(z.base)}</td>
+          <td class="tabular">{precio(z.porKiloExtra)}</td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+  <p>
+    El <strong>retiro en sucursal del correo</strong> descuenta {precio(1200)} y suele
+    llegar un día antes que la entrega a domicilio.
+  </p>
+
+  <h2 id="plazos">Plazos reales</h2>
+  <p>
+    Los plazos que mostramos son los que efectivamente tarda el pedido, no los que nos
+    gustaría que tardara. Se cuentan en días hábiles desde que el pago se acredita, e
+    incluyen el tiempo de preparación.
+  </p>
+  <p>
+    En la ficha de cada producto no vas a ver "7 a 14 días hábiles" sino
+    <strong>una fecha</strong>: "llega entre el 12 y el 18 de agosto". Nadie calcula días
+    hábiles de memoria, y traducirlo nosotros evita el malentendido más común del comercio
+    electrónico.
+  </p>
+
+  <h3>Por qué los plazos son largos</h3>
+  <p>
+    acentta trabaja con dropshipping: los productos salen del depósito del proveedor y no
+    de un local nuestro. Eso permite un catálogo más amplio y precios más bajos, y a cambio
+    suma días de tránsito. Preferimos decirlo antes de que compres.
+  </p>
+
+  <h2 id="demoras">Si se demora</h2>
+  <p>
+    Si el pedido supera en <strong>más de cinco días hábiles</strong> la fecha máxima
+    estimada, podés pedir el reintegro completo sin explicar nada, y lo procesamos dentro
+    de las 48 h. No hace falta esperar a que aparezca.
+  </p>
+  <p>
+    Si el paquete se pierde o llega dañado, lo reponemos o devolvemos el dinero, a tu
+    elección. El costo de la logística lo asumimos nosotros en los dos casos.
+  </p>
+
+  <h2 id="seguimiento">Seguimiento</h2>
+  <p>
+    Cuando el pedido sale del depósito te llega un correo con el número de seguimiento.
+    También podés consultarlo en cualquier momento desde la página de
+    <a href="/seguimiento">seguimiento de pedido</a> con el número que te dimos al comprar.
+  </p>
+</Documento>

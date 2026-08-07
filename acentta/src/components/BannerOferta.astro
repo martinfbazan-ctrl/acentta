@@ -1,0 +1,28 @@
+---
+/**
+ * Banner de oferta con corte diagonal.
+ * El corte usa el ángulo medido en el logo (21°). El barrido de entrada
+ * ocurre una sola vez, al entrar en viewport, y se anula con
+ * prefers-reduced-motion.
+ */
+interface Props {
+  titulo: string;
+  bajada?: string;
+  /** Fecha real de fin. Sin fecha real, no se muestra urgencia. */
+  hasta?: string;
+  class?: string;
+}
+const { titulo, bajada, hasta, class: clase } = Astro.props;
+---
+
+<div class={['banner-oferta', clase].filter(Boolean).join(' ')} data-banner-oferta>
+  <span class="banner-oferta__barrido" aria-hidden="true"></span>
+  <div class="banner-oferta__bloque">
+    <p class="t-seccion" style="color:inherit">{titulo}</p>
+    {hasta && <p class="t-meta" style="color:var(--gris-200)">Hasta el {hasta}</p>}
+  </div>
+  <div class="banner-oferta__contenido">
+    {bajada && <p class="t-meta" style="color:var(--gris-800)">{bajada}</p>}
+    <div style="margin-top:12px"><slot /></div>
+  </div>
+</div>

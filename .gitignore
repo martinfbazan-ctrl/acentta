@@ -1,0 +1,39 @@
+# acentta · qué NO entra al control de versiones
+# ---------------------------------------------------------------
+# El criterio es uno solo: se versiona lo que se escribe a mano,
+# no lo que una herramienta puede volver a generar. Un repositorio
+# con artefactos generados adentro ensucia cada comparación con
+# miles de líneas que nadie escribió, y esconde los cambios reales.
+
+# Dependencias. Se reinstalan con `npm install` a partir de
+# package.json, que sí está versionado.
+node_modules/
+
+# Salida de `astro build` y su caché de tipos.
+dist/
+.astro/
+
+# Copia local para revisar el sitio sin servidor. La rehace
+# `npm run vista-previa` a partir de dist/. Son ~2,4 MB de archivos
+# derivados: versionarlos sería guardar la misma información dos
+# veces, una de ellas desactualizada.
+vista-previa/
+ABRIR-VISTA-PREVIA.html
+
+# Variables de entorno. Nunca deben viajar al repositorio: es la
+# forma más común de publicar una clave sin querer.
+.env
+.env.*
+!.env.example
+
+# Basura del sistema operativo y de los editores.
+Thumbs.db
+desktop.ini
+.DS_Store
+*.swp
+.vscode/
+.idea/
+
+# Registros de npm cuando algo falla.
+npm-debug.log*
+*.log

@@ -1,0 +1,133 @@
+---
+import Base from '@layouts/Base.astro';
+import Encabezado from '@componentes/Encabezado.astro';
+import Pie from '@componentes/Pie.astro';
+import Migas from '@componentes/Migas.astro';
+import Campo from '@componentes/Campo.astro';
+import Boton from '@componentes/Boton.astro';
+---
+
+<Base
+  titulo="Contacto · acentta"
+  descripcion="Escribinos. Respondemos dentro de las 24 horas hábiles."
+>
+  <Encabezado slot="encabezado" />
+
+  <div class="contenedor contacto">
+    <Migas pasos={[{ nombre: 'Inicio', href: '/' }, { nombre: 'Contacto' }]} class="contacto__migas" />
+
+    <div class="contacto__cuerpo">
+      <div class="contacto__texto">
+        <h1 class="t-titular">Escribinos</h1>
+        <p class="t-texto">
+          Respondemos dentro de las <b>24 horas hábiles</b>. No es una promesa de
+          marketing: es el plazo que sostenemos, y si alguna vez no llegamos, lo decimos.
+        </p>
+
+        <dl class="datos">
+          <div class="datos__fila">
+            <dt>Correo</dt>
+            <dd><a href="mailto:hola@acentta.com.ar">hola@acentta.com.ar</a></dd>
+          </div>
+          <div class="datos__fila">
+            <dt>Horario</dt>
+            <dd>Lunes a viernes de 9 a 18 h</dd>
+          </div>
+          <div class="datos__fila">
+            <dt>Dónde estamos</dt>
+            <dd>Buenos Aires, Argentina</dd>
+          </div>
+        </dl>
+
+        <div class="contacto__atajos">
+          <p class="contacto__atajos-titulo">Puede que ya esté respondido</p>
+          <ul>
+            <li><a href="/ayuda">Preguntas frecuentes</a></li>
+            <li><a href="/envios">Costos y plazos de envío</a></li>
+            <li><a href="/devoluciones">Cómo devolver un producto</a></li>
+            <li><a href="/seguimiento">Dónde está mi pedido</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <form class="contacto__forma" data-contacto novalidate>
+        <Campo id="ct-nombre" etiqueta="Tu nombre" requerido autocompletar="name" />
+        <Campo id="ct-email" etiqueta="Tu correo" tipo="email" requerido autocompletar="email"
+               ayuda="Ahí te respondemos." />
+        <Campo id="ct-pedido" etiqueta="Número de pedido" marcador="AC-12345678"
+               ayuda="Si tu consulta es sobre una compra, con esto vamos más rápido." />
+        <Campo id="ct-mensaje" etiqueta="Tu consulta" areaTexto requerido
+               marcador="Contanos qué necesitás." />
+        <Boton tipo="submit" tamano="grande">Enviar consulta</Boton>
+        <p class="contacto__aviso" data-contacto-aviso hidden></p>
+        <p class="contacto__legal">
+          Usamos tus datos sólo para responderte. Ver la
+          <a href="/privacidad">política de privacidad</a>.
+        </p>
+      </form>
+    </div>
+  </div>
+
+  <Pie slot="pie" />
+</Base>
+
+<script>
+  import '../scripts/contacto';
+</script>
+
+<style>
+  .contacto { padding-block: var(--e-6) var(--e-16); }
+  .contacto__migas { margin-bottom: var(--e-8); }
+  .contacto__cuerpo { display: grid; gap: var(--e-12); align-items: start; }
+  @media (min-width: 900px) {
+    .contacto__cuerpo { grid-template-columns: minmax(0, 1fr) minmax(0, 480px); gap: var(--e-16); }
+  }
+
+  .contacto__texto .t-texto { margin-top: var(--e-4); }
+
+  .datos { margin-top: var(--e-8); display: flex; flex-direction: column; gap: var(--e-4); }
+  .datos__fila { display: flex; flex-direction: column; gap: 2px; }
+  .datos dt {
+    font-size: var(--t-meta);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: var(--gris-texto);
+  }
+  .datos dd { margin: 0; font-size: 1.0625rem; }
+  .datos a { color: var(--naranja-texto); font-weight: 600; }
+
+  .contacto__atajos {
+    margin-top: var(--e-10);
+    padding: var(--e-5);
+    background: var(--gris-050);
+    border-radius: var(--r-modal);
+  }
+  .contacto__atajos-titulo { font-weight: 600; margin-bottom: var(--e-3); }
+  .contacto__atajos ul { display: flex; flex-direction: column; gap: var(--e-2); }
+  .contacto__atajos a { color: var(--gris-800); font-size: 0.9375rem; }
+
+  .contacto__forma {
+    display: flex;
+    flex-direction: column;
+    gap: var(--e-5);
+    padding: var(--e-6);
+    background: var(--papel);
+    border: 1px solid var(--gris-200);
+    border-radius: var(--r-modal);
+  }
+  @media (min-width: 900px) { .contacto__forma { padding: var(--e-8); } }
+
+  .contacto__legal { font-size: var(--t-meta); color: var(--gris-texto); line-height: 1.5; }
+  .contacto__legal a { color: var(--naranja-texto); }
+
+  .contacto__aviso {
+    padding: var(--e-4);
+    background: var(--verde-wash);
+    border-left: 3px solid var(--verde);
+    border-radius: var(--r-tarjeta);
+    font-size: 0.9375rem;
+    line-height: 1.55;
+    color: var(--gris-800);
+  }
+</style>

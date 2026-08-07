@@ -1,0 +1,185 @@
+---
+/**
+ * Confirmación del pedido.
+ * ---------------------------------------------------------------
+ * La pantalla más subestimada del comercio electrónico. Es el único
+ * momento en que alguien que acaba de gastar plata está mirando con
+ * atención, y la mayoría de las tiendas la usan para decir "gracias
+ * por su compra" y nada más.
+ *
+ * Acá responde las tres preguntas que quedan abiertas después de
+ * pagar: qué pasa ahora, cuándo llega, y qué hago si me arrepiento.
+ * Las tres estaban sin responder y las tres generan el correo de
+ * soporte que nadie quiere escribir.
+ */
+import Base from '@layouts/Base.astro';
+import Encabezado from '@componentes/Encabezado.astro';
+import Pie from '@componentes/Pie.astro';
+import Boton from '@componentes/Boton.astro';
+---
+
+<Base
+  titulo="Pedido confirmado · acentta"
+  descripcion="Gracias por tu compra."
+  sinIndexar={true}
+>
+  <Encabezado slot="encabezado" />
+
+  <div class="contenedor confirmacion">
+    <div class="confirmacion__sello">
+      <svg width="30" height="30" viewBox="0 0 16 16" aria-hidden="true" fill="currentColor">
+        <path d="M6.2 11.4 3.3 8.5l-1.1 1.1 4 4 7.6-7.6-1.1-1.1z" />
+      </svg>
+    </div>
+
+    <h1 class="t-titular">Listo, tu pedido está confirmado</h1>
+
+    <p class="confirmacion__numero">
+      Número de pedido: <b class="tabular" data-numero-pedido>—</b>
+    </p>
+
+    <p class="t-texto">
+      Te mandamos el detalle a <b data-email-pedido>tu correo</b>. Ahí va a estar el
+      número de seguimiento apenas el paquete salga del depósito.
+    </p>
+
+    <div class="confirmacion__caja">
+      <h2 class="confirmacion__subtitulo">Qué pasa ahora</h2>
+      <ol class="pasos-siguientes">
+        <li><b>Preparamos el pedido.</b> Entre hoy y mañana lo empaquetamos en el depósito.</li>
+        <li><b>Sale y te avisamos.</b> Cuando lo despachamos te llega el número de seguimiento por correo.</li>
+        <li><b>Llega a tu casa</b><span data-fecha-entrega></span>. Si no hay nadie, el correo deja aviso y reintenta al día siguiente.</li>
+      </ol>
+    </div>
+
+    <div class="confirmacion__resumen" data-resumen-pedido hidden>
+      <h2 class="confirmacion__subtitulo">Tu pedido</h2>
+      <div class="confirmacion__items" data-items-pedido></div>
+      <dl class="confirmacion__cuentas">
+        <div><dt>Envío</dt><dd class="tabular" data-envio-pedido>—</dd></div>
+        <div class="es-total"><dt>Total pagado</dt><dd class="tabular" data-total-pedido>—</dd></div>
+      </dl>
+    </div>
+
+    <div class="confirmacion__acciones">
+      <Boton href="/seguimiento" tamano="grande">Seguir mi pedido</Boton>
+      <Boton href="/ofertas" jerarquia="secundario" tamano="grande">Seguir mirando</Boton>
+    </div>
+
+    <p class="confirmacion__arrepentimiento">
+      ¿Te arrepentiste? Tenés 10 días corridos para cancelar sin dar explicaciones,
+      con el <a href="/arrepentimiento">botón de arrepentimiento</a>. Y 30 días para
+      devolverlo si ya llegó y no te convence.
+    </p>
+
+    <p class="confirmacion__aviso">
+      acentta es un proyecto conceptual de portafolio. No se procesó ningún pago
+      real ni se guardó ningún dato personal.
+    </p>
+  </div>
+
+  <Pie slot="pie" />
+</Base>
+
+<script>
+  import '../scripts/confirmacion';
+</script>
+
+<style>
+  .confirmacion {
+    max-width: 68ch;
+    padding-block: var(--e-16) var(--e-24);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--e-4);
+  }
+  .confirmacion__sello {
+    width: 60px; height: 60px;
+    display: grid; place-items: center;
+    background: var(--verde-wash);
+    color: var(--verde);
+    border-radius: 50%;
+    margin-bottom: var(--e-2);
+  }
+  .confirmacion__numero { font-size: 0.9375rem; color: var(--gris-800); }
+  .confirmacion__numero b { color: var(--tinta); }
+
+  .confirmacion__caja {
+    width: 100%;
+    padding: var(--e-6);
+    background: var(--papel);
+    border: 1px solid var(--gris-200);
+    border-radius: var(--r-modal);
+    margin-top: var(--e-4);
+  }
+  .confirmacion__subtitulo { font-size: 1rem; font-weight: 700; margin-bottom: var(--e-4); }
+  .pasos-siguientes { display: flex; flex-direction: column; gap: var(--e-3); counter-reset: p; }
+  .pasos-siguientes li {
+    display: flex; gap: var(--e-3);
+    font-size: 0.9375rem; line-height: 1.55; color: var(--gris-800);
+    counter-increment: p;
+  }
+  .pasos-siguientes li::before {
+    content: counter(p);
+    flex: none;
+    width: 24px; height: 24px;
+    display: grid; place-items: center;
+    background: var(--arena-honda);
+    border-radius: 50%;
+    font-size: 12px; font-weight: 700; color: var(--tinta);
+  }
+  .pasos-siguientes b { color: var(--tinta); }
+
+  .confirmacion__resumen {
+    width: 100%;
+    margin-top: var(--e-4);
+    padding: var(--e-6);
+    background: var(--papel);
+    border: 1px solid var(--gris-200);
+    border-radius: var(--r-modal);
+  }
+  .confirmacion__items { display: flex; flex-direction: column; }
+  .confirmacion__cuentas {
+    margin-top: var(--e-4);
+    padding-top: var(--e-4);
+    border-top: 1px solid var(--gris-200);
+    display: flex;
+    flex-direction: column;
+    gap: var(--e-2);
+  }
+  .confirmacion__cuentas > div { display: flex; justify-content: space-between; gap: var(--e-4); font-size: 0.9375rem; }
+  .confirmacion__cuentas dt { color: var(--gris-800); }
+  .confirmacion__cuentas dd { margin: 0; font-weight: 600; }
+  .confirmacion__cuentas .es-total { font-size: 1.0625rem; padding-top: var(--e-2); }
+  .confirmacion__cuentas .es-total dt { color: var(--tinta); font-weight: 600; }
+  .confirmacion__cuentas .es-total dd { font-size: var(--t-precio); font-weight: 700; }
+
+  :global(.cf-item) {
+    display: flex;
+    gap: var(--e-3);
+    align-items: center;
+    padding: var(--e-3) 0;
+    border-bottom: 1px solid var(--gris-200);
+  }
+  :global(.cf-item:last-child) { border-bottom: 0; }
+  :global(.cf-item__foto) {
+    width: 52px; height: 65px; flex: none;
+    object-fit: cover; border-radius: var(--r-badge);
+    background: var(--gris-050);
+  }
+  :global(.cf-item__datos) { flex: 1; min-width: 0; }
+  :global(.cf-item__nombre) { font-size: 0.875rem; font-weight: 500; line-height: 1.35; }
+  :global(.cf-item__meta) { font-size: var(--t-meta); color: var(--gris-texto); }
+  :global(.cf-item__precio) { font-size: 0.9375rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+  .confirmacion__acciones { display: flex; flex-wrap: wrap; gap: var(--e-3); margin-top: var(--e-4); }
+
+  .confirmacion__arrepentimiento {
+    font-size: 0.875rem; color: var(--gris-800); line-height: 1.6;
+    padding-top: var(--e-6); margin-top: var(--e-4);
+    border-top: 1px solid var(--gris-200);
+  }
+  .confirmacion__arrepentimiento a { color: var(--naranja-texto); font-weight: 600; }
+  .confirmacion__aviso { font-size: var(--t-meta); color: var(--gris-texto); }
+</style>

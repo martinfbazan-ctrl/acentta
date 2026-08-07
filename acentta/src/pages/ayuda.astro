@@ -1,0 +1,152 @@
+---
+/**
+ * Preguntas frecuentes.
+ * Cada pregunta es un <details>: sin JavaScript, funciona igual, y
+ * el buscador puede leer las respuestas aunque estén plegadas.
+ */
+import Documento from '@layouts/Documento.astro';
+import { precio } from '@lib/formato';
+import { UMBRAL_ENVIO_GRATIS } from '@tipos/catalogo';
+
+const grupos = [
+  {
+    id: 'compra',
+    nombre: 'Comprar',
+    preguntas: [
+      {
+        p: '¿Necesito crear una cuenta?',
+        r: 'No. Se compra como invitado. Sólo pedimos los datos necesarios para facturar y entregar el pedido.',
+      },
+      {
+        p: '¿Puedo pagar en cuotas?',
+        r: 'Sí, hasta 12 cuotas sin interés con bancos seleccionados. El monto de cada cuota se muestra debajo del precio, en la ficha y en el carrito, calculado sobre el total real que vas a pagar.',
+      },
+      {
+        p: '¿Qué medios de pago aceptan?',
+        r: 'Visa, Mastercard, American Express, Cabal, Mercado Pago y transferencia bancaria. La transferencia tiene 10 % de descuento.',
+      },
+      {
+        p: '¿El carrito se guarda si cierro la página?',
+        r: 'Sí. Queda guardado en tu navegador, así que podés armar el pedido de a poco y volver cuando quieras.',
+      },
+    ],
+  },
+  {
+    id: 'envio',
+    nombre: 'Envíos',
+    preguntas: [
+      {
+        p: '¿Cuándo el envío es gratis?',
+        r: `Superando ${precio(UMBRAL_ENVIO_GRATIS)} de subtotal, a cualquier punto del país y sin tope de peso.`,
+      },
+      {
+        p: '¿Cuánto sale el envío si no llego al monto?',
+        r: 'Depende de la zona y del peso. Lo calculás con tu código postal en la ficha de cualquier producto, antes de agregar nada al carrito.',
+      },
+      {
+        p: '¿Por qué los plazos son de una o dos semanas?',
+        r: 'Porque trabajamos con dropshipping: los productos salen del depósito del proveedor. Eso permite un catálogo más amplio y precios más bajos, y a cambio suma días de tránsito. Preferimos decirlo antes de que compres.',
+      },
+      {
+        p: '¿Y si se demora más de lo prometido?',
+        r: 'Si supera en más de cinco días hábiles la fecha máxima estimada, podés pedir el reintegro completo sin explicar nada. Se procesa dentro de las 48 h.',
+      },
+    ],
+  },
+  {
+    id: 'devolucion',
+    nombre: 'Devoluciones',
+    preguntas: [
+      {
+        p: '¿Cuántos días tengo para devolver?',
+        r: 'Treinta días corridos desde que lo recibís. Es más del doble de lo que exige la ley, porque una alfombra o una lámpara se juzgan viviendo con ellas, no sacándolas de la caja.',
+      },
+      {
+        p: '¿Tengo que explicar por qué lo devuelvo?',
+        r: 'No. No preguntamos el motivo ni pedimos que el producto esté sin abrir.',
+      },
+      {
+        p: '¿Quién paga el envío de la devolución?',
+        r: 'Nosotros. La etiqueta es prepaga en todos los casos, incluso cuando el producto está perfecto y simplemente no te gustó.',
+      },
+      {
+        p: '¿Cuándo me devuelven la plata?',
+        r: 'Dentro de los 5 días hábiles de recibido el producto en el depósito, por el mismo medio con el que pagaste. Si fue con tarjeta, el reintegro aparece en el resumen siguiente según el cierre de tu banco.',
+      },
+    ],
+  },
+  {
+    id: 'productos',
+    nombre: 'Productos',
+    preguntas: [
+      {
+        p: '¿Las fotos son del producto real?',
+        r: 'Las fotos actuales son de bancos de imágenes, porque acentta es un proyecto conceptual de portafolio. En una tienda en operación serían fotos propias del producto.',
+      },
+      {
+        p: 'Un producto aparece agotado. ¿Vuelve?',
+        r: 'Los dejamos visibles justamente para que puedas avisarnos. Escribinos y te avisamos cuando entre stock.',
+      },
+      {
+        p: '¿Por qué muestran opiniones de 3 estrellas?',
+        r: 'Porque son las que recibimos. Un listado donde todo es perfecto se lee como comprado, y el comprador atento lo detecta. Mostramos todas, sin filtro por puntaje.',
+      },
+    ],
+  },
+];
+---
+
+<Documento
+  titulo="Preguntas frecuentes"
+  bajada="Lo que más se pregunta antes de comprar, respondido de una."
+  descripcion="Preguntas frecuentes sobre compras, envíos, devoluciones y productos en acentta."
+  actualizado="1 de agosto de 2026"
+  indice={grupos.map((g) => ({ id: g.id, nombre: g.nombre }))}
+>
+  {grupos.map((g) => (
+    <>
+      <h2 id={g.id}>{g.nombre}</h2>
+      {g.preguntas.map((q) => (
+        <details class="pregunta">
+          <summary class="pregunta__titulo">
+            {q.p}
+            <svg class="pregunta__flecha" width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M4 6l4 4 4-4" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </summary>
+          <p class="pregunta__cuerpo">{q.r}</p>
+        </details>
+      ))}
+    </>
+  ))}
+</Documento>
+
+<style is:global>
+  .pregunta {
+    border-bottom: 1px solid var(--gris-200);
+  }
+  .pregunta__titulo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--e-4);
+    padding: var(--e-4) 0;
+    font-size: 1.0625rem;
+    font-weight: 600;
+    color: var(--tinta);
+    cursor: pointer;
+    list-style: none;
+  }
+  .pregunta__titulo::-webkit-details-marker { display: none; }
+  .pregunta__titulo:hover { color: var(--naranja-texto); }
+  .pregunta__flecha {
+    flex: none;
+    color: var(--gris-texto);
+    transition: transform var(--v-medio) var(--curva);
+  }
+  .pregunta[open] .pregunta__flecha { transform: rotate(180deg); }
+  .pregunta__cuerpo {
+    padding-bottom: var(--e-5);
+    max-width: 62ch;
+  }
+</style>

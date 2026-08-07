@@ -1,0 +1,153 @@
+---
+/**
+ * Galería de la ficha.
+ * La foto grande cambia sin recargar ni saltar: el contenedor tiene
+ * proporción fija, así que el alto no se mueve cuando cambia la imagen.
+ * Con una sola foto, las miniaturas desaparecen en vez de mostrar una
+ * fila de una — ese es el fallback del caso borde del brief.
+ */
+import { foto, srcset } from '@lib/imagenes';
+import type { Imagen } from '@tipos/catalogo';
+
+interface Props {
+  imagenes: Imagen[];
+  nombre: string;
+}
+const { imagenes, nombre } = Astro.props;
+const unaSola = imagenes.length === 1;
+---
+
+<div class="galeria" data-galeria>
+  <div class="galeria__marco">
+    <img
+      class="galeria__foto"
+      data-galeria-principal
+      src={foto(imagenes[0]!.src, 1000)}
+      srcset={srcset(imagenes[0]!.src)}
+      sizes="(min-width: 900px) 620px, 100vw"
+      alt={imagenes[0]!.alt}
+      width="1000"
+      height="1250"
+      fetchpriority="high"
+      decoding="async"
+    />
+    <button class="galeria__lupa" type="button" data-abrir-zoom aria-label={`Ver ${nombre} en tamaño grande`}>
+      <svg width="18" height="18" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8">
+        <circle cx="8.5" cy="8.5" r="6" /><path d="M13 13l4.5 4.5M6 8.5h5M8.5 6v5" stroke-linecap="round" />
+      </svg>
+    </button>
+  </div>
+
+  {!unaSola && (
+    <ul class="galeria__tiras" role="list">
+      {imagenes.map((img, i) => (
+        <li>
+          <button
+            class="galeria__tira"
+            type="button"
+            data-indice={i}
+            data-src={img.src}
+            data-alt={img.alt}
+            aria-label={`Ver foto ${i + 1} de ${imagenes.length}`}
+            aria-current={i === 0 ? 'true' : undefined}
+          >
+            <img src={foto(img.src, 200)} alt="" width="100" height="125" loading="lazy" decoding="async" />
+          </button>
+        </li>
+      ))}
+    </ul>
+  )}
+</div>
+
+<!-- Zoom · se abre sobre la página, se cierra con Escape o clic afuera -->
+<dialog class="zoom" data-zoom aria-label={`${nombre}, foto ampliada`}>
+  <button class="zoom__cerrar" type="button" data-cerrar-zoom aria-label="Cerrar">
+    <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8">
+      <path d="M5 5l10 10M15 5L5 15" stroke-linecap="round" />
+    </svg>
+  </button>
+  <img class="zoom__foto" data-zoom-foto src="" alt="" />
+</dialog>
+
+<style>
+  .galeria { display: flex; flex-direction: column; gap: var(--e-3); }
+
+  .galeria__marco {
+    position: relative;
+    border-radius: var(--r-modal);
+    overflow: hidden;
+    background: var(--gris-050);
+    border: 1px solid var(--gris-200);
+  }
+  .galeria__foto {
+    width: 100%;
+    aspect-ratio: 4 / 5;
+    object-fit: cover;
+    display: block;
+  }
+
+  .galeria__lupa {
+    position: absolute;
+    right: var(--e-3);
+    bottom: var(--e-3);
+    width: 44px; height: 44px;
+    display: grid; place-items: center;
+    background: var(--papel);
+    color: var(--tinta);
+    border: 1px solid var(--gris-200);
+    border-radius: var(--r-tarjeta);
+    cursor: pointer;
+    box-shadow: var(--sombra-1);
+  }
+  .galeria__lupa:hover { background: var(--arena); }
+
+  .galeria__tiras {
+    display: flex;
+    gap: var(--e-2);
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+  }
+  .galeria__tiras::-webkit-scrollbar { display: none; }
+
+  .galeria__tira {
+    flex: none;
+    width: 74px;
+    padding: 0;
+    border: 2px solid transparent;
+    border-radius: var(--r-tarjeta);
+    overflow: hidden;
+    background: var(--gris-050);
+    cursor: pointer;
+    transition: border-color var(--v-rapido) var(--curva);
+  }
+  .galeria__tira img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; display: block; }
+  .galeria__tira:hover { border-color: var(--gris-500); }
+  .galeria__tira[aria-current='true'] { border-color: var(--tinta); }
+
+  /* ---- Zoom ---- */
+  .zoom {
+    border: 0;
+    padding: 0;
+    max-width: min(96vw, 1000px);
+    max-height: 94vh;
+    background: var(--papel);
+    border-radius: var(--r-modal);
+    box-shadow: var(--sombra-2);
+    overflow: hidden;
+  }
+  .zoom::backdrop { background: rgba(28, 24, 20, .78); backdrop-filter: blur(3px); }
+  .zoom__foto { display: block; width: 100%; height: auto; max-height: 94vh; object-fit: contain; }
+  .zoom__cerrar {
+    position: absolute;
+    top: var(--e-3); right: var(--e-3);
+    width: 44px; height: 44px;
+    display: grid; place-items: center;
+    background: var(--papel);
+    border: 1px solid var(--gris-200);
+    border-radius: var(--r-tarjeta);
+    color: var(--tinta);
+    cursor: pointer;
+    z-index: 1;
+  }
+</style>

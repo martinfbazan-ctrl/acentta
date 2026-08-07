@@ -1,0 +1,87 @@
+---
+import Base from '@layouts/Base.astro';
+import Logo from '@componentes/Logo.astro';
+import Boton from '@componentes/Boton.astro';
+import Badge from '@componentes/Badge.astro';
+
+const etapas = [
+  { n: 1, titulo: 'Tokens, tipografía y componentes base', estado: 'listo', enlace: '/sistema' },
+  { n: 2, titulo: 'Home bento + tarjeta de producto', estado: 'siguiente' },
+  { n: 3, titulo: 'Listado con filtros + ficha completa', estado: 'pendiente' },
+  { n: 4, titulo: 'Mini-carrito, carrito y checkout', estado: 'pendiente' },
+  { n: 5, titulo: 'Confirmación, seguimiento y páginas de confianza', estado: 'pendiente' },
+  { n: 6, titulo: 'Deco inteligente + catálogo definitivo', estado: 'pendiente' },
+  { n: 7, titulo: 'Auditoría de rendimiento y accesibilidad', estado: 'pendiente' },
+  { n: 8, titulo: 'Caso de estudio', estado: 'pendiente' },
+];
+---
+
+<Base
+  titulo="Plan de construcción · acentta"
+  descripcion="acentta — marketplace de decoración y deco inteligente. Proyecto conceptual de portafolio."
+  sinIndexar={true}
+>
+  <div class="contenedor obra">
+    <Logo alto={40} />
+    <p class="obra__etiqueta">Proyecto en construcción</p>
+    <h1 class="t-titular">La home llega en la etapa 2</h1>
+    <p class="t-texto">
+      Este es un proyecto conceptual propio: un marketplace de decoración y deco inteligente
+      que cobra, entrega, responde y acepta devoluciones. Se construye por etapas, y cada
+      etapa se revisa antes de pasar a la siguiente.
+    </p>
+
+    <ol class="etapas">
+      {etapas.map((e) => (
+        <li class="etapa" data-estado={e.estado}>
+          <span class="etapa__n tabular">{String(e.n).padStart(2, '0')}</span>
+          <span class="etapa__titulo">
+            {e.enlace ? <a href={e.enlace}>{e.titulo}</a> : e.titulo}
+          </span>
+          {e.estado === 'listo' && <Badge variante="nuevo" />}
+          {e.estado === 'siguiente' && <Badge variante="oferta" />}
+        </li>
+      ))}
+    </ol>
+
+    <Boton href="/sistema" tamano="grande">Ver el sistema de diseño</Boton>
+  </div>
+</Base>
+
+<style>
+  .obra {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--e-4);
+    padding-block: var(--e-16) var(--e-24);
+    max-width: 760px;
+  }
+  .obra__etiqueta {
+    font-size: var(--t-meta);
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--naranja-texto);
+    margin-top: var(--e-6);
+  }
+  .etapas {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    margin: var(--e-6) 0;
+    counter-reset: etapa;
+  }
+  .etapa {
+    display: flex;
+    align-items: center;
+    gap: var(--e-4);
+    padding: var(--e-4) 0;
+    border-bottom: 1px solid var(--gris-200);
+  }
+  .etapa__n { font-size: var(--t-meta); font-weight: 700; color: var(--gris-500); }
+  .etapa__titulo { flex: 1; font-size: 0.9375rem; }
+  .etapa[data-estado='pendiente'] .etapa__titulo { color: var(--gris-texto); }
+  .etapa[data-estado='listo'] .etapa__n { color: var(--verde); }
+  .etapa a { color: var(--tinta); font-weight: 600; }
+</style>

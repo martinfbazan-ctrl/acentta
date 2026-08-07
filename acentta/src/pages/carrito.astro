@@ -1,0 +1,307 @@
+---
+/**
+ * Carrito.
+ * ---------------------------------------------------------------
+ * El total incluye el envío desde acá, no desde el último paso del
+ * checkout. Cero costos sorpresa: el momento en que aparece un costo
+ * nuevo es el momento en que se abandona el carrito.
+ *
+ * Se pide el código postal en esta pantalla porque es lo único que
+ * falta para que el total sea el total. Pedirlo en el checkout
+ * significa que el número que la persona vio hasta ahí era mentira.
+ */
+import Base from '@layouts/Base.astro';
+import Encabezado from '@componentes/Encabezado.astro';
+import Pie from '@componentes/Pie.astro';
+import Migas from '@componentes/Migas.astro';
+import TarjetaProducto from '@componentes/TarjetaProducto.astro';
+import Boton from '@componentes/Boton.astro';
+import { masVendidos } from '@lib/catalogo';
+
+const sugeridos = masVendidos(4);
+---
+
+<Base
+  titulo="Tu carrito · acentta"
+  descripcion="Revisá tu pedido antes de pagar."
+  sinIndexar={true}
+>
+  <Encabezado slot="encabezado" />
+
+  <div class="contenedor pagina-carrito">
+    <Migas pasos={[{ nombre: 'Inicio', href: '/' }, { nombre: 'Carrito' }]} class="pagina-carrito__migas" />
+
+    <h1 class="t-titular">Tu carrito</h1>
+
+    <!-- Estado vacío -->
+    <div class="carro-vacio" data-carro-vacio hidden>
+      <svg width="52" height="52" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.3">
+        <path d="M3 4h2l2.2 11a1.8 1.8 0 0 0 1.8 1.4h8a1.8 1.8 0 0 0 1.8-1.4L21 7H6" stroke-linecap="round" stroke-linejoin="round" />
+        <circle cx="10" cy="20" r="1.3" fill="currentColor" stroke="none" />
+        <circle cx="17" cy="20" r="1.3" fill="currentColor" stroke="none" />
+      </svg>
+      <p class="carro-vacio__titulo t-seccion">Tu carrito está vacío</p>
+      <p class="t-texto">
+        Lo que agregues se guarda en este navegador, así que podés armar el pedido
+        de a poco y volver cuando quieras.
+      </p>
+      <div class="carro-vacio__acciones">
+        <Boton href="/ofertas" tamano="grande">Ver ofertas</Boton>
+        <Boton href="/categoria/iluminacion" jerarquia="secundario" tamano="grande">Ver iluminación</Boton>
+      </div>
+    </div>
+
+    <!-- Carrito con productos -->
+    <div class="carro" data-carro hidden>
+      <div class="carro__lista">
+        <div class="carro__items" data-carro-items></div>
+
+        <a class="carro__seguir" href="/ofertas">
+          <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6">
+            <path d="M9.5 3.5 5 8l4.5 4.5" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          Seguir comprando
+        </a>
+      </div>
+
+      <aside class="resumen" aria-labelledby="tit-resumen">
+        <h2 class="resumen__titulo" id="tit-resumen">Resumen del pedido</h2>
+
+        <div class="resumen__envio-gratis">
+          <div class="envio-gratis" data-logrado="false" data-carro-envio-caja>
+            <p class="envio-gratis__texto" data-carro-envio-texto></p>
+            <div class="envio-gratis__via" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Progreso hacia el envío gratis" data-carro-barra>
+              <div class="envio-gratis__relleno" style="--progreso:0%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Código postal · lo que falta para que el total sea el total -->
+        <form class="resumen__cp" data-cp-forma novalidate>
+          <div class="campo" data-estado="normal" data-campo-cp>
+            <label class="campo__etiqueta" for="cp-carrito">Código postal de entrega</label>
+            <div class="campo__envoltorio">
+              <input
+                class="campo__control"
+                id="cp-carrito"
+                name="cp"
+                type="text"
+                inputmode="numeric"
+                autocomplete="postal-code"
+                maxlength="8"
+                placeholder="1425"
+                aria-describedby="cp-carrito-ayuda"
+              />
+            </div>
+            <p class="campo__ayuda" id="cp-carrito-ayuda">Con esto el total ya incluye el envío.</p>
+          </div>
+          <button class="boton boton--secundario boton--chico" type="submit">
+            <span class="boton__texto">Aplicar</span>
+          </button>
+        </form>
+
+        <dl class="resumen__lineas">
+          <div class="resumen__linea">
+            <dt>Subtotal</dt>
+            <dd class="tabular" data-carro-subtotal>$ 0</dd>
+          </div>
+          <div class="resumen__linea">
+            <dt data-carro-envio-rotulo>Envío</dt>
+            <dd class="tabular" data-carro-envio>—</dd>
+          </div>
+          <div class="resumen__linea resumen__linea--ahorro" data-carro-ahorro-fila hidden>
+            <dt>Ahorro por ofertas</dt>
+            <dd class="tabular" data-carro-ahorro>$ 0</dd>
+          </div>
+          <div class="resumen__linea resumen__linea--total">
+            <dt>Total</dt>
+            <dd class="tabular" data-carro-total>$ 0</dd>
+          </div>
+        </dl>
+
+        <p class="resumen__cuotas" data-carro-cuotas></p>
+
+        <Boton href="/checkout" tamano="grande" ancho>Iniciar la compra</Boton>
+
+        <p class="resumen__invitado">
+          Se compra sin crear cuenta. Sólo pedimos los datos necesarios para
+          facturar y entregar.
+        </p>
+
+        <ul class="resumen__garantias">
+          <li>
+            <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true" fill="currentColor"><path d="M6.2 11.4 3.3 8.5l-1.1 1.1 4 4 7.6-7.6-1.1-1.1z"/></svg>
+            30 días para devolver, sin cargo
+          </li>
+          <li>
+            <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true" fill="currentColor"><path d="M6.2 11.4 3.3 8.5l-1.1 1.1 4 4 7.6-7.6-1.1-1.1z"/></svg>
+            Hasta 12 cuotas sin interés
+          </li>
+          <li>
+            <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true" fill="currentColor"><path d="M6.2 11.4 3.3 8.5l-1.1 1.1 4 4 7.6-7.6-1.1-1.1z"/></svg>
+            El total de arriba es el total: no cambia en el checkout
+          </li>
+        </ul>
+      </aside>
+    </div>
+
+    <!-- Cross-sell · después de la decisión, nunca antes -->
+    <section class="carro-cross" data-carro-cross hidden aria-labelledby="tit-carro-cross">
+      <h2 class="t-seccion" id="tit-carro-cross">Completá el ambiente</h2>
+      <p class="t-meta carro-cross__bajada">
+        Faltando poco para el envío gratis, sumar algo chico sale más barato que pagarlo.
+      </p>
+      <div class="grilla-productos">
+        {sugeridos.map((p) => <TarjetaProducto producto={p} />)}
+      </div>
+    </section>
+  </div>
+
+  <Pie slot="pie" />
+</Base>
+
+<script>
+  import '../scripts/pagina-carrito';
+</script>
+
+<style>
+  .pagina-carrito { padding-block: var(--e-6) var(--e-16); }
+  .pagina-carrito__migas { margin-bottom: var(--e-6); }
+  .pagina-carrito > h1 { margin-bottom: var(--e-8); }
+
+  /* ---- Vacío ---- */
+  .carro-vacio {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--e-4);
+    max-width: 56ch;
+    padding: var(--e-12) 0;
+  }
+  .carro-vacio svg { color: var(--gris-500); }
+  .carro-vacio__acciones { display: flex; flex-wrap: wrap; gap: var(--e-3); margin-top: var(--e-2); }
+
+  /* ---- Carrito ---- */
+  .carro { display: grid; gap: var(--e-8); align-items: start; }
+  /* El resumen ocupa cerca de la mitad del ancho útil. No es sólo un
+     total: es la pantalla donde se decide seguir o abandonar, y todo
+     lo que reduce riesgo —envío, cuotas, garantías— vive acá. Darle
+     el mismo peso visual que a la lista de productos es coherente con
+     lo que hace. */
+  @media (min-width: 900px) {
+    .carro {
+      grid-template-columns: minmax(0, 1fr) minmax(400px, 44%);
+      gap: var(--e-10);
+    }
+  }
+  @media (min-width: 1200px) {
+    .carro { grid-template-columns: minmax(0, 1fr) minmax(460px, 46%); gap: var(--e-12); }
+  }
+
+  .carro__items { display: flex; flex-direction: column; }
+
+  .carro__seguir {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--e-2);
+    margin-top: var(--e-6);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--naranja-texto);
+    text-decoration: none;
+  }
+  .carro__seguir:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+  /* ---- Resumen ---- */
+  .resumen {
+    position: relative;
+    padding: var(--e-6);
+    background: var(--papel);
+    border: 1px solid var(--gris-200);
+    border-radius: var(--r-modal);
+    display: flex;
+    flex-direction: column;
+    gap: var(--e-5);
+  }
+  @media (min-width: 900px) {
+    .resumen { position: sticky; top: var(--e-6); padding: var(--e-8); gap: var(--e-6); }
+  }
+
+  .resumen__titulo { font-size: var(--t-seccion); font-weight: 600; letter-spacing: -0.01em; }
+
+  .resumen__cp { display: flex; gap: var(--e-3); align-items: flex-start; }
+  .resumen__cp .campo { flex: 1; }
+  .resumen__cp .boton { margin-top: 26px; }
+
+  .resumen__lineas { display: flex; flex-direction: column; gap: var(--e-3); }
+  .resumen__linea { font-size: 1rem; }
+  .resumen__linea { display: flex; justify-content: space-between; gap: var(--e-4); font-size: 0.9375rem; }
+  .resumen__linea dt { color: var(--gris-800); }
+  .resumen__linea dd { margin: 0; font-weight: 600; }
+  .resumen__linea--ahorro dd { color: var(--verde); }
+  .resumen__linea--total {
+    padding-top: var(--e-4);
+    margin-top: var(--e-1);
+    border-top: 1px solid var(--gris-200);
+    align-items: baseline;
+  }
+  .resumen__linea--total dt { color: var(--tinta); font-weight: 600; font-size: 1.0625rem; }
+  .resumen__linea--total dd {
+    font-size: clamp(1.375rem, 1.1rem + 1.1vw, 1.75rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  .resumen__cuotas { font-size: var(--t-cuotas); color: var(--gris-800); font-variant-numeric: tabular-nums; }
+  .resumen__cuotas b { color: var(--tinta); }
+
+  .resumen__invitado { font-size: var(--t-meta); color: var(--gris-texto); line-height: 1.5; }
+
+  .resumen__garantias {
+    display: flex; flex-direction: column; gap: var(--e-2);
+    padding-top: var(--e-4);
+    border-top: 1px solid var(--gris-200);
+  }
+  .resumen__garantias li {
+    display: flex; gap: var(--e-2); align-items: flex-start;
+    font-size: var(--t-meta); color: var(--gris-800); line-height: 1.45;
+  }
+  .resumen__garantias svg { flex: none; margin-top: 1px; color: var(--verde); }
+
+  .carro-cross { padding-top: var(--e-16); }
+  .carro-cross__bajada { margin: var(--e-2) 0 var(--e-6); max-width: 56ch; }
+
+  /* ---- Línea de producto del carrito ---- */
+  :global(.carro-item) {
+    display: grid;
+    grid-template-columns: 96px minmax(0, 1fr);
+    gap: var(--e-4);
+    padding: var(--e-5) 0;
+    border-bottom: 1px solid var(--gris-200);
+  }
+  :global(.carro-item:first-child) { padding-top: 0; }
+  :global(.carro-item__foto) {
+    width: 96px; height: 120px;
+    object-fit: cover;
+    border-radius: var(--r-tarjeta);
+    background: var(--gris-050);
+  }
+  :global(.carro-item__datos) { display: flex; flex-direction: column; gap: var(--e-2); min-width: 0; }
+  :global(.carro-item__nombre) { font-size: 1rem; font-weight: 500; line-height: 1.35; }
+  :global(.carro-item__nombre a) { color: var(--tinta); text-decoration: none; }
+  :global(.carro-item__nombre a:hover) { text-decoration: underline; text-underline-offset: 2px; }
+  :global(.carro-item__variante) { font-size: var(--t-meta); color: var(--gris-texto); }
+  :global(.carro-item__aviso) { font-size: var(--t-meta); font-weight: 600; color: var(--rojo); }
+  :global(.carro-item__pie) {
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: var(--e-3); margin-top: auto; padding-top: var(--e-2);
+  }
+  :global(.carro-item__precio) { font-size: var(--t-precio); font-weight: 700; font-variant-numeric: tabular-nums; }
+  :global(.carro-item__unitario) { font-size: var(--t-meta); color: var(--gris-texto); font-variant-numeric: tabular-nums; }
+  :global(.carro-item__quitar) {
+    background: none; border: 0; padding: var(--e-2) 0;
+    font-size: var(--t-meta); color: var(--gris-texto);
+    text-decoration: underline; text-underline-offset: 3px; cursor: pointer;
+  }
+  :global(.carro-item__quitar:hover) { color: var(--rojo); }
+</style>

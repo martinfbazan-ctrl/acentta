@@ -1,0 +1,190 @@
+---
+/**
+ * Plantilla de las páginas de confianza.
+ * ---------------------------------------------------------------
+ * Envíos, devoluciones, términos, privacidad, ayuda y
+ * arrepentimiento comparten forma porque comparten función: son las
+ * páginas que alguien abre cuando duda. Tienen que leerse rápido,
+ * no lucir bien.
+ *
+ * Por eso: medida de lectura corta, índice lateral, y la fecha de
+ * última actualización arriba. Una política sin fecha no se puede
+ * verificar, y una que no se puede verificar no genera confianza.
+ */
+import Base from '@layouts/Base.astro';
+import Encabezado from '@componentes/Encabezado.astro';
+import Pie from '@componentes/Pie.astro';
+import Migas from '@componentes/Migas.astro';
+
+interface Props {
+  titulo: string;
+  bajada: string;
+  descripcion: string;
+  actualizado: string;
+  /** Anclas del índice lateral: [id, rótulo]. */
+  indice?: { id: string; nombre: string }[];
+}
+
+const { titulo, bajada, descripcion, actualizado, indice = [] } = Astro.props;
+---
+
+<Base titulo={`${titulo} · acentta`} descripcion={descripcion}>
+  <Encabezado slot="encabezado" />
+
+  <div class="contenedor doc-legal">
+    <Migas pasos={[{ nombre: 'Inicio', href: '/' }, { nombre: titulo }]} class="doc-legal__migas" />
+
+    <header class="doc-legal__cabeza">
+      <h1 class="t-titular">{titulo}</h1>
+      <p class="t-texto doc-legal__bajada">{bajada}</p>
+      <p class="doc-legal__fecha">Última actualización: {actualizado}</p>
+    </header>
+
+    <div class="doc-legal__cuerpo">
+      {indice.length > 0 && (
+        <nav class="indice" aria-labelledby="tit-indice">
+          <h2 class="indice__titulo" id="tit-indice">En esta página</h2>
+          <ul>
+            {indice.map((i) => (
+              <li><a href={`#${i.id}`}>{i.nombre}</a></li>
+            ))}
+          </ul>
+        </nav>
+      )}
+
+      <article class="prosa">
+        <slot />
+      </article>
+    </div>
+
+    <aside class="doc-legal__ayuda">
+      <p class="doc-legal__ayuda-titulo">¿Te quedó una duda?</p>
+      <p>
+        Escribinos a <b>hola@acentta.com.ar</b> y respondemos dentro de las
+        24 h hábiles. Si preferís, dejá tu consulta en el
+        <a href="/contacto">formulario de contacto</a>.
+      </p>
+    </aside>
+  </div>
+
+  <Pie slot="pie" />
+</Base>
+
+<style>
+  .doc-legal { padding-block: var(--e-6) var(--e-16); }
+  .doc-legal__migas { margin-bottom: var(--e-6); }
+  .doc-legal__cabeza { margin-bottom: var(--e-10); }
+  .doc-legal__bajada { margin-top: var(--e-4); }
+  .doc-legal__fecha {
+    margin-top: var(--e-4);
+    font-size: var(--t-meta);
+    color: var(--gris-texto);
+  }
+
+  .doc-legal__cuerpo { display: grid; gap: var(--e-10); align-items: start; }
+  @media (min-width: 900px) {
+    .doc-legal__cuerpo { grid-template-columns: 240px minmax(0, 1fr); gap: var(--e-16); }
+  }
+
+  /* ---- Índice ---- */
+  .indice { font-size: 0.875rem; }
+  @media (min-width: 900px) { .indice { position: sticky; top: var(--e-24); } }
+  .indice__titulo {
+    font-size: var(--t-meta);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: var(--gris-texto);
+    margin-bottom: var(--e-3);
+  }
+  .indice ul { display: flex; flex-direction: column; gap: var(--e-2); }
+  .indice a {
+    color: var(--gris-800);
+    text-decoration: none;
+    display: block;
+    padding: var(--e-1) 0;
+    border-left: 2px solid var(--gris-200);
+    padding-left: var(--e-3);
+  }
+  .indice a:hover { color: var(--tinta); border-left-color: var(--naranja-accion); }
+
+  /* ---- Prosa ---- */
+  .prosa { max-width: 68ch; }
+  .prosa :global(h2) {
+    font-size: var(--t-seccion);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin-top: var(--e-12);
+    margin-bottom: var(--e-4);
+    scroll-margin-top: var(--e-24);
+  }
+  .prosa :global(h2:first-child) { margin-top: 0; }
+  .prosa :global(h3) {
+    font-size: 1.0625rem;
+    font-weight: 700;
+    margin-top: var(--e-6);
+    margin-bottom: var(--e-2);
+  }
+  .prosa :global(p) {
+    font-size: var(--t-texto);
+    line-height: var(--interlinea-texto);
+    color: var(--gris-800);
+    margin-bottom: var(--e-4);
+  }
+  .prosa :global(strong), .prosa :global(b) { color: var(--tinta); font-weight: 600; }
+  .prosa :global(a) { color: var(--naranja-texto); font-weight: 500; }
+  .prosa :global(ul), .prosa :global(ol) {
+    margin-bottom: var(--e-5);
+    padding-left: var(--e-5);
+    display: flex;
+    flex-direction: column;
+    gap: var(--e-2);
+  }
+  .prosa :global(ul) { list-style: disc; }
+  .prosa :global(ol) { list-style: decimal; }
+  .prosa :global(li) {
+    font-size: var(--t-texto);
+    line-height: 1.6;
+    color: var(--gris-800);
+  }
+  .prosa :global(table) {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: var(--e-6);
+    font-size: 0.9375rem;
+  }
+  .prosa :global(th), .prosa :global(td) {
+    text-align: left;
+    padding: var(--e-3);
+    border-bottom: 1px solid var(--gris-200);
+  }
+  .prosa :global(th) {
+    font-size: var(--t-meta);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--gris-texto);
+  }
+  .prosa :global(.destacado) {
+    padding: var(--e-5);
+    background: var(--verde-wash);
+    border-left: 3px solid var(--verde);
+    border-radius: var(--r-tarjeta);
+    margin-bottom: var(--e-6);
+  }
+  .prosa :global(.destacado p:last-child) { margin-bottom: 0; }
+
+  .doc-legal__ayuda {
+    margin-top: var(--e-16);
+    padding: var(--e-6);
+    background: var(--papel);
+    border: 1px solid var(--gris-200);
+    border-radius: var(--r-modal);
+    max-width: 68ch;
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    color: var(--gris-800);
+  }
+  .doc-legal__ayuda-titulo { font-weight: 700; color: var(--tinta); margin-bottom: var(--e-2); }
+  .doc-legal__ayuda b { color: var(--tinta); }
+  .doc-legal__ayuda a { color: var(--naranja-texto); font-weight: 500; }
+</style>

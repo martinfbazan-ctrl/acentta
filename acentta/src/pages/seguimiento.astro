@@ -1,0 +1,277 @@
+---
+/**
+ * Seguimiento del pedido.
+ * ---------------------------------------------------------------
+ * Se consulta con el número de pedido, sin cuenta y sin contraseña.
+ * Pedir un registro para ver dónde está algo que ya se pagó es de
+ * los pedidos más irritantes que hace un e-commerce.
+ */
+import Base from '@layouts/Base.astro';
+import Encabezado from '@componentes/Encabezado.astro';
+import Pie from '@componentes/Pie.astro';
+import Migas from '@componentes/Migas.astro';
+import Campo from '@componentes/Campo.astro';
+import Boton from '@componentes/Boton.astro';
+import { PASOS } from '@lib/pedido';
+---
+
+<Base
+  titulo="Seguimiento de pedido · acentta"
+  descripcion="Consultá el estado de tu pedido con el número de compra. Sin cuenta ni contraseña."
+>
+  <Encabezado slot="encabezado" />
+
+  <div class="contenedor seguimiento">
+    <Migas pasos={[{ nombre: 'Inicio', href: '/' }, { nombre: 'Seguimiento' }]} class="seguimiento__migas" />
+
+    <h1 class="t-titular">¿Dónde está mi pedido?</h1>
+    <p class="t-texto seguimiento__bajada">
+      Buscalo con el número que te dimos al comprar. No hace falta cuenta ni contraseña.
+    </p>
+
+    <form class="seguimiento__buscador" data-seguimiento-forma novalidate>
+      <Campo id="sg-numero" etiqueta="Número de pedido" requerido marcador="AC-12345678"
+             ayuda="Empieza con AC y está en el correo de confirmación." />
+      <Boton tipo="submit" tamano="grande">Buscar</Boton>
+    </form>
+
+    <!-- Sin resultado -->
+    <div class="seguimiento__vacio" data-seguimiento-vacio>
+      <p class="t-meta">
+        Si compraste en este navegador, tu último pedido aparece acá automáticamente.
+      </p>
+    </div>
+
+    <!-- Resultado -->
+    <div class="seguimiento__resultado" data-seguimiento-resultado hidden>
+      <header class="pedido-cabeza">
+        <div>
+          <p class="pedido-cabeza__rotulo">Pedido</p>
+          <p class="pedido-cabeza__numero tabular" data-sg-numero>—</p>
+        </div>
+        <div>
+          <p class="pedido-cabeza__rotulo">Fecha de compra</p>
+          <p class="pedido-cabeza__dato" data-sg-fecha>—</p>
+        </div>
+        <div>
+          <p class="pedido-cabeza__rotulo">Total</p>
+          <p class="pedido-cabeza__dato tabular" data-sg-total>—</p>
+        </div>
+        <div>
+          <p class="pedido-cabeza__rotulo">Llega</p>
+          <p class="pedido-cabeza__dato" data-sg-entrega>—</p>
+        </div>
+      </header>
+
+      <!-- Línea de estados -->
+      <ol class="linea" data-sg-linea>
+        {PASOS.map((p, i) => (
+          <li class="linea__paso" data-paso={i}>
+            <span class="linea__marca" aria-hidden="true">
+              <svg viewBox="0 0 16 16" fill="currentColor"><path d="M6.2 11.4 3.3 8.5l-1.1 1.1 4 4 7.6-7.6-1.1-1.1z"/></svg>
+            </span>
+            <div class="linea__cuerpo">
+              <p class="linea__nombre">{p.nombre}</p>
+              <p class="linea__fecha tabular" data-paso-fecha={i}></p>
+              <p class="linea__detalle">{p.detalle}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+
+      <!-- Productos -->
+      <section class="pedido-items" aria-labelledby="tit-items">
+        <h2 class="pedido-items__titulo" id="tit-items">Qué pediste</h2>
+        <div data-sg-items></div>
+      </section>
+
+      <!-- Ayuda para revisar el prototipo -->
+      <div class="simulador">
+        <p class="simulador__titulo">Para revisar el prototipo</p>
+        <p class="simulador__texto">
+          El estado avanza solo con el paso de las horas. Para ver cómo se ve cada uno sin
+          esperar una semana, elegí acá:
+        </p>
+        <div class="simulador__botones" data-simulador>
+          {PASOS.map((p, i) => (
+            <button class="chip" type="button" data-forzar={i}>{p.nombre}</button>
+          ))}
+          <button class="chip chip--limpiar" type="button" data-forzar="auto">Volver al real</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- No encontrado -->
+    <div class="vacio" data-seguimiento-error hidden>
+      <div>
+        <p class="vacio__titulo">No encontramos ese pedido</p>
+        <p class="vacio__texto t-meta" style="margin-top:8px">
+          Revisá que el número esté completo, con el prefijo AC. Si lo comprobaste y sigue
+          sin aparecer, escribinos y lo buscamos nosotros.
+        </p>
+      </div>
+      <div class="vacio__acciones">
+        <Boton href="/contacto" jerarquia="secundario">Escribinos</Boton>
+        <Boton href="/ayuda">Ver preguntas frecuentes</Boton>
+      </div>
+    </div>
+  </div>
+
+  <Pie slot="pie" />
+</Base>
+
+<script>
+  import '../scripts/seguimiento';
+</script>
+
+<style>
+  .seguimiento { padding-block: var(--e-6) var(--e-16); max-width: 900px; }
+  .seguimiento__migas { margin-bottom: var(--e-6); }
+  .seguimiento__bajada { margin: var(--e-4) 0 var(--e-8); }
+
+  .seguimiento__buscador {
+    display: flex;
+    gap: var(--e-3);
+    align-items: flex-start;
+    padding: var(--e-6);
+    background: var(--papel);
+    border: 1px solid var(--gris-200);
+    border-radius: var(--r-modal);
+    margin-bottom: var(--e-8);
+  }
+  .seguimiento__buscador :global(.campo) { flex: 1; max-width: 320px; }
+  .seguimiento__buscador :global(.boton) { margin-top: 26px; }
+
+  .seguimiento__vacio { padding-bottom: var(--e-8); }
+
+  /* ---- Cabecera del pedido ---- */
+  .pedido-cabeza {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--e-5);
+    padding: var(--e-6);
+    background: var(--papel);
+    border: 1px solid var(--gris-200);
+    border-radius: var(--r-modal);
+    margin-bottom: var(--e-10);
+  }
+  @media (min-width: 700px) { .pedido-cabeza { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+  .pedido-cabeza__rotulo {
+    font-size: var(--t-meta);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: var(--gris-texto);
+    margin-bottom: 4px;
+  }
+  .pedido-cabeza__numero { font-size: 1.0625rem; font-weight: 700; }
+  .pedido-cabeza__dato { font-size: 0.9375rem; }
+
+  /* ---- Línea de estados ---- */
+  .linea { display: flex; flex-direction: column; margin-bottom: var(--e-12); }
+  .linea__paso { display: flex; gap: var(--e-4); position: relative; padding-bottom: var(--e-6); }
+  .linea__paso:last-child { padding-bottom: 0; }
+
+  /* El hilo que une los puntos */
+  .linea__paso::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 32px;
+    bottom: 0;
+    width: 2px;
+    background: var(--gris-200);
+  }
+  .linea__paso:last-child::before { display: none; }
+  .linea__paso[data-estado='hecho']::before { background: var(--verde); }
+
+  .linea__marca {
+    flex: none;
+    width: 32px; height: 32px;
+    display: grid; place-items: center;
+    border-radius: 50%;
+    background: var(--gris-050);
+    border: 2px solid var(--gris-200);
+    color: transparent;
+    z-index: 1;
+  }
+  .linea__marca svg { width: 16px; height: 16px; }
+
+  .linea__paso[data-estado='hecho'] .linea__marca {
+    background: var(--verde);
+    border-color: var(--verde);
+    color: var(--blanco);
+  }
+  .linea__paso[data-estado='actual'] .linea__marca {
+    background: var(--papel);
+    border-color: var(--naranja-accion);
+    border-width: 3px;
+    color: transparent;
+  }
+  /* El paso actual late suave: es el único que está pasando ahora. */
+  .linea__paso[data-estado='actual'] .linea__marca::after {
+    content: '';
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--naranja-accion);
+    animation: latir 2.4s ease-in-out infinite;
+  }
+  @keyframes latir {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(.72); opacity: .65; }
+  }
+
+  .linea__cuerpo { padding-top: 4px; }
+  .linea__nombre { font-size: 1.0625rem; font-weight: 600; color: var(--gris-texto); }
+  .linea__paso[data-estado='hecho'] .linea__nombre,
+  .linea__paso[data-estado='actual'] .linea__nombre { color: var(--tinta); }
+  .linea__fecha { font-size: var(--t-meta); color: var(--gris-texto); margin-top: 2px; }
+  .linea__detalle {
+    font-size: 0.9375rem;
+    line-height: 1.55;
+    color: var(--gris-800);
+    margin-top: var(--e-2);
+    max-width: 58ch;
+  }
+  .linea__paso[data-estado='pendiente'] .linea__detalle { display: none; }
+
+  /* ---- Productos ---- */
+  .pedido-items { margin-bottom: var(--e-10); }
+  .pedido-items__titulo { font-size: 1.0625rem; font-weight: 700; margin-bottom: var(--e-4); }
+
+  :global(.sg-item) {
+    display: flex;
+    gap: var(--e-4);
+    align-items: center;
+    padding: var(--e-4) 0;
+    border-bottom: 1px solid var(--gris-200);
+  }
+  :global(.sg-item__foto) {
+    width: 64px; height: 80px; flex: none;
+    object-fit: cover;
+    border-radius: var(--r-tarjeta);
+    background: var(--gris-050);
+  }
+  :global(.sg-item__datos) { flex: 1; min-width: 0; }
+  :global(.sg-item__nombre) { font-size: 0.9375rem; font-weight: 500; }
+  :global(.sg-item__nombre a) { color: var(--tinta); text-decoration: none; }
+  :global(.sg-item__meta) { font-size: var(--t-meta); color: var(--gris-texto); margin-top: 2px; }
+  :global(.sg-item__precio) { font-weight: 700; font-variant-numeric: tabular-nums; }
+
+  /* ---- Simulador ---- */
+  .simulador {
+    padding: var(--e-5);
+    background: var(--arena-honda);
+    border-radius: var(--r-modal);
+  }
+  .simulador__titulo {
+    font-size: var(--t-meta);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: var(--gris-texto);
+    margin-bottom: var(--e-2);
+  }
+  .simulador__texto { font-size: 0.875rem; color: var(--gris-800); margin-bottom: var(--e-4); max-width: 60ch; }
+  .simulador__botones { display: flex; flex-wrap: wrap; gap: var(--e-2); }
+</style>

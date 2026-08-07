@@ -1,0 +1,176 @@
+---
+/**
+ * Pie del sitio.
+ * Todo lo que reduce riesgo percibido vive acá arriba y no escondido:
+ * una tienda sin reputación se juega la venta en esto.
+ * El botón de arrepentimiento y el enlace a Defensa del Consumidor son
+ * exigibles por ley en Argentina (Resolución 424/2020).
+ */
+import Logo from '@componentes/Logo.astro';
+
+const comprar = [
+  { nombre: 'Iluminación', href: '/categoria/iluminacion' },
+  { nombre: 'Textil', href: '/categoria/textil' },
+  { nombre: 'Alfombras', href: '/categoria/alfombras' },
+  { nombre: 'Muebles chicos', href: '/categoria/muebles-chicos' },
+  { nombre: 'Ofertas', href: '/ofertas' },
+];
+
+const ayuda = [
+  { nombre: 'Envíos y plazos', href: '/envios' },
+  { nombre: 'Cambios y devoluciones', href: '/devoluciones' },
+  { nombre: 'Seguimiento de pedido', href: '/seguimiento' },
+  { nombre: 'Preguntas frecuentes', href: '/ayuda' },
+  { nombre: 'Contacto', href: '/contacto' },
+];
+
+const medios = ['Visa', 'Mastercard', 'Amex', 'Cabal', 'Mercado Pago', 'Transferencia'];
+---
+
+<footer class="pie">
+  <div class="contenedor">
+    <div class="pie__rejilla">
+      <div class="pie__marca">
+        <Logo alto={40} />
+        <p class="pie__lema">
+          Decoración e iluminación para la casa, con envío a todo el país.
+        </p>
+        <div class="pie__contacto">
+          <p><b>hola@acentta.com.ar</b></p>
+          <p>Respondemos dentro de las 24 h hábiles.</p>
+          <p>Lunes a viernes de 9 a 18 h · Buenos Aires, Argentina</p>
+        </div>
+      </div>
+
+      <nav class="pie__grupo" aria-labelledby="pie-comprar">
+        <h2 class="pie__titulo" id="pie-comprar">Comprar</h2>
+        <ul>
+          {comprar.map((e) => <li><a href={e.href}>{e.nombre}</a></li>)}
+        </ul>
+      </nav>
+
+      <nav class="pie__grupo" aria-labelledby="pie-ayuda">
+        <h2 class="pie__titulo" id="pie-ayuda">Ayuda</h2>
+        <ul>
+          {ayuda.map((e) => <li><a href={e.href}>{e.nombre}</a></li>)}
+        </ul>
+      </nav>
+
+      <div class="pie__grupo">
+        <h2 class="pie__titulo">Comprar sin riesgo</h2>
+        <ul class="pie__garantias">
+          <li>
+            <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" fill="currentColor"><path d="M6.2 11.4 3.3 8.5l-1.1 1.1 4 4 7.6-7.6-1.1-1.1z"/></svg>
+            30 días para devolverlo, sin explicar por qué
+          </li>
+          <li>
+            <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" fill="currentColor"><path d="M6.2 11.4 3.3 8.5l-1.1 1.1 4 4 7.6-7.6-1.1-1.1z"/></svg>
+            El costo de la devolución lo pagamos nosotros
+          </li>
+          <li>
+            <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" fill="currentColor"><path d="M6.2 11.4 3.3 8.5l-1.1 1.1 4 4 7.6-7.6-1.1-1.1z"/></svg>
+            Compra protegida: si no llega, te devolvemos el dinero
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="pie__medios">
+      <p class="pie__titulo">Medios de pago</p>
+      <ul class="pie__fichas">
+        {medios.map((m) => <li class="pie__ficha">{m}</li>)}
+      </ul>
+      <p class="pie__nota">Hasta 12 cuotas sin interés con bancos seleccionados.</p>
+    </div>
+
+    <div class="pie__legal">
+      <p class="pie__copia">
+        © 2026 acentta · Proyecto conceptual de portafolio. No es una tienda real
+        y no procesa pagos.
+      </p>
+      <ul class="pie__enlaces-legales">
+        <li><a href="/terminos">Términos y condiciones</a></li>
+        <li><a href="/privacidad">Política de privacidad</a></li>
+        <li><a class="pie__arrepentimiento" href="/arrepentimiento">Botón de arrepentimiento</a></li>
+        <li><a href="https://autogestion.produccion.gob.ar/consumidores" rel="noopener">Defensa de las y los Consumidores</a></li>
+      </ul>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .pie {
+    margin-top: var(--e-24);
+    padding-block: var(--e-16) var(--e-8);
+    background: var(--gris-050);
+    border-top: 1px solid var(--gris-200);
+    font-size: 0.875rem;
+  }
+
+  .pie__rejilla {
+    display: grid;
+    gap: var(--e-10);
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 640px) { .pie__rejilla { grid-template-columns: 1fr 1fr; } }
+  @media (min-width: 1024px) { .pie__rejilla { grid-template-columns: 1.4fr 1fr 1fr 1.2fr; gap: var(--e-8); } }
+
+  .pie__lema { margin: var(--e-4) 0; color: var(--gris-800); max-width: 34ch; }
+  .pie__contacto { display: flex; flex-direction: column; gap: 2px; color: var(--gris-texto); font-size: var(--t-meta); }
+  .pie__contacto b { color: var(--tinta); font-size: 0.875rem; }
+
+  .pie__titulo {
+    font-size: var(--t-meta);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: var(--tinta);
+    margin-bottom: var(--e-4);
+  }
+
+  .pie__grupo ul { list-style: none; display: flex; flex-direction: column; gap: var(--e-3); }
+  .pie__grupo a { color: var(--gris-800); text-decoration: none; }
+  .pie__grupo a:hover { color: var(--tinta); text-decoration: underline; text-underline-offset: 3px; }
+
+  .pie__garantias li {
+    display: flex;
+    gap: var(--e-2);
+    align-items: flex-start;
+    color: var(--gris-800);
+    line-height: 1.45;
+  }
+  .pie__garantias svg { flex: none; margin-top: 2px; color: var(--verde); }
+
+  .pie__medios {
+    margin-top: var(--e-12);
+    padding-top: var(--e-8);
+    border-top: 1px solid var(--gris-200);
+  }
+  .pie__fichas { display: flex; flex-wrap: wrap; gap: var(--e-2); list-style: none; }
+  .pie__ficha {
+    padding: var(--e-2) var(--e-3);
+    background: var(--papel);
+    border: 1px solid var(--gris-200);
+    border-radius: var(--r-badge);
+    font-size: var(--t-meta);
+    font-weight: 600;
+    color: var(--gris-800);
+  }
+  .pie__nota { margin-top: var(--e-3); color: var(--gris-texto); font-size: var(--t-meta); }
+
+  .pie__legal {
+    margin-top: var(--e-10);
+    padding-top: var(--e-6);
+    border-top: 1px solid var(--gris-200);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--e-4);
+    justify-content: space-between;
+    align-items: center;
+  }
+  .pie__copia { color: var(--gris-texto); font-size: var(--t-meta); max-width: 52ch; }
+  .pie__enlaces-legales { display: flex; flex-wrap: wrap; gap: var(--e-4); list-style: none; }
+  .pie__enlaces-legales a { color: var(--gris-800); font-size: var(--t-meta); text-decoration: underline; text-underline-offset: 3px; }
+  .pie__enlaces-legales a:hover { color: var(--tinta); }
+  .pie__arrepentimiento { font-weight: 600; }
+</style>

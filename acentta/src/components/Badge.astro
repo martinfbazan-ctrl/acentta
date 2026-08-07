@@ -1,0 +1,47 @@
+---
+/**
+ * Badge de descuento y de estado.
+ * El de descuento lleva el bisel en el ángulo del acento: un ángulo,
+ * una función — señalar precio.
+ */
+import type { Badge as TipoBadge } from '@tipos/catalogo';
+
+interface Props {
+  variante: TipoBadge | 'descuento';
+  /** Sólo para 'descuento': porcentaje entero. */
+  porcentaje?: number;
+  class?: string;
+}
+
+const { variante, porcentaje, class: clase } = Astro.props;
+
+const ETIQUETAS: Record<string, string> = {
+  oferta: 'Oferta',
+  mas_vendido: 'Más vendido',
+  nuevo: 'Nuevo',
+  ultimas_unidades: 'Últimas unidades',
+  agotado: 'Agotado',
+};
+
+const MODIFICADOR: Record<string, string> = {
+  oferta: 'oferta',
+  mas_vendido: 'mas-vendido',
+  nuevo: 'nuevo',
+  ultimas_unidades: 'ultimas',
+  agotado: 'agotado',
+  descuento: 'descuento',
+};
+
+/* El símbolo de porcentaje va separado del número, como manda la
+   norma en español — "31 %", no "31%". El espacio es fino e
+   inseparable (U+202F): mantiene la proporción tipográfica correcta
+   y evita que el signo caiga solo al renglón siguiente. */
+const esDescuento = variante === 'descuento';
+const clases = ['badge', `badge--${MODIFICADOR[variante]}`, clase].filter(Boolean).join(' ');
+---
+
+<span class={clases}>
+  {esDescuento
+    ? <span>−{porcentaje} %<span class="vo"> de descuento</span></span>
+    : ETIQUETAS[variante]}
+</span>

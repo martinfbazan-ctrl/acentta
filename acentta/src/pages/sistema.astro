@@ -1,0 +1,732 @@
+---
+import Base from '@layouts/Base.astro';
+import Logo from '@componentes/Logo.astro';
+import Boton from '@componentes/Boton.astro';
+import Badge from '@componentes/Badge.astro';
+import Precio from '@componentes/Precio.astro';
+import Rating from '@componentes/Rating.astro';
+import Campo from '@componentes/Campo.astro';
+import SelectorCantidad from '@componentes/SelectorCantidad.astro';
+import Chip from '@componentes/Chip.astro';
+import BarraEnvioGratis from '@componentes/BarraEnvioGratis.astro';
+import BannerOferta from '@componentes/BannerOferta.astro';
+import Toast from '@componentes/Toast.astro';
+import Skeleton from '@componentes/Skeleton.astro';
+import EstadoVacio from '@componentes/EstadoVacio.astro';
+import { rangoDeEntrega } from '@lib/formato';
+import TarjetaProducto from '@componentes/TarjetaProducto.astro';
+import { porSlug } from '@lib/catalogo';
+
+const colores = [
+  { token: '--arena',          valor: '#F9F5EF', uso: 'Fondo general del sitio',                 contraste: 'superficie', decorativo: true },
+  { token: '--arena-honda',    valor: '#EFE8DC', uso: 'Secciones alternadas y hover',            contraste: 'superficie', decorativo: true },
+  { token: '--papel',          valor: '#FFFFFF', uso: 'Tarjetas · la separa el borde, no el relleno', contraste: '1,09:1 sobre el fondo', decorativo: true },
+  { token: '--oferta-wash',    valor: '#DCDF9E', uso: 'Zona de oferta · oliva',                  contraste: 'superficie', decorativo: true },
+  { token: '--tinta',          valor: '#1C1814', uso: 'Texto principal',                         contraste: '16,3:1 fondo · 12,7:1 oliva', decorativo: false },
+  { token: '--gris-800',       valor: '#4A4038', uso: 'Texto secundario',                        contraste: '9,3:1 fondo · 7,3:1 oliva', decorativo: false },
+  { token: '--gris-texto',     valor: '#665A50', uso: 'Metadatos y precio tachado',              contraste: '6,2:1 fondo · 4,8:1 oliva', decorativo: false },
+  { token: '--gris-500',       valor: '#9C8C7A', uso: 'Íconos y separadores',                    contraste: '3,0:1 — no apto para texto', decorativo: true },
+  { token: '--gris-200',       valor: '#E3D3BC', uso: 'Bordes sobre arena',                      contraste: 'borde', decorativo: true },
+  { token: '--naranja-marca',  valor: '#FF6A3D', uso: 'El del logo · acento y resplandor',        contraste: '2,3:1 — decorativo', decorativo: true },
+  { token: '--naranja-accion', valor: '#B8431C', uso: 'Relleno de botón con texto blanco',       contraste: '5,4:1 con blanco', decorativo: false },
+  { token: '--naranja-texto',  valor: '#9C3714', uso: 'Naranja legible sobre fondo y oliva',     contraste: '5,5:1 fondo · 5,1:1 oliva', decorativo: false },
+  { token: '--verde',          valor: '#2F5D3A', uso: 'Ahorro, envío gratis, confirmación',      contraste: '7,0:1 fondo · 5,5:1 oliva', decorativo: false },
+  { token: '--rojo',           valor: '#A8342A', uso: 'Agotado, errores, urgencia real',         contraste: '6,1:1 fondo · 4,7:1 oliva', decorativo: false },
+  { token: '--amarillo',       valor: '#E0A32B', uso: 'Estrellas de rating',                     contraste: 'decorativo', decorativo: true },
+];
+
+const tipografia = [
+  { nombre: 'Titular de campaña', clase: 't-titular',        medida: '28 / 44 px', peso: '500, tracking −2,5 %' },
+  { nombre: 'Título de sección',  clase: 't-seccion',        medida: '20 / 28 px', peso: '600' },
+  { nombre: 'Nombre de producto', clase: 't-producto',       medida: '15 / 16 px', peso: '500' },
+  { nombre: 'Precio',             clase: 't-precio',         medida: '17 / 19 px', peso: '700, tabular-nums' },
+  { nombre: 'Precio anterior',    clase: 't-precio-anterior',medida: '13 / 14 px', peso: '400, tachado' },
+  { nombre: 'Cuotas y envío',     clase: 't-cuotas',         medida: '13 / 14 px', peso: '500' },
+  { nombre: 'Metadatos',          clase: 't-meta',           medida: '12 / 13 px', peso: '400' },
+  { nombre: 'Texto largo',        clase: 't-texto',          medida: '17 / 18 px', peso: '400, interlínea 1,65' },
+];
+
+const espaciado = [1, 2, 3, 4, 5, 6, 8, 10, 12, 16, 20, 24];
+const entrega = rangoDeEntrega(5, 9);
+
+/* Casos borde de la tarjeta, tomados del catálogo real: no son
+   maquetas hechas para la documentación, son los productos que
+   efectivamente tienen ese problema. */
+const bordes = [
+  { p: porSlug('lampara-de-pie-arco')!,            nota: 'Habitual · descuento, ranking y envío gratis' },
+  { p: porSlug('colgante-domo-laton-cable-textil')!, nota: 'Nombre de 92 caracteres' },
+  { p: porSlug('manta-tejida-sierra')!,            nota: 'Sin ninguna opinión todavía' },
+  { p: porSlug('alfombra-yute-redonda-150')!,      nota: 'Últimas unidades · stock real de 3' },
+  { p: porSlug('banqueta-nordica-fresno')!,        nota: 'Agotado' },
+  { p: porSlug('camino-de-mesa-telar-natural')!,   nota: 'Precio bajo · sin envío gratis' },
+];
+---
+
+<Base
+  titulo="Sistema de diseño · acentta"
+  descripcion="Tokens, tipografía y componentes base del marketplace acentta, documentados con todos sus estados."
+  sinIndexar={true}
+>
+  <header class="cabecera" slot="encabezado">
+    <div class="contenedor cabecera__caja">
+      <a href="/" class="cabecera__logo"><Logo alto={26} /></a>
+      <span class="badge badge--oferta">Etapa 1 de 8</span>
+    </div>
+  </header>
+
+  <div class="contenedor doc">
+    <section class="doc__intro">
+      <p class="doc__etiqueta">Sistema de diseño</p>
+      <h1 class="t-titular">Los ladrillos antes que la casa</h1>
+      <p class="t-texto">
+        Todo lo que se ve más adelante en el sitio sale de esta página. Cada componente
+        está documentado con todos sus estados, porque un componente sin sus estados
+        no es un componente: es un dibujo. Las decisiones que se apartan del brief están
+        marcadas y justificadas.
+      </p>
+    </section>
+
+    <!-- ============ COLOR ============ -->
+    <section class="doc__seccion" id="color">
+      <h2 class="t-seccion">1 · Color</h2>
+      <p class="t-texto">
+        El sitio se apoya sobre un arena muy claro, no sobre blanco. Es una decisión
+        comercial antes que estética: la tienda no tiene reputación, y un recorrido cálido
+        baja la guardia más que uno clínico. El tono se aclaró de <code>#F5E6D3</code> a
+        <code>#F9F5EF</code> para que la calidez esté sin pesar. Sobre esa base, el naranja
+        sólo aparece en lo que se toca o en lo que cuesta dinero — si algo es naranja y no
+        es accionable ni es precio, está mal puesto.
+      </p>
+      <p class="t-texto" style="margin-top:16px">
+        Todos los valores están verificados contra los <b>dos</b> fondos reales del sitio,
+        arena y oliva, no sólo contra blanco. Es donde suele romperse una paleta cálida:
+        un color que cumple sobre blanco puede quedar por debajo de AA sobre arena.
+      </p>
+
+      <ul class="paleta">
+        {colores.map((c) => (
+          <li class="paleta__ficha">
+            <span class="paleta__muestra" style={`background:${c.valor}`}></span>
+            <div class="paleta__datos">
+              <code class="paleta__token">{c.token}</code>
+              <span class="paleta__valor tabular">{c.valor}</span>
+              <span class="t-meta">{c.uso}</span>
+              <span class={`paleta__contraste ${c.decorativo ? 'es-decorativo' : 'es-texto'}`}>{c.contraste}</span>
+            </div>
+          </li>
+        ))}
+      </ul>
+
+      <div class="nota">
+        <p class="nota__titulo">Tres desvíos respecto del brief, y por qué</p>
+        <ol class="nota__lista">
+          <li>
+            <b>El hover del botón.</b> El brief pide hover en <code>#FF6A3D</code>. Con texto
+            blanco eso da 2,85:1 y rompe la meta de “AA sin excepciones” del §8. La salida no
+            fue elegir entre marca y accesibilidad: el relleno se oscurece a <code>#A8380F</code>
+            y el naranja de marca vuelve como <b>resplandor cálido</b> alrededor del botón.
+            La luz vive por fuera del relleno, así que nunca toca el texto y el blanco se
+            mantiene en 6,49:1. El gesto de marca no sólo sobrevive: queda más fuerte que con
+            el color plano. Y no es un adorno prestado — la tienda vende iluminación, y el
+            botón se enciende como el producto.
+            La comparación de las siete variantes que se evaluaron está en
+            <a href="/botones">la página de hover</a>.
+          </li>
+          <li>
+            <b>La paleta entera se movió a cálida.</b> El brief define blanco de fondo y
+            grises fríos. Sobre un fondo cálido, esos grises tienen tinte azul y se ven sucios; peor,
+            <code>#6B6B6B</code> caía a 4,35:1 sobre arena y quedaba por debajo de AA. Los
+            neutros pasaron a cálidos y, de paso, contrastan mejor: el metadato subió de
+            4,35:1 a 6,2:1. Lo mismo con los semánticos — el verde esmeralda y el rojo
+            bermellón del brief no llegaban a 4,5:1 sobre el fondo cálido, así que bajaron a
+            verde bosque y rojo tierra, que además pertenecen a la misma familia que el fondo.
+            Con el aclarado posterior del fondo todos los valores mejoraron todavía más; el
+            que sigue marcando el límite es el oliva de las ofertas, que es el más claro
+            de los dos fondos del sitio.
+          </li>
+          <li>
+            <b>El gris de metadatos.</b> El gris decorativo <code>#9C8C7A</code> da 2,7:1
+            sobre arena: sirve para íconos y separadores, no para texto. El texto chico usa
+            <code>#665A50</code> (5,5:1). A ojo son casi el mismo gris; para un lector con
+            baja visión, no.
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- ============ ACENTO ============ -->
+    <section class="doc__seccion" id="acento">
+      <h2 class="t-seccion">2 · El gesto que ya no está</h2>
+      <p class="t-texto">
+        El logo pasó por tres versiones. La primera tenía una tilde diagonal de 21°, medida
+        sobre el archivo; la segunda, una barra vertical que colgaba del borde de una
+        pastilla. Las dos veces el sistema tomó ese ángulo y lo repartió: bisel del badge de
+        descuento, corte del banner de oferta, cabeza de la barra de envío gratis, marca del
+        resumen del pedido.
+      </p>
+      <p class="t-texto" style="margin-top:16px">
+        El wordmark actual no tiene ninguno de los dos. Así que el gesto salió del sistema
+        completo, no de a pedazos: un sistema no puede sostener una cita a un logo que nadie
+        vio nunca. Un bisel diagonal huérfano se lee como un detalle azaroso, que es
+        exactamente lo contrario de lo que un sistema de diseño tiene que producir.
+      </p>
+      <div class="aclaracion">
+        <p>
+          <b>Lo que queda en su lugar.</b> Las formas volvieron al radio del sistema: el badge
+          de descuento es un chip sólido, el banner de oferta divide sus dos zonas con un
+          borde recto y la barra de envío gratis termina en una cabeza redondeada. Nada
+          quedó apuntando a un ángulo que la marca ya no usa.
+        </p>
+        <p style="margin-top:12px">
+          Si vuelve un acento gráfico, vuelve como token —un valor, un solo lugar donde
+          cambiarlo— y no como una decisión repetida a mano en seis componentes. Sacar este
+          gesto llevó una tarde justamente porque la primera vez se había aplicado bien.
+        </p>
+      </div>
+    </section>
+
+    <!-- ============ TIPOGRAFÍA ============ -->
+    <section class="doc__seccion" id="tipografia">
+      <h2 class="t-seccion">3 · Tipografía</h2>
+      <p class="t-texto">
+        Inter en una sola familia, escala fluida entre 360 y 1280 px. La tipografía del logo
+        se usa sólo en el logo. Todo número que se compara en columna lleva cifras tabulares:
+        sin eso, los precios de la grilla no alinean y la comparación cuesta.
+      </p>
+      <div class="aclaracion" style="margin-bottom:24px">
+        <p><b>El titular de campaña usa peso 500, no 700.</b></p>
+        <p style="margin-top:12px">
+          Un display en negrita sobre paleta cálida empuja, y el recorrido que busca este
+          sitio es el contrario: que el visitante se tome su tiempo. En 500 el titular
+          sostiene los 44 px sin levantar la voz. El tamaño hace la jerarquía; el peso queda
+          libre para otra cosa.
+        </p>
+        <p style="margin-top:12px">
+          El tracking se cerró de −2 % a −2,5 % para compensar. Menos peso deja más aire
+          entre letras: si se baja el peso sin ajustar el tracking, el titular se desarma en
+          las medidas grandes.
+        </p>
+        <p style="margin-top:12px">
+          Los títulos de sección se quedan en 600, así que a 20 px son más pesados que el
+          titular a 44. Se ve raro escrito, pero funciona: a esa diferencia de tamaño la
+          jerarquía la define la escala, y el contraste de peso le da al titular un aire
+          editorial que un 700 uniforme le sacaría.
+        </p>
+      </div>
+      <ul class="tipo">
+        {tipografia.map((t) => (
+          <li class="tipo__fila">
+            <div class="tipo__muestra">
+              <span class={t.clase}>{t.nombre}</span>
+            </div>
+            <div class="tipo__datos">
+              <code>.{t.clase}</code>
+              <span class="t-meta">{t.medida} · {t.peso}</span>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </section>
+
+    <!-- ============ SISTEMA ============ -->
+    <section class="doc__seccion" id="tokens">
+      <h2 class="t-seccion">4 · Espaciado, radios y elevación</h2>
+
+      <h3 class="doc__sub">Escala de 4 px</h3>
+      <ul class="escala">
+        {espaciado.map((n) => (
+          <li class="escala__item">
+            <span class="escala__barra" style={`width:${n * 4}px`}></span>
+            <code>--e-{n}</code>
+            <span class="t-meta tabular">{n * 4} px</span>
+          </li>
+        ))}
+      </ul>
+
+      <h3 class="doc__sub">Radios</h3>
+      <div class="muestras">
+        <div class="muestra"><span class="radio-demo" style="border-radius:2px"></span><code>--r-badge</code><span class="t-meta">2 px · badges</span></div>
+        <div class="muestra"><span class="radio-demo" style="border-radius:6px"></span><code>--r-tarjeta</code><span class="t-meta">6 px · tarjetas y campos</span></div>
+        <div class="muestra"><span class="radio-demo" style="border-radius:8px"></span><code>--r-modal</code><span class="t-meta">8 px · modales</span></div>
+      </div>
+
+      <h3 class="doc__sub">Elevación · dos niveles y ninguno más</h3>
+      <div class="muestras">
+        <div class="muestra"><span class="elev-demo tarjeta"></span><code>borde</code><span class="t-meta">reposo</span></div>
+        <div class="muestra"><span class="elev-demo tarjeta--elevada"></span><code>--sombra-1</code><span class="t-meta">tarjeta activa</span></div>
+        <div class="muestra"><span class="elev-demo tarjeta--flotante"></span><code>--sombra-2</code><span class="t-meta">mini-carrito, modal</span></div>
+      </div>
+    </section>
+
+    <!-- ============ BOTONES ============ -->
+    <section class="doc__seccion" id="botones">
+      <h2 class="t-seccion">5 · Botón · 3 jerarquías × 4 estados</h2>
+      <p class="t-texto">
+        Una sola acción primaria por pantalla. Si hay dos naranjas compitiendo, no hay ninguna.
+      </p>
+
+      <div class="matriz">
+        <div class="matriz__encabezado">
+          <span></span><span>Reposo</span><span>Hover</span><span>Foco</span><span>Deshabilitado</span>
+        </div>
+        <div class="matriz__fila">
+          <span class="matriz__titulo">Primario</span>
+          <span><Boton>Comprar ahora</Boton></span>
+          <span><Boton class="es-hover">Comprar ahora</Boton></span>
+          <span><Boton class="es-foco">Comprar ahora</Boton></span>
+          <span><Boton deshabilitado>Sin stock</Boton></span>
+        </div>
+        <div class="matriz__fila">
+          <span class="matriz__titulo">Secundario</span>
+          <span><Boton jerarquia="secundario">Ver detalle</Boton></span>
+          <span><Boton jerarquia="secundario" class="es-hover">Ver detalle</Boton></span>
+          <span><Boton jerarquia="secundario" class="es-foco">Ver detalle</Boton></span>
+          <span><Boton jerarquia="secundario" deshabilitado>Ver detalle</Boton></span>
+        </div>
+        <div class="matriz__fila">
+          <span class="matriz__titulo">Fantasma</span>
+          <span><Boton jerarquia="fantasma">Seguir comprando</Boton></span>
+          <span><Boton jerarquia="fantasma" class="es-hover">Seguir comprando</Boton></span>
+          <span><Boton jerarquia="fantasma" class="es-foco">Seguir comprando</Boton></span>
+          <span><Boton jerarquia="fantasma" deshabilitado>Seguir comprando</Boton></span>
+        </div>
+      </div>
+
+      <h3 class="doc__sub">Tamaños y estado cargando</h3>
+      <div class="fila envuelve g-3" style="align-items:center">
+        <Boton tamano="chico">Chico · 36 px</Boton>
+        <Boton>Medio · 44 px</Boton>
+        <Boton tamano="grande">Grande · 52 px</Boton>
+        <Boton jerarquia="secundario" data-demo-cargando>Probá el estado cargando</Boton>
+        <Boton cargando textoCargando="Agregando al carrito">Agregando</Boton>
+      </div>
+      <div class="aclaracion">
+        <p><b>Sobre la columna “Foco”.</b> Ese contorno grueso y oscuro no es el hover: es el
+        indicador de foco de teclado, y aparece cuando alguien navega con Tab en lugar de
+        mouse. Es intencionalmente el elemento más visible del botón — quien no usa mouse
+        necesita saber sin ninguna duda dónde está parado. Va en tinta y no en naranja
+        porque tiene que leerse sobre cualquier fondo del sitio, y es el mismo en todas las
+        jerarquías: el foco no es decoración, es orientación.</p>
+        <p style="margin-top:12px">El hover, en cambio, es la luz naranja de la primera
+        columna. Nunca se muestran los dos a la vez salvo que alguien navegue con teclado y
+        además apoye el mouse encima.</p>
+      </div>
+      <p class="t-meta" style="margin-top:16px">
+        Probá recorrer los botones con la tecla Tab para verlo en vivo.
+      </p>
+    </section>
+
+    <!-- ============ BADGES ============ -->
+    <section class="doc__seccion" id="badges">
+      <h2 class="t-seccion">6 · Badges</h2>
+      <div class="fila envuelve g-3">
+        <Badge variante="descuento" porcentaje={60} />
+        <Badge variante="descuento" porcentaje={15} />
+        <Badge variante="oferta" />
+        <Badge variante="mas_vendido" />
+        <Badge variante="nuevo" />
+        <Badge variante="ultimas_unidades" />
+        <Badge variante="agotado" />
+      </div>
+      <p class="t-meta" style="margin-top:12px">
+        “Últimas unidades” no se carga a mano: se calcula del stock real. Si el stock sube,
+        el badge desaparece solo. Es la única forma de que la urgencia no mienta.
+      </p>
+    </section>
+
+    <!-- ============ PRECIO ============ -->
+    <section class="doc__seccion" id="precio">
+      <h2 class="t-seccion">7 · Bloque de precio</h2>
+      <div class="muestras muestras--4">
+        <div class="muestra muestra--caja">
+          <Precio precio={45900} precioAnterior={72000} />
+          <span class="t-meta">Con descuento</span>
+        </div>
+        <div class="muestra muestra--caja">
+          <Precio precio={18500} />
+          <span class="t-meta">Sin descuento</span>
+        </div>
+        <div class="muestra muestra--caja">
+          <Precio precio={129900} precioAnterior={324750} cuotas={12} />
+          <span class="t-meta">60 % y cinco dígitos</span>
+        </div>
+        <div class="muestra muestra--caja">
+          <Precio precio={13600} unidades={4} cuotas={3} />
+          <span class="t-meta">Conjunto, con precio por unidad</span>
+        </div>
+      </div>
+      <div class="muestra muestra--caja" style="margin-top:16px;max-width:340px">
+        <Precio precio={45900} precioAnterior={72000} tamano="ficha" cuotas={12} />
+        <span class="t-meta">Tamaño ficha</span>
+      </div>
+    </section>
+
+    <!-- ============ RATING ============ -->
+    <section class="doc__seccion" id="rating">
+      <h2 class="t-seccion">8 · Rating</h2>
+      <div class="muestras muestras--4">
+        <div class="muestra muestra--caja"><Rating puntaje={4.6} cantidad={128} /><span class="t-meta">Caso habitual</span></div>
+        <div class="muestra muestra--caja"><Rating puntaje={5} cantidad={3} /><span class="t-meta">Pocas opiniones</span></div>
+        <div class="muestra muestra--caja"><Rating puntaje={3.2} cantidad={41} /><span class="t-meta">Rating bajo, igual visible</span></div>
+        <div class="muestra muestra--caja"><Rating cantidad={0} /><span class="t-meta">Sin opiniones</span></div>
+      </div>
+      <p class="t-meta" style="margin-top:12px">
+        Las estrellas son decorativas y están ocultas al lector de pantalla: el dato accesible
+        es el número. Por eso el amarillo puede ser amarillo sin discutir contraste.
+      </p>
+    </section>
+
+    <!-- ============ FORMULARIO ============ -->
+    <section class="doc__seccion" id="campos">
+      <h2 class="t-seccion">9 · Campos y validación</h2>
+      <div class="muestras muestras--2">
+        <Campo id="d-nombre" etiqueta="Nombre y apellido" requerido autocompletar="name" marcador="María González" />
+        <Campo id="d-mail" etiqueta="Correo electrónico" tipo="email" requerido autocompletar="email" ayuda="Te enviamos el seguimiento del pedido acá." />
+        <Campo id="d-cp" etiqueta="Código postal" requerido modoEntrada="numeric" maxlargo={4} autocompletar="postal-code" ayuda="Cuatro números, sin letras." />
+        <Campo id="d-error" etiqueta="Código postal" requerido modoEntrada="numeric" valor="C1425" error="El código postal lleva sólo cuatro números. Probá con 1425." />
+        <Campo id="d-exito" etiqueta="Correo electrónico" tipo="email" valor="maria@ejemplo.com" exito requerido />
+        <Campo id="d-off" etiqueta="Provincia" valor="Buenos Aires" deshabilitado ayuda="Se completa con el código postal." />
+      </div>
+      <div class="aclaracion">
+        <p><b>El foco de un campo de texto no es el foco de un botón.</b></p>
+        <p style="margin-top:12px">
+          En botones y enlaces el foco es un anillo negro de 3 px, porque quien navega con
+          teclado necesita saber sin ninguna duda dónde está parado. Sobre un campo de texto
+          ese mismo anillo grita: el campo ya se ve como campo, y lo único que hace falta es
+          confirmar que está listo para escribir. Por eso el foco de los campos es verde y
+          suave — el mismo verde que en este sistema significa “esto está bien, seguí”.
+        </p>
+        <p style="margin-top:12px">
+          Contraste verificado igual: <code>#0F7B4F</code> da 5,29:1 sobre blanco y 4,89:1
+          sobre el gris del buscador, muy por encima del 3:1 que exige el criterio 1.4.11
+          para indicadores no textuales. El halo suave es refuerzo visual; el indicador que
+          cumple es el borde sólido, y funciona solo.
+        </p>
+        <p style="margin-top:12px">
+          <b>El choque que hubo que resolver.</b> El verde ya era el color de “campo válido”,
+          así que foco y validado iban a verse igual. Se separaron por otra vía: el foco trae
+          halo, el validado trae tilde. Nunca se confunden, y cuando un campo válido recibe
+          foco, muestra los dos — que es exactamente lo que está pasando.
+        </p>
+        <p style="margin-top:12px">
+          <b>Ni el foco ni el error mueven el contenido.</b> El borde nunca cambia de grosor:
+          el segundo píxel de color es un <code>box-shadow</code> de spread 1. Engrosar el
+          borde en <code>:focus</code> desplaza todo 1 px, y en un checkout de tres pasos eso
+          se siente en cada campo.
+        </p>
+      </div>
+      <p class="t-meta" style="margin-top:16px">
+        Los campos miden 48 px de alto y usan 16 px de fuente: por debajo de eso, iOS hace zoom
+        solo al enfocar y el formulario se desarma. El error dice qué hacer, no sólo qué falló,
+        y gana sobre el foco — si hay algo mal, eso es lo urgente.
+      </p>
+    </section>
+
+    <!-- ============ CANTIDAD Y CHIPS ============ -->
+    <section class="doc__seccion" id="controles">
+      <h2 class="t-seccion">10 · Selector de cantidad y chips de filtro</h2>
+      <div class="fila envuelve g-6" style="align-items:flex-start">
+        <div class="pila g-2">
+          <SelectorCantidad id="d-cant" valor={1} max={4} />
+          <span class="t-meta">Tope en 4: el stock real de la variante</span>
+        </div>
+        <div class="pila g-3">
+          <div class="fila envuelve g-2">
+            <Chip activo quitable>Iluminación</Chip>
+            <Chip activo quitable>Hasta $ 50.000</Chip>
+            <Chip>Textil</Chip>
+            <Chip>Alfombras</Chip>
+            <Chip limpiar>Limpiar todo</Chip>
+          </div>
+          <span class="t-meta">Filtro activo con salida en un toque</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ ENVÍO ============ -->
+    <section class="doc__seccion" id="envio">
+      <h2 class="t-seccion">11 · Barra de envío gratis</h2>
+      <p class="t-texto">
+        Umbral en $ 50.000. Es la palanca de mayor impacto sobre el ticket promedio: convierte
+        “me falta poco” en un motivo concreto para sumar un producto más.
+      </p>
+      <div class="muestras muestras--3">
+        <div class="muestra muestra--caja"><BarraEnvioGratis subtotal={12000} /><span class="t-meta">Recién arranca</span></div>
+        <div class="muestra muestra--caja"><BarraEnvioGratis subtotal={41500} /><span class="t-meta">Cerca: acá empuja</span></div>
+        <div class="muestra muestra--caja"><BarraEnvioGratis subtotal={58000} /><span class="t-meta">Logrado</span></div>
+      </div>
+      <p class="t-meta" style="margin-top:12px">
+        La entrega se comunica en fechas, no en días hábiles: “llega {entrega}”. El comprador
+        no calcula días hábiles, quiere saber qué día llega.
+      </p>
+    </section>
+
+    <!-- ============ BANNER ============ -->
+    <section class="doc__seccion" id="banner">
+      <h2 class="t-seccion">12 · Banner de oferta</h2>
+      <BannerOferta titulo="Semana de iluminación" bajada="Hasta 40 % en lámparas de pie y colgantes seleccionadas." hasta="10 de agosto">
+        <Boton tamano="chico">Ver la selección</Boton>
+      </BannerOferta>
+      <p class="t-meta" style="margin-top:12px">
+        El corte diagonal usa los mismos 21° del logo. El barrido de entrada ocurre una sola
+        vez, al entrar en viewport, y no se repite al hacer scroll para arriba.
+        Con <code>prefers-reduced-motion</code> no ocurre nunca.
+      </p>
+    </section>
+
+    <!-- ============ RETROALIMENTACIÓN ============ -->
+    <section class="doc__seccion" id="feedback">
+      <h2 class="t-seccion">13 · Toasts, skeletons y estados vacíos</h2>
+
+      <div class="muestras muestras--3">
+        <Toast variante="exito" titulo="Agregado al carrito" detalle="Lámpara de pie Arco · Arena" accion="Deshacer" />
+        <Toast variante="error" titulo="No pudimos calcular el envío" detalle="Revisá el código postal e intentá de nuevo." />
+        <Toast titulo="Guardamos tu carrito" detalle="Lo vas a encontrar cuando vuelvas." />
+      </div>
+
+      <h3 class="doc__sub">Skeletons · nunca pantalla en blanco</h3>
+      <div class="grilla-productos" style="max-width:640px">
+        <Skeleton variante="tarjeta" />
+        <Skeleton variante="tarjeta" />
+      </div>
+
+      <h3 class="doc__sub">Estado vacío · siempre con salida</h3>
+      <EstadoVacio
+        titulo="No encontramos productos con esos filtros"
+        texto="Probá quitando el filtro de precio, o mirá lo más vendido de la categoría."
+      >
+        <Boton jerarquia="secundario">Quitar filtros</Boton>
+        <Boton>Ver más vendidos</Boton>
+      </EstadoVacio>
+    </section>
+
+    <!-- ============ TARJETA DE PRODUCTO ============ -->
+    <section class="doc__seccion" id="tarjeta">
+      <h2 class="t-seccion">14 · Tarjeta de producto</h2>
+      <p class="t-texto">
+        El componente que más se repite del sitio, y por eso el que más tiene que
+        aguantar. Estos seis casos no son maquetas armadas para la documentación:
+        son los productos del catálogo que efectivamente tienen cada problema.
+      </p>
+
+      <div class="grilla-productos" style="margin-bottom:24px">
+        {bordes.slice(0, 3).map((b) => <TarjetaProducto producto={b.p} />)}
+        <TarjetaProducto producto={bordes[3]!.p} />
+      </div>
+      <ul class="notas-borde">
+        {bordes.slice(0, 4).map((b) => <li><b>{b.p.nombre.slice(0, 28)}…</b> {b.nota}</li>)}
+      </ul>
+
+      <div class="grilla-productos" style="margin:24px 0">
+        <TarjetaProducto producto={bordes[4]!.p} />
+        <TarjetaProducto producto={bordes[5]!.p} />
+      </div>
+
+      <div class="aclaracion">
+        <p><b>Tres decisiones de la tarjeta.</b></p>
+        <p style="margin-top:12px">
+          <b>El nombre se corta en dos líneas.</b> Un producto de 92 caracteres no puede
+          empujar el precio fuera de la línea de base de la grilla: si los precios no
+          alinean entre columnas, comparar cuesta, y comparar es lo único que se hace
+          en un listado.
+        </p>
+        <p style="margin-top:12px">
+          <b>El envío gratis se anuncia en la tarjeta.</b> El costo de envío sorpresa es
+          la principal causa de abandono de carrito. Cuando la noticia es buena, darla
+          temprano es gratis; cuando es mala, evita el reclamo.
+        </p>
+        <p style="margin-top:12px">
+          <b>El agotado no se esconde.</b> Sigue visible, sigue indexable y conserva el
+          precio. Sacarlo de la grilla pierde el tráfico que ya lo estaba buscando —
+          y quien llega puede terminar comprando otra cosa.
+        </p>
+      </div>
+    </section>
+
+    <section class="doc__seccion doc__cierre">
+      <h2 class="t-seccion">Qué sigue</h2>
+      <p class="t-texto">
+        Etapa 2: la home con el bento comercial y la tarjeta de producto en sus tres variantes.
+        Todo lo de esta página se usa ahí sin tocar una línea de CSS nueva — esa es la prueba
+        de que el sistema funciona.
+      </p>
+    </section>
+  </div>
+</Base>
+
+<style>
+  .cabecera {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: rgba(249, 245, 239, .92);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--gris-200);
+  }
+  .cabecera__caja {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 60px;
+  }
+  .cabecera__logo { display: inline-flex; }
+
+  .doc { padding-block: var(--e-10) var(--e-24); }
+  .doc__intro { max-width: 72ch; margin-bottom: var(--e-16); }
+  .doc__etiqueta {
+    font-size: var(--t-meta);
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--naranja-texto);
+    margin-bottom: var(--e-3);
+  }
+  .doc__intro h1 { margin-bottom: var(--e-4); }
+
+  .doc__seccion {
+    padding-top: var(--e-12);
+    margin-top: var(--e-12);
+    border-top: 1px solid var(--gris-200);
+  }
+  .doc__seccion > h2 { margin-bottom: var(--e-4); }
+  .doc__seccion > .t-texto { margin-bottom: var(--e-8); }
+  .doc__sub {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: var(--e-10) 0 var(--e-4);
+    color: var(--gris-800);
+  }
+  .aclaracion {
+    margin-top: var(--e-6);
+    padding: var(--e-5);
+    background: var(--gris-050);
+    border-left: 3px solid var(--gris-500);
+    border-radius: var(--r-tarjeta);
+    font-size: 0.9375rem;
+    line-height: 1.6;
+  }
+  .notas-borde {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: var(--e-2);
+    list-style: none;
+    font-size: var(--t-meta);
+    color: var(--gris-texto);
+  }
+  .notas-borde b { color: var(--tinta); }
+  .doc__cierre { background: var(--gris-050); border-radius: var(--r-modal); padding: var(--e-8); border-top: 0; }
+
+  /* --- Paleta --- */
+  .paleta {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(232px, 1fr));
+    gap: var(--e-3);
+    margin-bottom: var(--e-8);
+  }
+  .paleta__ficha {
+    display: flex;
+    gap: var(--e-3);
+    padding: var(--e-3);
+    border: 1px solid var(--gris-200);
+    border-radius: var(--r-tarjeta);
+  }
+  .paleta__muestra {
+    flex: none;
+    width: 44px;
+    height: 44px;
+    border-radius: var(--r-tarjeta);
+    box-shadow: inset 0 0 0 1px rgba(15, 17, 21, .12);
+  }
+  .paleta__datos { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .paleta__token { font-size: 12px; font-weight: 600; }
+  .paleta__valor { font-size: 12px; color: var(--gris-texto); }
+  .paleta__contraste { font-size: 11px; font-weight: 600; margin-top: 2px; }
+  .paleta__contraste.es-texto { color: var(--verde); }
+  .paleta__contraste.es-decorativo { color: var(--gris-texto); }
+
+  .nota {
+    padding: var(--e-6);
+    background: var(--oferta-wash);
+    border-radius: var(--r-modal);
+    border-left: 3px solid var(--naranja-accion);
+  }
+  .nota__titulo { font-weight: 700; margin-bottom: var(--e-3); }
+  .nota__lista { display: flex; flex-direction: column; gap: var(--e-3); padding-left: var(--e-5); list-style: decimal; }
+  .nota__lista li { font-size: 0.9375rem; line-height: 1.6; }
+
+  code {
+    font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    font-size: 0.85em;
+    background: var(--gris-050);
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+
+  /* --- Acento --- */
+
+
+  /* --- Tipografía --- */
+  .tipo { display: flex; flex-direction: column; }
+  .tipo__fila {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--e-4);
+    padding: var(--e-4) 0;
+    border-bottom: 1px solid var(--gris-200);
+  }
+  .tipo__datos { display: flex; flex-direction: column; gap: 2px; text-align: right; }
+
+  /* --- Escala --- */
+  .escala { display: flex; flex-direction: column; gap: var(--e-2); }
+  .escala__item { display: flex; align-items: center; gap: var(--e-3); }
+  .escala__barra { height: 14px; background: var(--oferta-wash); border-left: 2px solid var(--naranja-accion); flex: none; }
+
+  /* --- Muestras --- */
+  .muestras { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--e-4); }
+  .muestras--2 { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+  .muestras--3 { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+  .muestras--4 { grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); }
+  .muestra { display: flex; flex-direction: column; gap: var(--e-2); align-items: flex-start; }
+  .muestra--caja {
+    padding: var(--e-4);
+    border: 1px solid var(--gris-200);
+    border-radius: var(--r-tarjeta);
+    justify-content: space-between;
+    gap: var(--e-4);
+  }
+  .radio-demo { display: block; width: 72px; height: 48px; background: var(--gris-200); }
+  .elev-demo { display: block; width: 100%; height: 64px; border-radius: var(--r-tarjeta); background: var(--papel); }
+
+  /* --- Matriz de botones --- */
+  /* overflow-x: auto también recorta en vertical. El padding le da aire
+     a la retroiluminación para que no quede cortada contra el borde. */
+  .matriz { overflow-x: auto; padding-block: var(--e-5); margin-block: calc(var(--e-5) * -1); }
+  .matriz__encabezado,
+  .matriz__fila {
+    display: grid;
+    grid-template-columns: 110px repeat(4, minmax(170px, 1fr));
+    gap: var(--e-3);
+    align-items: center;
+    min-width: 780px;
+  }
+  .matriz__encabezado {
+    padding-bottom: var(--e-2);
+    border-bottom: 1px solid var(--gris-200);
+    font-size: var(--t-meta);
+    font-weight: 600;
+    color: var(--gris-texto);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+  .matriz__fila { padding: var(--e-4) 0; border-bottom: 1px solid var(--gris-200); }
+  .matriz__titulo { font-size: 0.875rem; font-weight: 600; }
+
+  /* Estados forzados, para poder verlos todos juntos en la documentación */
+  :global(.es-hover.boton--primario) { background: var(--naranja-accion-hover); }
+  :global(.es-hover.boton--primario)::after { opacity: 1; }
+  :global(.es-hover.boton--secundario) { background: var(--gris-050); border-color: var(--tinta); }
+  :global(.es-hover.boton--fantasma) { background: var(--oferta-wash); color: var(--naranja-accion-activo); }
+  :global(.es-foco) { outline: 3px solid var(--tinta); outline-offset: 2px; }
+</style>

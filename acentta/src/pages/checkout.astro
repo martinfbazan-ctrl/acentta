@@ -1,0 +1,449 @@
+---
+/**
+ * Checkout en tres pasos.
+ * ---------------------------------------------------------------
+ * Donde se pierde la venta ya ganada. Decisiones:
+ *
+ * · Se compra como invitado. El registro obligatorio es de los
+ *   mayores destructores de conversión que existen, y este sitio no
+ *   necesita cuentas para entregar un pedido.
+ * · Tres pasos con progreso visible. Un formulario largo de una sola
+ *   pantalla asusta; tres pasos cortos con final a la vista, no.
+ * · El resumen del pedido está siempre presente, con el mismo total
+ *   que el carrito. Si el número cambiara acá, todo lo anterior
+ *   habría sido mentira.
+ * · Cada campo pide una sola cosa y dice para qué la pide.
+ */
+import Base from '@layouts/Base.astro';
+import Logo from '@componentes/Logo.astro';
+import Campo from '@componentes/Campo.astro';
+import Boton from '@componentes/Boton.astro';
+
+const pasos = [
+  { n: 1, nombre: 'Tus datos' },
+  { n: 2, nombre: 'Envío' },
+  { n: 3, nombre: 'Pago' },
+];
+---
+
+<Base
+  titulo="Finalizar compra · acentta"
+  descripcion="Completá tu pedido."
+  sinIndexar={true}
+>
+  <!-- Encabezado reducido: en el checkout no hay nada más que hacer
+       que terminar. Menos salidas, menos abandono — pero el logo
+       sigue llevando al inicio, porque encerrar a alguien es peor. -->
+  <header class="cabecera-checkout" slot="encabezado">
+    <div class="contenedor cabecera-checkout__caja">
+      <a href="/" aria-label="acentta, volver al inicio"><Logo alto={40} /></a>
+      <p class="cabecera-checkout__seguro">
+        <svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8">
+          <rect x="5" y="11" width="14" height="9" rx="2" />
+          <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+        </svg>
+        Compra protegida
+      </p>
+    </div>
+  </header>
+
+  <div class="contenedor checkout">
+    <!-- Progreso -->
+    <ol class="progreso" data-progreso>
+      {pasos.map((p) => (
+        <li class="progreso__paso" data-paso={p.n} aria-current={p.n === 1 ? 'step' : undefined}>
+          <span class="progreso__numero tabular">{p.n}</span>
+          <span class="progreso__nombre">{p.nombre}</span>
+        </li>
+      ))}
+    </ol>
+
+    <div class="checkout__cuerpo">
+      <div class="checkout__forma">
+        <!-- ============ PASO 1 · DATOS ============ -->
+        <form class="paso" data-paso-forma="1" novalidate>
+          <h1 class="t-seccion">Tus datos</h1>
+          <p class="paso__nota">
+            No hace falta crear una cuenta. Pedimos sólo lo necesario para
+            facturar el pedido y avisarte cuándo llega.
+          </p>
+
+          <div class="paso__campos">
+            <Campo id="email" etiqueta="Correo electrónico" tipo="email" requerido
+                   autocompletar="email" marcador="nombre@ejemplo.com"
+                   ayuda="Acá te mandamos el número de pedido y el seguimiento." />
+            <div class="paso__par">
+              <Campo id="nombre" etiqueta="Nombre" requerido autocompletar="given-name" />
+              <Campo id="apellido" etiqueta="Apellido" requerido autocompletar="family-name" />
+            </div>
+            <div class="paso__par">
+              <Campo id="dni" etiqueta="DNI" requerido modoEntrada="numeric" maxlargo={8}
+                     ayuda="Sin puntos. Lo pide la factura." />
+              <Campo id="telefono" etiqueta="Teléfono" requerido tipo="tel" modoEntrada="tel"
+                     autocompletar="tel" marcador="11 2345 6789"
+                     ayuda="Por si el correo necesita coordinar la entrega." />
+            </div>
+          </div>
+
+          <div class="paso__acciones">
+            <a class="paso__volver" href="/carrito">Volver al carrito</a>
+            <Boton tipo="submit" tamano="grande">Continuar al envío</Boton>
+          </div>
+        </form>
+
+        <!-- ============ PASO 2 · ENVÍO ============ -->
+        <form class="paso" data-paso-forma="2" novalidate hidden>
+          <h1 class="t-seccion">¿A dónde lo llevamos?</h1>
+          <p class="paso__nota" data-envio-resumen></p>
+
+          <fieldset class="metodos">
+            <legend class="metodos__titulo">Forma de entrega</legend>
+            <label class="metodo">
+              <input type="radio" name="metodo-envio" value="domicilio" checked />
+              <span class="metodo__cuerpo">
+                <span class="metodo__nombre">A domicilio</span>
+                <span class="metodo__detalle" data-metodo-domicilio>Lo entrega el correo en la dirección que indiques.</span>
+              </span>
+              <span class="metodo__precio tabular" data-precio-domicilio></span>
+            </label>
+            <label class="metodo">
+              <input type="radio" name="metodo-envio" value="sucursal" />
+              <span class="metodo__cuerpo">
+                <span class="metodo__nombre">Retiro en sucursal del correo</span>
+                <span class="metodo__detalle">Lo retirás con DNI. Suele llegar un día antes.</span>
+              </span>
+              <span class="metodo__precio tabular" data-precio-sucursal></span>
+            </label>
+          </fieldset>
+
+          <div class="paso__campos">
+            <div class="paso__par">
+              <Campo id="cp-checkout" etiqueta="Código postal" requerido modoEntrada="numeric"
+                     maxlargo={8} autocompletar="postal-code" />
+              <Campo id="provincia" etiqueta="Provincia" requerido autocompletar="address-level1"
+                     ayuda="Se completa sola con el código postal." />
+            </div>
+            <Campo id="ciudad" etiqueta="Ciudad o localidad" requerido autocompletar="address-level2" />
+            <div class="paso__par paso__par--calle">
+              <Campo id="calle" etiqueta="Calle" requerido autocompletar="address-line1" />
+              <Campo id="numero" etiqueta="Número" requerido modoEntrada="numeric" />
+            </div>
+            <div class="paso__par">
+              <Campo id="piso" etiqueta="Piso y departamento" autocompletar="address-line2" marcador="3° B" />
+              <Campo id="entre" etiqueta="Entre qué calles" marcador="Av. Rivadavia y Mitre" />
+            </div>
+            <Campo id="referencias" etiqueta="Indicaciones para el repartidor" areaTexto
+                   marcador="Portón negro, timbre 2. Si no estoy, dejar con el encargado."
+                   ayuda="Esto es lo que más ayuda a que la primera visita no falle." />
+          </div>
+
+          <div class="paso__acciones">
+            <button class="paso__volver" type="button" data-atras>Volver a tus datos</button>
+            <Boton tipo="submit" tamano="grande">Continuar al pago</Boton>
+          </div>
+        </form>
+
+        <!-- ============ PASO 3 · PAGO ============ -->
+        <form class="paso" data-paso-forma="3" novalidate hidden>
+          <h1 class="t-seccion">Pago</h1>
+
+          <div class="simulacro">
+            <svg width="18" height="18" viewBox="0 0 20 20" aria-hidden="true" fill="currentColor">
+              <path d="M10 1a9 9 0 1 0 0 18A9 9 0 0 0 10 1Zm1 13.5H9v-6h2v6ZM10 7.2a1.2 1.2 0 1 1 0-2.4 1.2 1.2 0 0 1 0 2.4Z"/>
+            </svg>
+            <p>
+              <b>Esto es una simulación.</b> acentta es un proyecto conceptual de
+              portafolio: no procesa pagos y no guarda ningún dato. Podés escribir
+              cualquier número de tarjeta válido — probá con 4509 9535 6623 3704.
+            </p>
+          </div>
+
+          <fieldset class="metodos">
+            <legend class="metodos__titulo">Forma de pago</legend>
+            <label class="metodo">
+              <input type="radio" name="metodo-pago" value="tarjeta" checked />
+              <span class="metodo__cuerpo">
+                <span class="metodo__nombre">Tarjeta de crédito o débito</span>
+                <span class="metodo__detalle">Hasta 12 cuotas sin interés con bancos seleccionados.</span>
+              </span>
+            </label>
+            <label class="metodo">
+              <input type="radio" name="metodo-pago" value="transferencia" />
+              <span class="metodo__cuerpo">
+                <span class="metodo__nombre">Transferencia bancaria</span>
+                <span class="metodo__detalle">10 % de descuento. Te enviamos los datos por correo.</span>
+              </span>
+              <span class="metodo__precio metodo__precio--verde tabular" data-descuento-transferencia></span>
+            </label>
+          </fieldset>
+
+          <div class="paso__campos" data-campos-tarjeta>
+            <Campo id="tarjeta" etiqueta="Número de tarjeta" requerido modoEntrada="numeric"
+                   maxlargo={23} autocompletar="cc-number" marcador="0000 0000 0000 0000" />
+            <Campo id="titular" etiqueta="Nombre como figura en la tarjeta" requerido autocompletar="cc-name" />
+            <div class="paso__par">
+              <Campo id="vencimiento" etiqueta="Vencimiento" requerido modoEntrada="numeric"
+                     maxlargo={5} autocompletar="cc-exp" marcador="MM/AA" />
+              <Campo id="cvv" etiqueta="Código de seguridad" requerido modoEntrada="numeric"
+                     maxlargo={4} autocompletar="cc-csc" marcador="123"
+                     ayuda="Los tres números del dorso." />
+            </div>
+            <div class="campo">
+              <label class="campo__etiqueta" for="cuotas">Cuotas</label>
+              <div class="campo__envoltorio">
+                <select class="campo__control" id="cuotas" name="cuotas" data-cuotas></select>
+              </div>
+            </div>
+          </div>
+
+          <label class="acuerdo">
+            <input type="checkbox" id="acepto" required />
+            <span class="opcion__marca" aria-hidden="true"></span>
+            <span>
+              Leí y acepto los <a href="/terminos">términos y condiciones</a> y la
+              <a href="/privacidad">política de privacidad</a>.
+            </span>
+          </label>
+
+          <div class="paso__acciones">
+            <button class="paso__volver" type="button" data-atras>Volver al envío</button>
+            <Boton tipo="submit" tamano="grande" data-pagar>
+              <span data-texto-pagar>Confirmar compra</span>
+            </Boton>
+          </div>
+        </form>
+      </div>
+
+      <!-- ============ RESUMEN ============ -->
+      <aside class="resumen-pedido" aria-labelledby="tit-resumen-pedido">
+        <h2 class="resumen-pedido__titulo" id="tit-resumen-pedido">Tu pedido</h2>
+
+        <button class="resumen-pedido__toggle" type="button" data-toggle-resumen aria-expanded="false">
+          <span>Ver el detalle</span>
+          <b class="tabular" data-ck-total>$ 0</b>
+        </button>
+
+        <div class="resumen-pedido__contenido" data-resumen-contenido>
+          <div class="resumen-pedido__items" data-ck-items></div>
+
+          <dl class="resumen__lineas">
+            <div class="resumen__linea">
+              <dt>Subtotal</dt>
+              <dd class="tabular" data-ck-subtotal>$ 0</dd>
+            </div>
+            <div class="resumen__linea">
+              <dt data-ck-envio-rotulo>Envío</dt>
+              <dd class="tabular" data-ck-envio>—</dd>
+            </div>
+            <div class="resumen__linea resumen__linea--ahorro" data-ck-descuento-fila hidden>
+              <dt>Descuento por transferencia</dt>
+              <dd class="tabular" data-ck-descuento>$ 0</dd>
+            </div>
+            <div class="resumen__linea resumen__linea--total">
+              <dt>Total</dt>
+              <dd class="tabular" data-ck-total-2>$ 0</dd>
+            </div>
+          </dl>
+
+          <p class="resumen-pedido__entrega" data-ck-entrega></p>
+        </div>
+
+        <ul class="resumen__garantias">
+          <li>
+            <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true" fill="currentColor"><path d="M6.2 11.4 3.3 8.5l-1.1 1.1 4 4 7.6-7.6-1.1-1.1z"/></svg>
+            30 días para devolver, sin cargo
+          </li>
+          <li>
+            <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true" fill="currentColor"><path d="M6.2 11.4 3.3 8.5l-1.1 1.1 4 4 7.6-7.6-1.1-1.1z"/></svg>
+            Si no llega, te devolvemos el dinero
+          </li>
+        </ul>
+      </aside>
+    </div>
+  </div>
+</Base>
+
+<script>
+  import '../scripts/checkout';
+</script>
+
+<style>
+  .cabecera-checkout { border-bottom: 1px solid var(--gris-200); background: var(--papel); }
+  .cabecera-checkout__caja {
+    display: flex; align-items: center; justify-content: space-between;
+    min-height: 76px; gap: var(--e-4);
+  }
+  .cabecera-checkout__seguro {
+    display: flex; align-items: center; gap: var(--e-2);
+    font-size: var(--t-meta); font-weight: 600; color: var(--verde);
+  }
+
+  .checkout { padding-block: var(--e-8) var(--e-16); }
+
+  /* ---- Progreso ---- */
+  .progreso {
+    display: flex;
+    gap: var(--e-2);
+    margin-bottom: var(--e-10);
+    counter-reset: paso;
+  }
+  .progreso__paso {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: var(--e-2);
+    padding-top: var(--e-3);
+    border-top: 3px solid var(--gris-200);
+    color: var(--gris-texto);
+    font-size: 0.875rem;
+    transition: border-color var(--v-medio) var(--curva), color var(--v-medio) var(--curva);
+  }
+  .progreso__numero {
+    width: 24px; height: 24px;
+    display: grid; place-items: center;
+    border-radius: 50%;
+    background: var(--gris-200);
+    color: var(--gris-800);
+    font-size: 12px; font-weight: 700;
+    flex: none;
+  }
+  .progreso__nombre { font-weight: 500; }
+  @media (max-width: 560px) { .progreso__nombre { display: none; } }
+
+  .progreso__paso[data-estado='hecho'] { border-top-color: var(--verde); color: var(--verde); }
+  .progreso__paso[data-estado='hecho'] .progreso__numero { background: var(--verde); color: var(--papel); }
+  .progreso__paso[aria-current='step'] { border-top-color: var(--naranja-accion); color: var(--tinta); }
+  .progreso__paso[aria-current='step'] .progreso__numero { background: var(--naranja-accion); color: var(--blanco); }
+
+  /* ---- Cuerpo ---- */
+  .checkout__cuerpo { display: grid; gap: var(--e-8); align-items: start; }
+  @media (min-width: 900px) {
+    .checkout__cuerpo { grid-template-columns: minmax(0, 1fr) 380px; gap: var(--e-12); }
+  }
+
+  .paso { display: flex; flex-direction: column; gap: var(--e-5); }
+  .paso__nota { font-size: 0.9375rem; color: var(--gris-800); line-height: 1.55; max-width: 60ch; }
+  .paso__campos { display: flex; flex-direction: column; gap: var(--e-5); }
+  .paso__par { display: grid; gap: var(--e-4); }
+  @media (min-width: 640px) {
+    .paso__par { grid-template-columns: 1fr 1fr; }
+    .paso__par--calle { grid-template-columns: 2.2fr 1fr; }
+  }
+
+  .paso__acciones {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--e-4);
+    padding-top: var(--e-4);
+    border-top: 1px solid var(--gris-200);
+  }
+  .paso__volver {
+    background: none; border: 0; padding: var(--e-2) 0;
+    font-size: 0.9375rem; color: var(--gris-800);
+    text-decoration: underline; text-underline-offset: 3px; cursor: pointer;
+  }
+  .paso__volver:hover { color: var(--tinta); }
+
+  /* ---- Métodos ---- */
+  .metodos { border: 0; padding: 0; margin: 0; display: flex; flex-direction: column; gap: var(--e-3); }
+  .metodos__titulo {
+    padding: 0; margin-bottom: var(--e-1);
+    font-size: var(--t-meta); font-weight: 700;
+    text-transform: uppercase; letter-spacing: .07em; color: var(--gris-texto);
+  }
+  .metodo {
+    display: flex; align-items: flex-start; gap: var(--e-3);
+    padding: var(--e-4);
+    border: 1px solid var(--gris-500);
+    border-radius: var(--r-tarjeta);
+    background: var(--papel);
+    cursor: pointer;
+    transition: border-color var(--v-rapido) var(--curva), background-color var(--v-rapido) var(--curva);
+  }
+  .metodo:hover { border-color: var(--tinta); }
+  .metodo:has(input:checked) { border-color: var(--tinta); border-width: 2px; padding: calc(var(--e-4) - 1px); background: var(--gris-050); }
+  .metodo:has(input:focus-visible) { outline: 3px solid var(--foco-color); outline-offset: 2px; }
+  .metodo input { margin-top: 3px; accent-color: var(--tinta); width: 18px; height: 18px; flex: none; }
+  .metodo__cuerpo { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+  .metodo__nombre { font-weight: 600; font-size: 0.9375rem; }
+  .metodo__detalle { font-size: var(--t-meta); color: var(--gris-texto); line-height: 1.45; }
+  .metodo__precio { font-weight: 700; font-size: 0.9375rem; }
+  .metodo__precio--verde { color: var(--verde); }
+
+  /* ---- Aviso de simulacro ---- */
+  .simulacro {
+    display: flex; gap: var(--e-3);
+    padding: var(--e-4);
+    background: var(--oferta-wash);
+    border-radius: var(--r-tarjeta);
+    font-size: 0.875rem;
+    line-height: 1.55;
+  }
+  .simulacro svg { flex: none; margin-top: 2px; color: var(--naranja-texto-oliva); }
+
+  /* ---- Acuerdo ---- */
+  .acuerdo {
+    display: flex; align-items: flex-start; gap: var(--e-3);
+    font-size: 0.875rem; line-height: 1.5; cursor: pointer;
+  }
+  .acuerdo input { position: absolute; opacity: 0; width: 0; height: 0; }
+  .acuerdo .opcion__marca { margin-top: 1px; }
+  .acuerdo input:checked + .opcion__marca { background: var(--verde); border-color: var(--verde); }
+  .acuerdo input:checked + .opcion__marca::after { opacity: 1; }
+  .acuerdo input:focus-visible + .opcion__marca { outline: 3px solid var(--foco-color); outline-offset: 2px; }
+  .acuerdo a { color: var(--naranja-texto); }
+
+  /* ---- Resumen ---- */
+  .resumen-pedido {
+    padding: var(--e-5);
+    background: var(--papel);
+    border: 1px solid var(--gris-200);
+    border-radius: var(--r-modal);
+    display: flex; flex-direction: column; gap: var(--e-4);
+  }
+  @media (min-width: 900px) { .resumen-pedido { position: sticky; top: var(--e-6); } }
+
+  .resumen-pedido__titulo { font-size: 1rem; font-weight: 700; }
+
+  /* En móvil el resumen se pliega: ocupar media pantalla con el
+     detalle mientras se completa un formulario es un estorbo, pero
+     el total tiene que quedar siempre a la vista. */
+  .resumen-pedido__toggle {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: var(--e-3);
+    width: 100%;
+    padding: var(--e-3) 0;
+    background: none; border: 0; cursor: pointer;
+    font-size: 0.9375rem; color: var(--naranja-texto);
+    border-top: 1px solid var(--gris-200);
+    border-bottom: 1px solid var(--gris-200);
+  }
+  .resumen-pedido__toggle b { color: var(--tinta); font-size: var(--t-precio); }
+  @media (min-width: 900px) { .resumen-pedido__toggle { display: none; } }
+
+  .resumen-pedido__contenido { display: flex; flex-direction: column; gap: var(--e-4); }
+
+  .resumen-pedido__items { display: flex; flex-direction: column; gap: var(--e-3); }
+  .resumen-pedido__entrega {
+    font-size: var(--t-meta); color: var(--gris-800);
+    padding: var(--e-3);
+    background: var(--verde-wash);
+    border-radius: var(--r-tarjeta);
+  }
+
+  :global(.ck-item) { display: flex; gap: var(--e-3); align-items: flex-start; }
+  :global(.ck-item__foto) {
+    width: 52px; height: 65px; flex: none;
+    object-fit: cover; border-radius: var(--r-badge);
+    background: var(--gris-050);
+  }
+  :global(.ck-item__datos) { flex: 1; min-width: 0; }
+  :global(.ck-item__nombre) {
+    font-size: 0.8125rem; font-weight: 500; line-height: 1.3;
+    display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  :global(.ck-item__meta) { font-size: var(--t-meta); color: var(--gris-texto); }
+  :global(.ck-item__precio) { font-size: 0.875rem; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+</style>

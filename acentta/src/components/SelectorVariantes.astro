@@ -1,0 +1,133 @@
+---
+/**
+ * Selector de variantes.
+ * Las agotadas siguen visibles y tachadas: esconderlas hace que el
+ * comprador crea que la que busca nunca existió, y que se vaya a
+ * buscarla a otro lado.
+ */
+import type { Producto, TipoVariante } from '@tipos/catalogo';
+
+interface Props { producto: Producto }
+const { producto: p } = Astro.props;
+
+const ETIQUETA: Record<TipoVariante, string> = {
+  color: 'Color',
+  medida: 'Medida',
+  material: 'Material',
+};
+
+/* Se agrupan por tipo: un producto puede tener color y medida a la vez. */
+const tipos = [...new Set(p.variantes.map((v) => v.tipo))];
+const primeraConStock = p.variantes.find((v) => v.stock > 0) ?? p.variantes[0]!;
+---
+
+<div class="variantes" data-variantes>
+  {tipos.map((tipo) => {
+    const grupo = p.variantes.filter((v) => v.tipo === tipo);
+    return (
+      <fieldset class="variantes__grupo">
+        <legend class="variantes__titulo">
+          {ETIQUETA[tipo]}:
+          <span class="variantes__elegida" data-elegida={tipo}>{primeraConStock.nombre}</span>
+        </legend>
+
+        <div class={tipo === 'color' ? 'variantes__colores' : 'variantes__botones'}>
+          {grupo.map((v) => (
+            <label class={`variante ${v.stock === 0 ? 'variante--agotada' : ''}`}>
+              <input
+                type="radio"
+                name={`variante-${tipo}`}
+                value={v.nombre}
+                data-stock={v.stock}
+                data-imagen={v.imagen ?? 0}
+                data-tipo={tipo}
+                checked={v.id === primeraConStock.id}
+                disabled={v.stock === 0}
+              />
+              {tipo === 'color' ? (
+                <span class="variante__muestra" style={`--muestra:${v.muestra}`} aria-hidden="true"></span>
+              ) : (
+                <span class="variante__texto">{v.nombre}</span>
+              )}
+              <span class="vo">
+                {v.nombre}{v.stock === 0 ? ', sin stock' : ''}
+              </span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
+    );
+  })}
+</div>
+
+<style>
+  .variantes { display: flex; flex-direction: column; gap: var(--e-5); }
+  .variantes__grupo { border: 0; padding: 0; margin: 0; }
+  .variantes__titulo {
+    padding: 0;
+    font-size: 0.875rem;
+    color: var(--gris-800);
+    margin-bottom: var(--e-3);
+  }
+  .variantes__elegida { color: var(--tinta); font-weight: 600; }
+
+  .variantes__colores { display: flex; flex-wrap: wrap; gap: var(--e-3); }
+  .variantes__botones { display: flex; flex-wrap: wrap; gap: var(--e-2); }
+
+  .variante { position: relative; cursor: pointer; display: inline-flex; }
+  .variante input { position: absolute; opacity: 0; width: 0; height: 0; }
+  .variante--agotada { cursor: not-allowed; }
+
+  /* Color */
+  .variante__muestra {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    background: var(--muestra);
+    box-shadow: inset 0 0 0 1px rgba(28, 24, 20, .18);
+    transition: box-shadow var(--v-rapido) var(--curva);
+  }
+  .variante input:checked + .variante__muestra {
+    box-shadow: inset 0 0 0 1px rgba(28, 24, 20, .18), 0 0 0 2px var(--papel), 0 0 0 4px var(--tinta);
+  }
+  .variante input:focus-visible + .variante__muestra { outline: 3px solid var(--foco-color); outline-offset: 4px; }
+
+  /* La agotada se cruza con una barra, no se esconde. */
+  .variante--agotada .variante__muestra { opacity: .45; }
+  .variante--agotada::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: -2px; right: -2px;
+    height: 1.5px;
+    background: var(--rojo);
+    transform: rotate(-45deg);
+  }
+
+  /* Medida y material */
+  .variante__texto {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding-inline: var(--e-4);
+    border: 1px solid var(--gris-500);
+    border-radius: var(--r-tarjeta);
+    background: var(--papel);
+    font-size: 0.9375rem;
+    font-weight: 500;
+    transition: all var(--v-rapido) var(--curva);
+  }
+  .variante:hover .variante__texto { border-color: var(--tinta); }
+  .variante input:checked + .variante__texto {
+    background: var(--tinta);
+    border-color: var(--tinta);
+    color: var(--papel);
+  }
+  .variante input:focus-visible + .variante__texto { outline: 3px solid var(--foco-color); outline-offset: 2px; }
+  .variante--agotada .variante__texto {
+    color: var(--gris-texto);
+    border-color: var(--gris-200);
+    text-decoration: line-through;
+    text-decoration-color: var(--rojo);
+  }
+  .variante--agotada::after { display: none; }
+  .variantes__colores .variante--agotada::after { display: block; }
+</style>

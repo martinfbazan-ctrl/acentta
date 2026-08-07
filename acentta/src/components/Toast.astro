@@ -1,0 +1,26 @@
+---
+interface Props {
+  variante?: 'exito' | 'error' | 'info';
+  titulo: string;
+  detalle?: string;
+  /** Texto del botón de deshacer. Sin él, no se muestra acción. */
+  accion?: string;
+  class?: string;
+}
+const { variante = 'info', titulo, detalle, accion, class: clase } = Astro.props;
+---
+
+<div class={['toast', `toast--${variante}`, clase].filter(Boolean).join(' ')} role="status" aria-live="polite">
+  <svg class="toast__icono" viewBox="0 0 20 20" aria-hidden="true" fill="currentColor">
+    {variante === 'exito'
+      ? <path d="M7.8 14.2 4 10.4l1.4-1.4 2.4 2.4 6.8-6.8L16 6z"/>
+      : variante === 'error'
+      ? <path d="M10 2 19 17.5H1L10 2Zm0 5.4a1 1 0 0 0-1 1.1l.3 3.9a.7.7 0 0 0 1.4 0l.3-3.9a1 1 0 0 0-1-1.1Zm0 6.6a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z"/>
+      : <path d="M10 1a9 9 0 1 0 0 18A9 9 0 0 0 10 1Zm1 13.5H9v-6h2v6ZM10 7.2a1.2 1.2 0 1 1 0-2.4 1.2 1.2 0 0 1 0 2.4Z"/>}
+  </svg>
+  <div class="toast__cuerpo">
+    <p class="toast__titulo">{titulo}</p>
+    {detalle && <p class="toast__detalle">{detalle}</p>}
+    {accion && <button class="toast__accion" type="button">{accion}</button>}
+  </div>
+</div>
