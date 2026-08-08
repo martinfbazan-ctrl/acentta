@@ -86,6 +86,12 @@ const atajos = CATEGORIAS_TODAS.map((c) => ({
 
     <p class="vo" role="status" aria-live="polite" data-busqueda-aviso></p>
 
+    <!-- Los nombres de producto son h3 dentro de la tarjeta, que es un
+         componente compartido. Sin este h2 la página saltaba de h1 a
+         h3 y el índice de encabezados quedaba con un escalón roto.
+         No hace falta que se vea: hace falta que exista. -->
+    <h2 class="vo" data-busqueda-h2>Productos</h2>
+
     <div class="grilla-productos" data-busqueda-grilla>
       {productos.map((p) => (
         <div class="busqueda__celda" data-slug={p.slug}>

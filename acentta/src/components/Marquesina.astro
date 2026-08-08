@@ -42,7 +42,18 @@ const mensajes = [
    cargada la tipografía y cuán ancha es la pantalla. */
 ---
 
-<div class="marquesina" data-marquesina>
+<!--
+  Es un <aside> y no un <div>, y lleva nombre accesible.
+  Motivo: la auditoría marcaba 60 de 64 páginas con contenido fuera de
+  todo punto de referencia, y el único culpable era esta franja, que
+  vive antes del <header>. Meterla adentro del encabezado lo habría
+  arreglado, pero el encabezado es fijo: la franja se habría quedado
+  pegada arriba ocupando alto para siempre. Como <aside> es una región
+  complementaria por sí sola, se resuelve sin mover nada — y además es
+  lo que la franja es: contenido de apoyo, no navegación ni contenido
+  principal.
+-->
+<aside class="marquesina" data-marquesina aria-label="Envíos, devoluciones y cuotas">
   <div class="marquesina__pista">
     <ul class="marquesina__grupo">
       {mensajes.map((m) => (
@@ -53,7 +64,7 @@ const mensajes = [
       ))}
     </ul>
   </div>
-</div>
+</aside>
 
 <style>
   .marquesina {

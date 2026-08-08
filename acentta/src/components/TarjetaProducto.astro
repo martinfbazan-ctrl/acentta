@@ -39,6 +39,13 @@ const {
   producto: p,
   variante = 'grilla',
   posicion,
+  /* Carga inmediata sí, prioridad alta no.
+     `fetchpriority="high"` está pensado para un solo elemento por
+     página: el que va a ser el LCP. Repartirlo entre las primeras
+     tarjetas no las adelanta —se disputan el mismo ancho de banda— y
+     sí le quita turno al CSS y a la tipografía, que son lo que
+     bloquea el primer pintado. Esa prioridad la tiene la foto del
+     hero, y nadie más. */
   prioritaria = false,
   filtrable = false,
   class: clase,
@@ -74,7 +81,6 @@ const clases = [
         width={portada.ancho}
         height={portada.alto}
         loading={prioritaria ? 'eager' : 'lazy'}
-        fetchpriority={prioritaria ? 'high' : 'auto'}
         decoding="async"
       />
     </a>

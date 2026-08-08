@@ -214,7 +214,9 @@ if (contenedor) {
        donde corresponde y lo único que lograba era dibujar un
        recuadro alrededor del titular apenas entrar. */
     if (!inicial) {
-      const titulo = formas[n - 1]?.querySelector<HTMLElement>('h1');
+      /* h2, no h1: el h1 es de la página entera ("Finalizar compra").
+         Cada paso tiene su h2, y es ése el que anuncia el cambio. */
+      const titulo = formas[n - 1]?.querySelector<HTMLElement>('h2');
       titulo?.setAttribute('tabindex', '-1');
       titulo?.focus({ preventScroll: true });
       window.scrollTo({ top: 0, behavior: 'smooth' });

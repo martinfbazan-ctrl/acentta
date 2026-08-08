@@ -66,7 +66,10 @@ const unaSola = imagenes.length === 1;
       <path d="M5 5l10 10M15 5L5 15" stroke-linecap="round" />
     </svg>
   </button>
-  <img class="zoom__foto" data-zoom-foto src="" alt="" />
+  <!-- Sin src: un src vacío hace que algunos navegadores pidan la
+       propia página como si fuera una imagen. La fuente y el texto
+       alternativo los pone el guion al abrir el zoom. -->
+  <img class="zoom__foto" data-zoom-foto alt="" />
 </dialog>
 
 <style>

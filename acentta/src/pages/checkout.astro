@@ -48,6 +48,12 @@ const pasos = [
   </header>
 
   <div class="contenedor checkout">
+    <!-- Un h1 para la página y un h2 por paso. Antes cada paso tenía
+         su propio h1: tres en el mismo documento. Sólo uno se ve a la
+         vez, pero el árbol de accesibilidad no sabe de pasos — ve tres
+         títulos de nivel uno y ninguna jerarquía. -->
+    <h1 class="vo">Finalizar compra</h1>
+
     <!-- Progreso -->
     <ol class="progreso" data-progreso>
       {pasos.map((p) => (
@@ -62,7 +68,7 @@ const pasos = [
       <div class="checkout__forma">
         <!-- ============ PASO 1 · DATOS ============ -->
         <form class="paso" data-paso-forma="1" novalidate>
-          <h1 class="t-seccion">Tus datos</h1>
+          <h2 class="t-seccion">Tus datos</h2>
           <p class="paso__nota">
             No hace falta crear una cuenta. Pedimos sólo lo necesario para
             facturar el pedido y avisarte cuándo llega.
@@ -93,7 +99,7 @@ const pasos = [
 
         <!-- ============ PASO 2 · ENVÍO ============ -->
         <form class="paso" data-paso-forma="2" novalidate hidden>
-          <h1 class="t-seccion">¿A dónde lo llevamos?</h1>
+          <h2 class="t-seccion">¿A dónde lo llevamos?</h2>
           <p class="paso__nota" data-envio-resumen></p>
 
           <fieldset class="metodos">
@@ -145,7 +151,7 @@ const pasos = [
 
         <!-- ============ PASO 3 · PAGO ============ -->
         <form class="paso" id="forma-pago" data-paso-forma="3" novalidate hidden>
-          <h1 class="t-seccion">Pago</h1>
+          <h2 class="t-seccion">Pago</h2>
 
           <div class="simulacro">
             <svg width="18" height="18" viewBox="0 0 20 20" aria-hidden="true" fill="currentColor">
@@ -463,8 +469,8 @@ const pasos = [
      no orienta a nadie: es un recuadro negro alrededor de un texto
      que nadie va a tocar. La función accesible se cumple igual sin
      dibujarlo. */
-  .paso h1:focus,
-  .paso h1:focus-visible { outline: none; }
+  .paso h2:focus,
+  .paso h2:focus-visible { outline: none; }
 
   .resumen-pedido__items { display: flex; flex-direction: column; gap: var(--e-3); }
   .resumen-pedido__entrega {

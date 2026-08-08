@@ -10,14 +10,22 @@
     "build": "astro build",
     "preview": "astro preview",
     "check": "astro check",
-    "vista-previa": "astro build && node generar-vista-previa.mjs"
+    "vista-previa": "astro build && node generar-vista-previa.mjs",
+
+    "auditar": "npm run check && npm run vista-previa && node pruebas/auditoria.mjs && node pruebas/buscador.mjs && node pruebas/teclado.mjs",
+    "auditar:a11y": "node pruebas/auditoria.mjs",
+    "auditar:teclado": "node pruebas/teclado.mjs",
+    "auditar:buscador": "node pruebas/buscador.mjs",
+    "auditar:lighthouse": "node pruebas/lighthouse.mjs"
   },
   "dependencies": {
     "astro": "^7.1.6"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.4",
-    "typescript": "^5.7.0",
-    "esbuild": "^0.28.1"
+    "axe-core": "^4.13.0",
+    "esbuild": "^0.28.1",
+    "jsdom": "^28.0.0",
+    "typescript": "^5.7.0"
   }
 }

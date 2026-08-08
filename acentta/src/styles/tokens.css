@@ -31,7 +31,13 @@
   --tinta: #1C1814;      /* principal · 16,3:1 fondo · 12,7:1 oliva */
   --gris-800: #4A4038;   /* secundario · 9,3:1 fondo · 7,3:1 oliva */
   --gris-texto: #665A50; /* metadatos y precio tachado · 6,2:1 fondo · 4,8:1 oliva */
-  --gris-500: #9C8C7A;   /* decorativo: íconos y separadores. No apto para texto. */
+  /* Precio tachado, bordes de campo e íconos. El mínimo que le
+     corresponde es 3:1 —texto grande y elementos no textuales— y el
+     valor anterior, #9C8C7A, daba 2,998:1 sobre el fondo arena. Pasar
+     o no pasar por dos milésimas es lo mismo que no pasar, así que se
+     oscurece a #918170: 3,47:1 sobre arena y 3,09:1 sobre el arena
+     honda, que es el fondo más difícil donde aparece. */
+  --gris-500: #918170;
   --gris-200: #E3D3BC;   /* bordes · 1,35:1 sobre el fondo, 1,43:1 sobre papel */
   --gris-050: #F7F3EC;   /* fondo sutil dentro de una tarjeta */
 

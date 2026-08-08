@@ -97,9 +97,14 @@ const categorias = [...conteo.entries()].map(([clave, cantidad]) => ({
         <button class="chip chip--limpiar" type="button" data-limpiar-filtros>Limpiar todo</button>
       </div>
 
+      <!-- Sólo las dos primeras piden prioridad de carga. Con cuatro,
+           el navegador reparte el mismo ancho de banda entre las cuatro
+           y ninguna llega antes: pedir prioridad para todo es lo mismo
+           que no pedirla para nada, y encima le quita turno al CSS.
+           Dos es lo que se ve sin bajar en un teléfono. -->
       <div class="grilla-productos" data-grilla>
         {productos.map((p, i) => (
-          <TarjetaProducto producto={p} prioritaria={i < 4} filtrable />
+          <TarjetaProducto producto={p} prioritaria={i < 2} filtrable />
         ))}
       </div>
 

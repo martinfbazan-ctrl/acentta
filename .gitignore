@@ -37,3 +37,6 @@ desktop.ini
 # Registros de npm cuando algo falla.
 npm-debug.log*
 *.log
+
+# Informes de Lighthouse: los genera npm run auditar:lighthouse
+acentta/pruebas/informes/
