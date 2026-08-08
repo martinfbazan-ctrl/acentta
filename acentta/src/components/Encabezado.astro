@@ -8,6 +8,7 @@
  */
 import Logo from '@componentes/Logo.astro';
 import Marquesina from '@componentes/Marquesina.astro';
+import Buscador from '@componentes/Buscador.astro';
 
 interface Props {
   /** Cantidad de ítems en el carrito. */
@@ -39,21 +40,7 @@ const categorias = [
       <Logo alto={44} class="cabecera__wordmark" />
     </a>
 
-    <form class="buscador" role="search" action="/buscar">
-      <label class="vo" for="q">Buscar productos</label>
-      <svg class="buscador__lupa" width="17" height="17" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="8.5" cy="8.5" r="6" />
-        <path d="M13 13l4.5 4.5" stroke-linecap="round" />
-      </svg>
-      <input
-        class="buscador__campo"
-        id="q"
-        name="q"
-        type="search"
-        placeholder="Buscar lámparas, alfombras, almohadones…"
-        autocomplete="off"
-      />
-    </form>
+    <Buscador />
 
     <div class="cabecera__acciones">
       <a class="cabecera__icono cabecera__icono--solo-movil" href="/buscar" aria-label="Buscar">
@@ -181,44 +168,9 @@ const categorias = [
      No hay dos números que mantener sincronizados: hay uno. */
   :global(.cabecera__wordmark) { --logo-alto: var(--alto-control); }
 
-  /* ---- Buscador ---- */
-  .buscador {
-    position: relative;
-    flex: 1;
-    max-width: 520px;
-    margin-inline: auto;
-    display: none;
-  }
-  @media (min-width: 768px) { .buscador { display: block; } }
-
-  .buscador__lupa {
-    position: absolute;
-    left: var(--e-3);
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--gris-texto);
-    pointer-events: none;
-  }
-  .buscador__campo {
-    width: 100%;
-    height: var(--alto-control);
-    padding: 0 var(--e-4) 0 var(--e-10);
-    border: 1px solid var(--gris-500);
-    border-radius: var(--r-tarjeta);
-    background: rgba(255, 255, 255, .82);
-    font-size: 0.9375rem;
-    transition: border-color var(--v-rapido) var(--curva), background-color var(--v-rapido) var(--curva);
-  }
-  .buscador__campo::placeholder { color: var(--gris-texto); }
-  .buscador__campo:hover { border-color: var(--gris-800); }
-  /* Mismo criterio que los campos del formulario: el foco de texto es
-     verde y suave, no el anillo negro de los botones. */
-  .buscador__campo:focus {
-    outline: none;
-    background: var(--papel);
-    border-color: var(--verde);
-    box-shadow: 0 0 0 1px var(--verde), 0 0 0 4px rgba(15, 123, 79, .16);
-  }
+  /* Los estilos del buscador viven en Buscador.astro, con el
+     componente. Astro aísla el CSS por archivo: si se quedaran acá,
+     dejarían de aplicarse al mover el marcado. */
 
   /* ---- Acciones ---- */
   .cabecera__acciones { display: flex; align-items: center; gap: var(--e-1); margin-left: auto; }

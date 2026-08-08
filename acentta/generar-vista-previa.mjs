@@ -100,7 +100,11 @@ async function procesar(archivo) {
   );
   h = h.replace(/url\(\/fuentes\//g, `url(${raiz}fuentes/`);
 
-  /* 2 · Enlaces internos */
+  /* 2 · Enlaces internos y destinos de formulario */
+  h = h.replace(/action="(\/[^"#]*)"/g, (_, ruta) => {
+    const base = ruta.replace(/\/$/, '') || '/';
+    return RUTAS.has(base) ? `action="${rutaDePagina(base, raiz)}"` : 'action="#"';
+  });
   h = h.replace(/href="(\/[^"#]*)"/g, (_, ruta) => {
     const base = ruta.split('?')[0].split('#')[0].replace(/\/$/, '') || '/';
     if (RUTAS.has(base)) return `href="${rutaDePagina(base, raiz)}"`;
@@ -124,8 +128,19 @@ async function procesar(archivo) {
     /* Un <script type="module"> es diferido por definición: corre
        después de armado el DOM. Un <script> clásico en el <head>
        corre antes, y todo querySelector devuelve null. Se envuelve
-       en DOMContentLoaded para conservar el momento de ejecución. */
-    h = h.replace(etiqueta, `<script>window.addEventListener("DOMContentLoaded",function(){${codigo}});</script>`);
+       en DOMContentLoaded para conservar el momento de ejecución.
+
+       El reemplazo va con función y no con cadena a propósito: en una
+       cadena de reemplazo, `$&` significa "lo que acaba de coincidir",
+       y el guion del buscador contiene literalmente "\\$&" dentro de
+       una expresión regular. Con la forma de cadena, ese `$&` se
+       expandía a la etiqueta <script> entera y el archivo quedaba
+       partido al medio: el navegador cerraba el guion ahí y perdía
+       todo lo que venía después. La función desactiva esa expansión. */
+    h = h.replace(
+      etiqueta,
+      () => `<script>window.addEventListener("DOMContentLoaded",function(){${codigo}});</script>`
+    );
   }
 
   /* Los módulos ya incrustados (los que Astro puso en línea) tampoco

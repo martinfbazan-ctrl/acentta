@@ -1,0 +1,199 @@
+---
+/**
+ * Resultados de búsqueda.
+ * ---------------------------------------------------------------
+ * Un sitio estático no puede generar una página por consulta: las
+ * consultas son infinitas. Así que esta página se construye una sola
+ * vez con el catálogo entero renderizado en HTML, y el navegador
+ * esconde lo que no corresponde a `?q=`.
+ *
+ * Tiene tres consecuencias buenas y una condición:
+ *   · El resultado aparece instantáneo, sin ida y vuelta a la red.
+ *   · Las 36 tarjetas ya están en el HTML, así que el buscador de
+ *     Google las indexa igual que en cualquier listado.
+ *   · Sin JavaScript la página sigue sirviendo: muestra el catálogo
+ *     completo con sus filtros, que es un mal resultado pero nunca
+ *     una pantalla en blanco.
+ *   · La condición es el tamaño: esto deja de cerrar cuando el
+ *     catálogo llega a unos cientos de productos. Está anotado en
+ *     lib/buscador.ts, que es donde habría que intervenir.
+ *
+ * El orden lo decide el puntaje de la búsqueda, no el del catálogo:
+ * las tarjetas se reordenan en el DOM con `order` de CSS, sin
+ * moverlas de lugar ni volver a pedir las fotos.
+ */
+import Base from '@layouts/Base.astro';
+import Encabezado from '@componentes/Encabezado.astro';
+import Pie from '@componentes/Pie.astro';
+import Migas from '@componentes/Migas.astro';
+import TarjetaProducto from '@componentes/TarjetaProducto.astro';
+import Boton from '@componentes/Boton.astro';
+import EstadoVacio from '@componentes/EstadoVacio.astro';
+import { todos, masVendidos, NOMBRE_CATEGORIA, CATEGORIAS_TODAS } from '@lib/catalogo';
+
+const productos = todos();
+const sugeridos = masVendidos(4);
+
+/* Atajos para el estado vacío. No es decoración: un buscador que
+   contesta "no hay nada" y termina ahí es un callejón sin salida.
+   Estos cuatro son las categorías con más productos. */
+const atajos = CATEGORIAS_TODAS.map((c) => ({
+  clave: c,
+  nombre: NOMBRE_CATEGORIA[c]!,
+  cantidad: productos.filter((p) => p.categoria === c).length,
+}))
+  .sort((a, b) => b.cantidad - a.cantidad)
+  .slice(0, 4);
+---
+
+<Base
+  titulo="Buscar · acentta"
+  descripcion="Busca entre los 36 productos del catálogo por nombre, categoría o característica."
+>
+  <Encabezado slot="encabezado" />
+
+  <div class="contenedor busqueda">
+    <Migas pasos={[{ nombre: 'Inicio', href: '/' }, { nombre: 'Buscar' }]} />
+
+    <header class="busqueda__encabezado">
+      <h1 class="t-seccion" data-busqueda-titulo>Buscar en el catálogo</h1>
+      <p class="t-meta" data-busqueda-cuenta>
+        {productos.length} productos en dos rubros. Escribe en la barra de arriba
+        para filtrar por nombre, categoría o característica.
+      </p>
+    </header>
+
+    <!-- Campo propio de la página. El de la barra fija sigue estando,
+         pero en móvil está oculto, y quien llega acá desde el ícono de
+         la lupa necesita dónde escribir. -->
+    <form class="busqueda__forma" role="search" action="/buscar" data-busqueda-forma>
+      <label class="vo" for="qp">Buscar productos</label>
+      <svg class="busqueda__lupa" width="19" height="19" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="8.5" cy="8.5" r="6" /><path d="M13 13l4.5 4.5" stroke-linecap="round" />
+      </svg>
+      <input
+        class="busqueda__campo"
+        id="qp"
+        name="q"
+        type="search"
+        placeholder="lámpara de pie, alfombra lavable, robot…"
+        autocomplete="off"
+        enterkeyhint="search"
+        data-busqueda-campo
+      />
+      <button class="busqueda__limpiar" type="button" hidden data-busqueda-limpiar>Limpiar</button>
+    </form>
+
+    <p class="vo" role="status" aria-live="polite" data-busqueda-aviso></p>
+
+    <div class="grilla-productos" data-busqueda-grilla>
+      {productos.map((p) => (
+        <div class="busqueda__celda" data-slug={p.slug}>
+          <TarjetaProducto producto={p} />
+        </div>
+      ))}
+    </div>
+
+    <div hidden data-busqueda-vacio>
+      <EstadoVacio titulo="No encontramos nada con esa búsqueda">
+        <p class="busqueda__vacio-texto" data-busqueda-vacio-texto></p>
+        <div class="busqueda__atajos">
+          {atajos.map((a) => (
+            <a class="busqueda__atajo" href={`/categoria/${a.clave}`}>
+              {a.nombre} <span class="t-meta">({a.cantidad})</span>
+            </a>
+          ))}
+        </div>
+        <Boton href="/">Volver al inicio</Boton>
+      </EstadoVacio>
+
+      <section class="busqueda__sugeridos" aria-labelledby="tit-sug">
+        <h2 class="t-seccion" id="tit-sug">Mientras tanto, lo más vendido</h2>
+        <div class="grilla-productos">
+          {sugeridos.map((p) => <TarjetaProducto producto={p} />)}
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <Pie slot="pie" />
+</Base>
+
+<script>
+  import '../scripts/buscar';
+</script>
+
+<style>
+  .busqueda { padding-block: var(--e-6) var(--e-16); }
+  .busqueda__encabezado { margin-bottom: var(--e-5); }
+  .busqueda__encabezado .t-meta { margin-top: var(--e-2); color: var(--gris-texto); }
+
+  .busqueda__forma { position: relative; margin-bottom: var(--e-8); max-width: 640px; }
+  .busqueda__lupa {
+    position: absolute;
+    left: var(--e-4);
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--gris-texto);
+    pointer-events: none;
+  }
+  .busqueda__campo {
+    width: 100%;
+    height: 52px;
+    padding: 0 110px 0 var(--e-11);
+    border: 1px solid var(--gris-500);
+    border-radius: var(--r-tarjeta);
+    background: var(--papel);
+    font-size: 1rem;
+  }
+  .busqueda__campo::-webkit-search-cancel-button { display: none; }
+  .busqueda__campo:focus {
+    outline: none;
+    border-color: var(--verde);
+    box-shadow: 0 0 0 1px var(--verde), 0 0 0 4px rgba(15, 123, 79, .16);
+  }
+  .busqueda__limpiar {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    min-height: 36px;
+    padding-inline: var(--e-3);
+    background: var(--gris-050);
+    border: 1px solid var(--gris-200);
+    border-radius: var(--r-pastilla);
+    font-size: var(--t-meta);
+    color: var(--gris-800);
+    cursor: pointer;
+  }
+  .busqueda__limpiar:hover { background: var(--arena-honda); }
+
+  /* La celda existe para poder ordenar y esconder sin tocar la
+     tarjeta, que es un componente compartido con el resto del sitio.
+     Es `grid` y no `contents` a propósito: con `display: contents` el
+     elemento desaparece de la caja y `order` deja de tener efecto,
+     que es justo lo que se necesita para reordenar por relevancia. */
+  .busqueda__celda { display: grid; }
+  .busqueda__celda[hidden] { display: none; }
+
+  .busqueda__vacio-texto { font-size: var(--t-meta); color: var(--gris-texto); }
+  .busqueda__atajos { display: flex; flex-wrap: wrap; gap: var(--e-2); margin-block: var(--e-3); }
+  .busqueda__atajo {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-height: 40px;
+    padding-inline: var(--e-3);
+    border: 1px solid var(--gris-200);
+    border-radius: var(--r-pastilla);
+    background: var(--papel);
+    color: var(--tinta);
+    text-decoration: none;
+    font-size: var(--t-meta);
+    font-weight: 500;
+  }
+  .busqueda__atajo:hover { border-color: var(--gris-500); }
+
+  .busqueda__sugeridos { margin-top: var(--e-12); }
+  .busqueda__sugeridos .t-seccion { margin-bottom: var(--e-4); }
+</style>

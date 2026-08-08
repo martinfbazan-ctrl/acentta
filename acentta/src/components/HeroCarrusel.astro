@@ -2,10 +2,18 @@
 /**
  * Hero · carrusel de campañas a ancho completo.
  * ---------------------------------------------------------------
- * Tres campañas, no diez. Un carrusel largo es una forma elegante de
- * no decidir qué es lo más importante: la mayoría de la gente ve la
- * primera lámina y sigue bajando, así que las láminas 4 a 10 son
- * trabajo que nadie mira.
+ * Cuatro campañas, dos por rubro: iluminación y alfombras del lado
+ * de la decoración, proyectores y limpieza del lado de Deco
+ * inteligente. El reparto en partes iguales es una decisión y no una
+ * simetría: la home cuenta arriba que acá hay dos cosas distintas, y
+ * el visitante que vino por un robot no tiene que bajar hasta la
+ * mitad de la página para descubrir que existe.
+ *
+ * Cuatro y no diez. Un carrusel largo es una forma elegante de no
+ * decidir qué es lo más importante: la mayoría de la gente ve la
+ * primera lámina y sigue bajando, así que las láminas 5 a 10 son
+ * trabajo que nadie mira. Con cuatro, la última todavía se alcanza
+ * si alguien se queda mirando.
  *
  * Reglas que se respetan acá y que casi ningún carrusel respeta:
  * · Se detiene al pasar el mouse y al recibir foco de teclado.
@@ -13,7 +21,7 @@
  *   botones de verdad con estado anunciado.
  * · Con prefers-reduced-motion no gira solo: queda en la primera y
  *   se avanza a mano.
- * · La primera lámina carga con prioridad y las otras dos diferidas.
+ * · La primera lámina carga con prioridad y las otras tres diferidas.
  *   Es el LCP de la home: si el hero tarda, tarda el sitio.
  */
 import Boton from '@componentes/Boton.astro';
@@ -23,13 +31,20 @@ import { porSlug, enOferta, ahorroEnPorcentaje } from '@lib/catalogo';
 
 const arco = porSlug('lampara-de-pie-arco')!;
 const alfombra = porSlug('alfombra-bereber-trenzada-160x230')!;
+const proyector = porSlug('proyector-de-cielo-estrellado-aurora')!;
+const robot = porSlug('robot-aspirador-con-vaciado-automatico')!;
+
+/* Los dos descuentos salen del catálogo, no están escritos a mano:
+   si cambia un precio, cambia el titular solo. */
 const maxDescuento = ahorroEnPorcentaje(enOferta(1)[0]!);
+const descuentoRobot = ahorroEnPorcentaje(robot);
 
 const laminas = [
+  /* ---- Decoración ---- */
   {
     etiqueta: 'Iluminación',
-    titulo: 'Encendé el ambiente,<br />no la habitación',
-    bajada: `Lámparas que arman un rincón en lugar de alumbrar un cuarto entero. Si te llevás la de arco, llega ${rangoDeEntrega(arco.plazoEnvio.min, arco.plazoEnvio.max)}.`,
+    titulo: 'Enciende el ambiente,<br />no la habitación',
+    bajada: `Lámparas que arman un rincón en lugar de alumbrar un cuarto entero. Si te llevas la de arco, llega ${rangoDeEntrega(arco.plazoEnvio.min, arco.plazoEnvio.max)}.`,
     principal: { texto: 'Ver iluminación', href: '/categoria/iluminacion' },
     secundario: { texto: 'Ver la lámpara de arco', href: `/producto/${arco.slug}` },
     imagen: arco.imagenes[1]!,
@@ -37,18 +52,28 @@ const laminas = [
   {
     etiqueta: 'Alfombras y textil',
     titulo: 'Lo que se pisa<br />también decide',
-    bajada: `Una alfombra delimita un ambiente mejor que una pared, y se puede mover. Lana, kilim y yute desde ${precio(41200)}.`,
+    bajada: `Una alfombra delimita un ambiente mejor que una pared, y se puede mover. Lana, kilim y yute desde ${precio(41200)}. Hasta ${maxDescuento} % menos, sin precios inflados para simular la rebaja.`,
     principal: { texto: 'Ver alfombras', href: '/categoria/alfombras' },
-    secundario: { texto: 'Ver textil', href: '/categoria/textil' },
+    secundario: { texto: 'Ver ofertas', href: '/ofertas' },
     imagen: alfombra.imagenes[1]!,
   },
+
+  /* ---- Deco inteligente ---- */
   {
-    etiqueta: 'Ofertas vigentes',
-    titulo: `Hasta ${maxDescuento} % menos,<br />sin letra chica`,
-    bajada: 'El precio tachado es el precio al que se vendió antes, no uno inflado para que el descuento parezca más grande. Y el envío se calcula antes de pagar.',
-    principal: { texto: 'Ver ofertas', href: '/ofertas' },
+    etiqueta: 'Deco inteligente · Proyectores',
+    titulo: 'Un cielo entero<br />con un solo enchufe',
+    bajada: 'Proyectores y veladores que cambian el cuarto apagando el resto de las luces. Se programan desde el teléfono y se apagan solos a la hora que les digas.',
+    principal: { texto: 'Ver proyectores', href: '/categoria/proyectores' },
+    secundario: { texto: 'Ver el Aurora', href: `/producto/${proyector.slug}` },
+    imagen: proyector.imagenes[0]!,
+  },
+  {
+    etiqueta: 'Deco inteligente · Limpieza',
+    titulo: 'La casa limpia<br />sin que estés',
+    bajada: `Robots que aspiran, pasan el trapo y vuelven solos a la base. El de vaciado automático está ${descuentoRobot} % menos y el envío se calcula antes de pagar.`,
+    principal: { texto: 'Ver Deco inteligente', href: '/deco-inteligente' },
     secundario: { texto: 'Cómo funciona el envío', href: '/envios' },
-    imagen: porSlug('puff-tejido-nube')!.imagenes[2]!,
+    imagen: robot.imagenes[0]!,
   },
 ];
 ---

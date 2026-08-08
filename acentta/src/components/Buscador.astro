@@ -1,0 +1,208 @@
+---
+/**
+ * Buscador de la barra fija.
+ * ---------------------------------------------------------------
+ * Es el componente con más intención de compra del sitio: quien
+ * escribe acá ya sabe qué quiere. Por eso las sugerencias muestran
+ * foto y precio, y no una lista de texto: la decisión se toma en la
+ * sugerencia, no en la página de resultados.
+ *
+ * Accesibilidad — patrón combobox de la APG:
+ * · El campo declara aria-expanded, aria-controls y aria-activedescendant.
+ * · Las flechas recorren, Enter abre, Escape cierra sin borrar.
+ * · El foco NUNCA sale del campo: se mueve un descendiente activo.
+ *   Eso permite seguir escribiendo para afinar sin volver con Tab.
+ * · Un aviso en aria-live canta cuántos resultados hay, porque el
+ *   cambio visual de la lista no lo percibe un lector de pantalla.
+ *
+ * Sin JavaScript sigue sirviendo: es un formulario que hace GET a
+ * /buscar, que resuelve lo mismo del lado de la página.
+ */
+import { foto } from '@lib/imagenes';
+import { todos, NOMBRE_CATEGORIA } from '@lib/catalogo';
+import { construirIndice } from '@lib/buscador';
+
+/* El índice se arma al construir el sitio y viaja como JSON en cada
+   página. Las URLs de las miniaturas se resuelven acá y no en el
+   navegador: así el guion no necesita saber quién sirve las fotos. */
+const indice = construirIndice(todos(), (c) => NOMBRE_CATEGORIA[c] ?? c);
+const paquete = {
+  ...indice,
+  entradas: indice.entradas.map((e) => ({ ...e, foto: foto(e.imagen, 120) })),
+};
+---
+
+<div class="buscador-caja" data-buscador>
+  <form class="buscador" role="search" action="/buscar" data-buscador-forma>
+    <label class="vo" for="q">Buscar productos</label>
+    <svg class="buscador__lupa" width="17" height="17" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="8.5" cy="8.5" r="6" />
+      <path d="M13 13l4.5 4.5" stroke-linecap="round" />
+    </svg>
+    <input
+      class="buscador__campo"
+      id="q"
+      name="q"
+      type="search"
+      placeholder="Buscar lámparas, alfombras, robots…"
+      autocomplete="off"
+      role="combobox"
+      aria-expanded="false"
+      aria-controls="sugerencias"
+      aria-autocomplete="list"
+      data-buscador-campo
+    />
+    <button class="buscador__limpiar" type="button" hidden data-buscador-limpiar aria-label="Borrar la búsqueda">
+      <svg width="14" height="14" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2">
+        <path d="M5 5l10 10M15 5L5 15" stroke-linecap="round" />
+      </svg>
+    </button>
+  </form>
+
+  <div class="sugerencias" id="sugerencias" hidden data-buscador-panel>
+    <ul class="sugerencias__lista" role="listbox" aria-label="Sugerencias" data-buscador-lista></ul>
+    <a class="sugerencias__todo" href="/buscar" hidden data-buscador-todo></a>
+    <p class="sugerencias__vacio" hidden data-buscador-vacio></p>
+  </div>
+
+  <p class="vo" role="status" aria-live="polite" data-buscador-aviso></p>
+</div>
+
+<script type="application/json" id="indice-buscador" set:html={JSON.stringify(paquete)} is:inline />
+
+<style>
+  /* ---- Caja y campo ----
+     La caja es la que ocupa el lugar en la barra; el panel de
+     sugerencias se cuelga de ella en posición absoluta. */
+  .buscador-caja {
+    position: relative;
+    flex: 1;
+    max-width: 520px;
+    margin-inline: auto;
+    min-width: 0;
+    display: none;
+  }
+  @media (min-width: 768px) { .buscador-caja { display: block; } }
+
+  .buscador { position: relative; }
+
+  .buscador__lupa {
+    position: absolute;
+    left: var(--e-3);
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--gris-texto);
+    pointer-events: none;
+  }
+  .buscador__campo {
+    width: 100%;
+    height: var(--alto-control);
+    padding: 0 var(--e-10) 0 var(--e-10);
+    border: 1px solid var(--gris-500);
+    border-radius: var(--r-tarjeta);
+    background: rgba(255, 255, 255, .82);
+    font-size: 0.9375rem;
+    transition: border-color var(--v-rapido) var(--curva), background-color var(--v-rapido) var(--curva);
+  }
+  .buscador__campo::placeholder { color: var(--gris-texto); }
+  .buscador__campo:hover { border-color: var(--gris-800); }
+  /* Mismo criterio que los campos del formulario: el foco de texto es
+     verde y suave, no el anillo negro de los botones. */
+  .buscador__campo:focus {
+    outline: none;
+    background: var(--papel);
+    border-color: var(--verde);
+    box-shadow: 0 0 0 1px var(--verde), 0 0 0 4px rgba(15, 123, 79, .16);
+  }
+  /* La cruz nativa de Chrome duplicaría el botón de limpiar. */
+  .buscador__campo::-webkit-search-cancel-button { display: none; }
+
+  /* ---- Panel de sugerencias ---- */
+  .sugerencias {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    z-index: 40;
+    background: var(--papel);
+    border: 1px solid var(--gris-200);
+    border-radius: var(--r-tarjeta);
+    box-shadow: var(--sombra-2);
+    overflow: hidden;
+    max-height: min(60vh, 460px);
+    overflow-y: auto;
+  }
+
+  .sugerencias__lista { display: block; }
+
+  .sugerencias__item {
+    display: grid;
+    grid-template-columns: 44px 1fr auto;
+    align-items: center;
+    gap: var(--e-3);
+    padding: var(--e-2) var(--e-3);
+    cursor: pointer;
+    border-bottom: 1px solid var(--gris-050);
+  }
+  .sugerencias__item:last-child { border-bottom: 0; }
+
+  /* El resaltado se dispara con un atributo y no con :hover, para que
+     el teclado y el mouse produzcan exactamente el mismo estado. */
+  .sugerencias__item[aria-selected='true'] { background: var(--arena-honda); }
+
+  .sugerencias__foto {
+    width: 44px; height: 44px;
+    border-radius: 6px;
+    object-fit: cover;
+    background: var(--gris-050);
+    display: block;
+  }
+
+  .sugerencias__datos { min-width: 0; }
+  .sugerencias__nombre {
+    display: block;
+    font-size: var(--t-producto);
+    color: var(--tinta);
+    /* Un nombre de 96 caracteres no puede empujar el precio fuera de
+       la caja: se corta en dos renglones y sigue. */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .sugerencias__rotulo { display: block; font-size: var(--t-meta); color: var(--gris-texto); }
+  .sugerencias__nombre :global(b) { font-weight: 700; }
+
+  .sugerencias__precio { font-size: var(--t-producto); font-weight: 600; white-space: nowrap; }
+  .sugerencias__agotado { font-size: var(--t-meta); color: var(--gris-texto); white-space: nowrap; }
+
+  .sugerencias__todo {
+    display: block;
+    padding: var(--e-3);
+    text-align: center;
+    font-size: var(--t-meta);
+    font-weight: 600;
+    color: var(--naranja-texto);
+    background: var(--gris-050);
+    text-decoration: none;
+    border-top: 1px solid var(--gris-200);
+  }
+  .sugerencias__todo:hover { text-decoration: underline; }
+
+  .sugerencias__vacio { padding: var(--e-4); font-size: var(--t-meta); color: var(--gris-texto); }
+
+  /* ---- Botón de limpiar ---- */
+  .buscador__limpiar {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 32px; height: 32px;
+    display: grid; place-items: center;
+    background: none; border: 0; padding: 0;
+    color: var(--gris-texto);
+    cursor: pointer;
+    border-radius: 50%;
+  }
+  .buscador__limpiar:hover { color: var(--tinta); background: var(--gris-050); }
+</style>
