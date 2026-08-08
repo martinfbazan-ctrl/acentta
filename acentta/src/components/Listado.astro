@@ -147,18 +147,34 @@ const categorias = [...conteo.entries()].map(([clave, cantidad]) => ({
   .listado__principal { min-width: 0; }
 
   /* ---- Barra de control ---- */
+  /* Se envuelve. Medido a 412 px —un teléfono corriente— la fila de
+     "Filtros" más el selector de orden sumaba 416 px sobre 397
+     disponibles: diecinueve píxeles de barrido lateral en toda la
+     página. Un desborde chico es peor que uno grande, porque no se ve
+     de dónde viene: sólo se nota que la página se mueve un poco al
+     costado y no se sabe por qué. */
   .control {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
-    gap: var(--e-4);
+    gap: var(--e-3) var(--e-4);
     padding-bottom: var(--e-4);
     margin-bottom: var(--e-4);
     border-bottom: 1px solid var(--gris-200);
   }
   .control__cuenta { font-size: 0.9375rem; color: var(--gris-800); }
   .control__cuenta b { color: var(--tinta); }
-  .control__acciones { display: flex; align-items: center; gap: var(--e-3); }
+  .control__acciones {
+    display: flex;
+    align-items: center;
+    gap: var(--e-3);
+    /* Cuando la fila se parte, las acciones ocupan el renglón entero y
+       el selector se reparte el espacio en vez de forzar el ancho. */
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+  @media (min-width: 560px) { .control__acciones { flex: 0 1 auto; } }
 
   .control__filtros { position: relative; }
   @media (min-width: 900px) { .control__filtros { display: none; } }
@@ -172,10 +188,15 @@ const categorias = [...conteo.entries()].map(([clave, cantidad]) => ({
     border-radius: 999px;
   }
 
-  .orden { position: relative; display: inline-flex; align-items: center; }
+  .orden { position: relative; display: inline-flex; align-items: center; flex: 1; min-width: 0; }
+  @media (min-width: 560px) { .orden { flex: 0 0 auto; } }
   .orden__campo {
     appearance: none;
-    height: 36px;
+    width: 100%;
+    /* 44 px en móvil. No es capricho: es la medida de un dedo, y este
+       selector es el control que más se toca del listado. En pantallas
+       grandes, donde se apunta con el mouse, 36 alcanza y pesa menos. */
+    height: 44px;
     padding: 0 var(--e-8) 0 var(--e-3);
     border: 1px solid var(--gris-500);
     border-radius: var(--r-tarjeta);
@@ -191,6 +212,7 @@ const categorias = [...conteo.entries()].map(([clave, cantidad]) => ({
     box-shadow: 0 0 0 1px var(--verde), 0 0 0 4px rgba(47, 93, 58, .16);
   }
   .orden__flecha { position: absolute; right: var(--e-3); pointer-events: none; color: var(--gris-texto); }
+  @media (min-width: 900px) { .orden__campo { height: 36px; } }
 
   /* ---- Chips activos ---- */
   .activos {

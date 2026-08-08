@@ -245,15 +245,19 @@ const laminas = [
   /* ---- Puntos ---- */
   .hero__pie {
     position: absolute;
-    inset: auto 0 var(--e-6) 0;
+    inset: auto 0 var(--e-4) 0;
     z-index: 3;
     display: flex;
     justify-content: flex-start;
     pointer-events: none;
   }
   .hero__puntos { display: flex; gap: var(--e-2); pointer-events: auto; }
+  /* 44 × 44, aunque la barra que se ve mida 3 px de alto. El área
+     táctil es la del botón, no la del dibujo: con 24 px de alto había
+     que apuntarle con la punta del dedo a una raya. La barra sigue
+     siendo igual de discreta; lo que crece es lo que se puede tocar. */
   .hero__punto {
-    width: 44px; height: 24px;
+    width: 44px; height: 44px;
     display: grid; place-items: center;
     background: none; border: 0; padding: 0; cursor: pointer;
   }
