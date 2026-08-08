@@ -44,12 +44,13 @@ const esquema = {
 
 <style>
   .migas { font-size: var(--t-meta); }
-  /* La misma línea que separa la navegación de categorías. Sin ella,
-     la ruta y el titular flotan a la misma distancia de todo y la
-     jerarquía entre "dónde estoy" y "qué es esto" se pierde. */
+  /* Separación por espacio, no por línea. El aire hace el mismo
+     trabajo de agrupar —la ruta arriba, el titular abajo— sin sumar
+     un trazo más a una página que ya tiene el borde del encabezado,
+     el de la navegación y el de cada tarjeta. La línea era una forma
+     de decir en tinta algo que el espacio ya decía solo. */
   .migas--separada {
     padding-bottom: var(--e-4);
-    border-bottom: 1px solid var(--gris-200);
   }
   .migas ol { display: flex; flex-wrap: wrap; align-items: center; gap: var(--e-1); list-style: none; }
   .migas li { display: flex; align-items: center; gap: var(--e-1); color: var(--gris-texto); }
