@@ -54,6 +54,13 @@ const sugeridos = masVendidos(4);
     <!-- Carrito con productos -->
     <div class="carro" data-carro hidden>
       <div class="carro__lista">
+        <!-- El contenido lo pinta el guion desde el almacenamiento del
+             navegador, así que al cargar la página este bloque está
+             vacío y crece un instante después. Sin altura reservada,
+             ese crecimiento empujaba el pie de página hacia abajo y
+             producía un salto de 0,21 de CLS — cuatro veces la meta, y
+             el único desplazamiento de todo el sitio.
+             La altura mínima se libera apenas hay contenido real. -->
         <div class="carro__items" data-carro-items></div>
 
         <a class="carro__seguir" href="/ofertas">
@@ -198,7 +205,14 @@ const sugeridos = masVendidos(4);
     .carro { grid-template-columns: minmax(0, 1fr) minmax(460px, 46%); gap: var(--e-12); }
   }
 
+  /* Altura reservada mientras el guion pinta las líneas del carrito.
+     Sin esto el bloque nace vacío, crece un instante después y empuja
+     el pie de página: 0,21 de CLS medido con Lighthouse, cuatro veces
+     la meta del brief y el único desplazamiento de todo el sitio.
+     `:empty` deja de aplicar en cuanto entra el primer nodo, así que
+     el espacio se libera solo y no hay que acordarse de quitarlo. */
   .carro__items { display: flex; flex-direction: column; }
+  .carro__items:empty { min-height: 320px; }
 
   .carro__seguir {
     display: inline-flex;

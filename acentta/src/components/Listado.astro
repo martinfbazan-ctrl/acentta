@@ -102,6 +102,15 @@ const categorias = [...conteo.entries()].map(([clave, cantidad]) => ({
            y ninguna llega antes: pedir prioridad para todo es lo mismo
            que no pedirla para nada, y encima le quita turno al CSS.
            Dos es lo que se ve sin bajar en un teléfono. -->
+      {/*
+        Los nombres de producto son h3 dentro de la tarjeta. Sin este
+        h2 la página salta de h1 a h3 y el índice de encabezados queda
+        con un escalón roto: Lighthouse lo marcaba y bajaba la
+        accesibilidad a 98. No hace falta que se vea, hace falta que
+        exista.
+      */}
+      <h2 class="vo">Productos</h2>
+
       <div class="grilla-productos" data-grilla>
         {productos.map((p, i) => (
           <TarjetaProducto producto={p} prioritaria={i < 2} filtrable />

@@ -185,8 +185,15 @@ for (const ruta of RUTAS) {
   );
   const fila = { ruta, ...cat };
 
+  /* El carrito y el checkout llevan noindex a propósito: nadie quiere
+     un carrito en los resultados de Google. Lighthouse lo penaliza en
+     SEO igual, así que en esas páginas esa categoría no se exige — de
+     lo contrario la auditoría fallaría por hacer lo correcto. */
+  const noIndexado = r.lhr.audits['is-crawlable']?.score === 0;
+
   for (const [clave, meta] of Object.entries(METAS)) {
     if (cat[clave] === undefined) continue;
+    if (clave === 'seo' && noIndexado) continue;
     if (cat[clave] < meta) fallos.push(`${ruta} · ${clave}: ${cat[clave]} (meta ${meta})`);
   }
   for (const [clave, { max, nombre: n, unidad }] of Object.entries(VITALES)) {
@@ -199,7 +206,16 @@ for (const ruta of RUTAS) {
   console.log('listo');
 }
 
-await chrome.kill();
+/* Windows no siempre libera el perfil temporal de Chrome a tiempo y
+   `kill()` revienta con EPERM al intentar borrarlo. Eso ocurre DESPUÉS
+   de medir: sin este try, la auditoría terminaba en un volcado de Node
+   y los resultados —ya calculados— no llegaban a imprimirse nunca. */
+try {
+  await chrome.kill();
+} catch (e) {
+  if (e?.code !== 'EPERM') throw e;
+  console.log('(Windows no dejó borrar el perfil temporal de Chrome. No afecta la medición.)');
+}
 cerrar();
 
 console.table(tabla);

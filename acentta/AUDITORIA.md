@@ -24,6 +24,35 @@ Lo de la derecha depende de red, CPU y motor de layout. Para eso está `npm run 
 
 ---
 
+## Lighthouse · primera corrida
+
+Lighthouse 13.4.1, perfil **móvil** con red y CPU limitadas. Ésta es la medición inicial, **antes** de las correcciones que aparecen más abajo.
+
+| Página | Rend. | A11y | B. prácticas | SEO | LCP | CLS | TBT |
+|---|---|---|---|---|---|---|---|
+| Home | 85 | **100** | **100** | **100** | 4359 ms | **0** | **0** |
+| Categoría | 99 | 98 | **100** | **100** | 2120 ms | **0** | **0** |
+| Ficha | 92 | **100** | **100** | **100** | 3394 ms | **0** | **0** |
+| Carrito | 90 | **100** | **100** | 66 | 1658 ms | 0,21 | **0** |
+
+Lo que se cumple sin discusión: **accesibilidad 100** en tres de cuatro, **buenas prácticas 100** en todas, y **TBT 0 ms** en todas — el hilo principal nunca se bloquea, que es la mitad de lo que hace que un sitio se sienta rápido.
+
+### Lo que no se cumplió, y por qué
+
+**LCP entre 2,1 y 4,4 segundos.** El elemento más grande es siempre la foto del hero, y todas las fotos son de `images.unsplash.com`. Antes de poder pedir el primer byte hay que resolver el DNS, abrir el TCP y negociar el TLS contra un dominio ajeno: en una red móvil simulada eso son varios cientos de milisegundos de nada. Se agregó `preconnect` para que esa negociación arranque junto con el HTML.
+
+Pero el techo real es otro: son fotos provisorias servidas por un tercero. **Con las fotos propias, optimizadas y servidas desde el mismo dominio, este número cae solo** — y ése es justamente el plan del brief. No hay forma honesta de llegar a 2 segundos con placeholders remotos.
+
+**CLS de 0,21 en el carrito.** El único desplazamiento de todo el sitio, y era real: el carrito pinta sus líneas desde el almacenamiento del navegador, así que el bloque nace vacío y crece un instante después, empujando el pie de página. Se reservó la altura mientras no hay contenido, y se libera sola en cuanto entra la primera línea.
+
+**Accesibilidad 98 en categoría.** Orden de encabezados: la página saltaba de `h1` a los `h3` de las tarjetas. El mismo defecto que ya se había corregido en la búsqueda, en el otro componente. Corregido.
+
+**SEO 66 en el carrito.** Es un falso positivo: la página lleva `noindex` a propósito —nadie quiere su carrito en Google— y Lighthouse lo penaliza igual. La auditoría ahora no exige SEO en páginas marcadas como no indexables.
+
+> Volver a correr `npm run auditar:lighthouse` para medir después de estas correcciones.
+
+---
+
 ## Resultados
 
 ### Accesibilidad — axe-core, 64 páginas

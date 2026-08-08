@@ -30,6 +30,20 @@ const canonica = new URL(Astro.url.pathname, Astro.site);
     {sinIndexar && <meta name="robots" content="noindex" />}
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 
+    {/*
+      Conexión anticipada al proveedor de fotos.
+      La imagen del hero es el LCP y vive en otro dominio: antes de
+      poder pedirla hay que resolver el DNS, abrir el TCP y negociar
+      el TLS. En una red móvil eso son varios cientos de milisegundos
+      en los que no se descarga ni un byte. Con `preconnect` esa
+      negociación arranca junto con el HTML, en paralelo.
+      Cuando las fotos pasen a servirse desde el propio dominio, esta
+      línea sobra y hay que borrarla: un preconnect a un dominio que
+      no se usa es una conexión abierta al pedo.
+    */}
+    <link rel="preconnect" href="https://images.unsplash.com" crossorigin />
+    <link rel="dns-prefetch" href="https://images.unsplash.com" />
+
     {/* La fuente se precarga: es el recurso que bloquea el primer texto útil. */}
     <link
       rel="preload"
