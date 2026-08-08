@@ -87,6 +87,10 @@ const medios = ['Visa', 'Mastercard', 'Amex', 'Cabal', 'Mercado Pago', 'Transfer
       <p class="pie__copia">
         © 2026 acentta · Proyecto conceptual de portafolio. No es una tienda real
         y no procesa pagos.
+        <!-- El enlace al caso de estudio va acá, junto a la aclaración de
+             que esto es un portafolio: es donde alguien que se dio cuenta
+             de que no es una tienda de verdad va a buscar la explicación. -->
+        <a class="pie__caso" href="/caso">Ver cómo se construyó</a>
       </p>
       <ul class="pie__enlaces-legales">
         <li><a href="/terminos">Términos y condiciones</a></li>
@@ -157,6 +161,15 @@ const medios = ['Visa', 'Mastercard', 'Amex', 'Cabal', 'Mercado Pago', 'Transfer
     color: var(--gris-800);
   }
   .pie__nota { margin-top: var(--e-3); color: var(--gris-texto); font-size: var(--t-meta); }
+
+  .pie__caso {
+    display: inline-block;
+    margin-left: var(--e-1);
+    color: var(--naranja-texto);
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
 
   .pie__legal {
     margin-top: var(--e-10);

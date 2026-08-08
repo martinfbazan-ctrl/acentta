@@ -215,6 +215,10 @@ export function auditarContraste() {
     // ---- Bordes y separadores ----
     ['borde de campo',         'gris-500',     'papel',        3],
     ['separador',              'gris-200',     'papel',        1.2],
+
+    // ---- Sobre fondo oscuro: cierre del caso de estudio ----
+    ['bajada sobre oscuro',    'gris-200',     'tinta',        4.5],
+    ['nota sobre oscuro',      'gris-500',     'tinta',        4.5],
   ];
 
   const filas = pares.map(([uso, color, fondo, minimo]) => {

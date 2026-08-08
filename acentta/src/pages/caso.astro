@@ -1,0 +1,581 @@
+---
+/**
+ * Caso de estudio.
+ * ---------------------------------------------------------------
+ * La página más importante del proyecto para quien lo mira desde
+ * afuera. El sitio demuestra que sé construir; ésta demuestra que sé
+ * por qué construí así, que es lo que un cliente está comprando.
+ *
+ * Dos reglas que la ordenan:
+ *
+ * 1. Ningún número inventado. Se presenta como proyecto conceptual
+ *    propio, sin cliente ficticio y sin métricas de negocio. Las
+ *    únicas cifras son las técnicas, y todas salen de una medición
+ *    que se puede repetir con un comando.
+ *
+ * 2. Se cuentan los errores. Un caso de estudio donde todo salió bien
+ *    no lo cree nadie que haya construido algo. Lo que distingue a
+ *    alguien con oficio no es no equivocarse: es cómo encuentra el
+ *    error y qué hace después.
+ */
+import Base from '@layouts/Base.astro';
+import Encabezado from '@componentes/Encabezado.astro';
+import Pie from '@componentes/Pie.astro';
+import Migas from '@componentes/Migas.astro';
+import Boton from '@componentes/Boton.astro';
+import { foto, srcset } from '@lib/imagenes';
+import { todos, porSlug } from '@lib/catalogo';
+import { UMBRAL_ENVIO_GRATIS } from '@tipos/catalogo';
+import { precio } from '@lib/formato';
+
+const catalogo = todos();
+const portada = porSlug('lampara-de-pie-arco')!.imagenes[1]!;
+
+/* Las cifras del catálogo se cuentan, no se escriben: si el catálogo
+   cambia, el caso de estudio deja de mentir solo. */
+const totalProductos = catalogo.length;
+const totalDeco = catalogo.filter((p) => p.rubro === 'decoracion').length;
+const totalInteligente = catalogo.filter((p) => p.rubro === 'deco-inteligente').length;
+
+/* Resultados de la auditoría. Salen de pruebas/ y de la corrida de
+   Lighthouse guardada en pruebas/informes/. Nada acá es estimado. */
+const medidas = [
+  { rotulo: 'Accesibilidad', valor: '100', nota: 'Lighthouse, en 3 de 4 pantallas', bueno: true },
+  { rotulo: 'Buenas prácticas', valor: '100', nota: 'Lighthouse, en las 4', bueno: true },
+  { rotulo: 'Bloqueo del hilo', valor: '0 ms', nota: 'TBT en las 4 pantallas', bueno: true },
+  { rotulo: 'Infracciones de axe', valor: '0', nota: 'sobre las 64 páginas', bueno: true },
+  { rotulo: 'Contraste', valor: '32/32', nota: 'combinaciones reales, fórmula WCAG', bueno: true },
+  { rotulo: 'Peso de la página más grande', valor: '33 KB', nota: 'comprimida, meta < 300 KB', bueno: true },
+  { rotulo: 'Circuito de compra con teclado', valor: 'completo', nota: 'verificado paso por paso', bueno: true },
+  { rotulo: 'LCP móvil', valor: '2,1 – 4,4 s', nota: 'meta < 2 s · fotos provisorias de terceros', bueno: false },
+];
+
+const decisiones = [
+  {
+    n: 1,
+    titulo: 'El naranja de la marca no puede ser el naranja del botón',
+    resumen: 'El color que define la identidad no llega al contraste mínimo. Se separó en dos.',
+    cuerpo: [
+      'El coral <b>#FF6A3D</b> es el color de la marca y funciona: es cálido, se distingue de cualquier competidor y se ve bien en una foto de living. El problema aparece cuando se lo usa donde importa. Con texto blanco encima da <b>2,9:1</b> de contraste, y el mínimo para texto es 4,5:1. Un botón de compra que no se lee no es un problema estético.',
+      'La salida fácil era ignorarlo: casi nadie audita el contraste de un portafolio. La salida honesta fue partir el color en dos roles. El coral quedó para lo decorativo —badges, gráficos, el acento del logo— y para lo funcional entró un naranja más oscuro, <b>#B8431C</b>, que da 4,9:1 y sigue siendo reconociblemente el mismo color.',
+    ],
+    contra: 'El botón principal ya no es exactamente el color de la marca. En una comparación lado a lado se nota, y hubo que aceptarlo: es el precio de que se pueda leer.',
+  },
+  {
+    n: 2,
+    titulo: 'Mostrar el costo y el plazo de envío antes de que los pregunten',
+    resumen: 'La mala noticia se da temprano, cuando todavía no costó nada.',
+    cuerpo: [
+      'En dropshipping los plazos son largos y el envío casi nunca es gratis. La tentación es esconder las dos cosas hasta el último paso del checkout, cuando la persona ya invirtió tiempo y le cuesta más abandonar. Es una táctica que funciona, y por eso está tan extendida.',
+      'Acá el costo se calcula por código postal <b>en la ficha del producto</b>, y la fecha se muestra en lenguaje humano —«llega entre el 14 y el 20 de agosto», no «7 a 14 días hábiles»—. El umbral de envío gratis está a la vista con una barra que dice cuánto falta.',
+      'El razonamiento no es moral, es aritmético: el costo de envío sorpresa es la principal causa de abandono de carrito, y en una tienda sin reputación cada reclamo pesa el doble. Cambiar una venta de hoy por un reclamo de mañana es un mal negocio.',
+    ],
+    contra: 'Alguna gente se va al ver el costo. Esa venta se pierde, y no hay forma de saber cuántas. La apuesta es que las que quedan valen más que las que se van.',
+  },
+  {
+    n: 3,
+    titulo: 'Nada de urgencia inventada',
+    resumen: 'Los avisos de escasez se calculan del stock. Si no hay dato, no hay aviso.',
+    cuerpo: [
+      'El repertorio habitual está a mano: contadores que se reinician al recargar, «quedan 2 unidades» que dicen lo mismo hace un mes, «12 personas están viendo esto». Levantan la conversión en el corto plazo y son la razón por la que mucha gente ya no le cree a ninguna tienda chica.',
+      'Acá el badge de «últimas unidades» sale de una función que suma el stock real de cada variante. Si el catálogo cambia, el badge cambia. No existe forma de escribirlo a mano: no hay ningún campo para eso. El contador de unidades vendidas sólo aparece cuando el dato existe, y el ranking de más vendidos se ordena por ventas reales — el producto que no tiene el dato simplemente no entra.',
+      'La misma regla vale para el precio tachado: es el precio al que se vendió antes, no uno inflado para que el descuento parezca más grande.',
+    ],
+    contra: 'Se deja conversión sobre la mesa, y es medible: hay estudios que le ponen números. La contra es real y la decisión igual se sostiene, porque el daño a la confianza cuesta más que la venta ganada y dura más tiempo.',
+  },
+];
+
+const alternativas = [
+  {
+    descartado: 'React con renderizado en el servidor',
+    elegido: 'Astro estático',
+    porque: 'Un catálogo que no cambia entre visitas no necesita un servidor pensando en cada pedido. Astro entrega HTML terminado y manda al navegador sólo el JavaScript del carrito y los filtros. La consecuencia se mide: 0 ms de bloqueo del hilo principal en las cuatro pantallas.',
+  },
+  {
+    descartado: 'Un servicio de búsqueda externo',
+    elegido: 'Índice en el navegador, 18 KB',
+    porque: 'Con 36 productos, contratar un servicio significaba una dependencia, una clave y una ida y vuelta a la red para resolver algo que entra en el HTML. Las sugerencias aparecen mientras se escribe, sin una sola petición. Está anotado dónde deja de servir: a partir de unos cientos de productos, el peso del índice manda.',
+  },
+  {
+    descartado: 'Filtrar en el servidor',
+    elegido: 'Filtrar en el navegador sobre HTML completo',
+    porque: 'El listado llega con los 36 productos renderizados, así que el buscador de Google los indexa todos y filtrar no cuesta un viaje. El mismo límite que la búsqueda, y por la misma razón.',
+  },
+  {
+    descartado: 'Modal al agregar al carrito',
+    elegido: 'Panel lateral con barra de envío gratis',
+    porque: 'Un modal interrumpe y obliga a decidir «seguir o pagar». El panel lateral confirma que se agregó, muestra cuánto falta para el envío gratis y se cierra solo con Escape, sin bloquear el catálogo que la persona estaba mirando.',
+  },
+  {
+    descartado: 'Registro obligatorio antes de pagar',
+    elegido: 'Compra como invitado',
+    porque: 'Es de los mayores destructores de conversión que existen, y este sitio no necesita cuentas para entregar un pedido. Se piden los datos que hacen falta para facturar y avisar, y cada campo dice para qué se pide.',
+  },
+];
+
+const aprendizajes = [
+  {
+    titulo: 'Las fotos propias, desde el primer día',
+    texto: 'Es lo único que impide llegar a la meta de velocidad. Las imágenes son placeholders servidos por un tercero: antes de pedir el primer byte hay que negociar una conexión con otro dominio. Ninguna optimización del código compensa eso. Empezar por las fotos habría cambiado el número final.',
+  },
+  {
+    titulo: 'Definir antes qué vive en el sistema y qué en la página',
+    texto: 'Astro aísla el CSS por archivo. Tres errores distintos salieron de lo mismo: estilos escritos dentro de una página que otra página necesitaba, y reglas que no alcanzaban a los elementos creados por JavaScript. Ninguno era difícil de arreglar; todos fueron difíciles de encontrar.',
+  },
+  {
+    titulo: 'Auditar la salida compilada, no el código',
+    texto: 'Dos de los errores más caros sólo existían después del compilador: el minificador borraba una propiedad del efecto de vidrio, y el generador de la vista previa partía un guion al medio. Mirando el código fuente los dos eran invisibles. Todas las pruebas de este proyecto corren sobre lo que recibe el navegador.',
+  },
+  {
+    titulo: 'Escribir las pruebas mientras se construye',
+    texto: 'Aparecieron cuando algo ya se había roto dos veces. Cada una encontró después un defecto que yo no estaba buscando — el orden de encabezados, el voseo que sobrevivió al barrido, el desborde de diecinueve píxeles en móvil. Escritas antes, habrían atajado los tres.',
+  },
+];
+---
+
+<Base
+  titulo="Caso de estudio · acentta"
+  descripcion="Cómo se diseñó y construyó acentta: las decisiones difíciles, las alternativas descartadas y los resultados técnicos verificables."
+>
+  <Encabezado slot="encabezado" />
+
+  <article class="caso">
+    <!-- ============ 1 · QUÉ ES ============ -->
+    <header class="caso__portada">
+      <div class="contenedor caso__portada-caja">
+        <Migas pasos={[{ nombre: 'Inicio', href: '/' }, { nombre: 'Caso de estudio' }]} />
+        <p class="etiqueta caso__kicker">Caso de estudio</p>
+        <h1 class="t-titular caso__titulo">
+          Una tienda sin reputación<br />que igual da confianza
+        </h1>
+        <p class="caso__linea">
+          <b>acentta</b> es un marketplace de dropshipping completo: {totalProductos} productos
+          en dos rubros, buscador, carrito y un checkout de tres pasos que termina en un
+          pedido con seguimiento. Proyecto conceptual propio, construido de punta a punta.
+        </p>
+
+        <div class="caso__datos">
+          <div><b class="tabular">{totalProductos}</b><span>productos</span></div>
+          <div><b class="tabular">64</b><span>páginas</span></div>
+          <div><b class="tabular">100</b><span>en accesibilidad</span></div>
+          <div><b class="tabular">33 KB</b><span>la página más pesada</span></div>
+        </div>
+      </div>
+
+      <div class="caso__captura">
+        <img
+          src={foto(portada.src, 1600)}
+          srcset={srcset(portada.src)}
+          sizes="(min-width: 1100px) 1040px, 100vw"
+          alt="Portada del sitio acentta: la home con el carrusel de campañas"
+          width="1600" height="900"
+          loading="eager" fetchpriority="high" decoding="async"
+        />
+      </div>
+    </header>
+
+    <div class="contenedor caso__cuerpo">
+      <!-- ============ 2 · EL PROBLEMA ============ -->
+      <section class="bloque" aria-labelledby="t-problema">
+        <p class="bloque__n">01</p>
+        <h2 class="t-seccion" id="t-problema">El problema</h2>
+        <p class="bloque__entrada">
+          Diseñar una tienda que nadie conoce, para que un desconocido le deje
+          los datos de su tarjeta.
+        </p>
+        <p>
+          Una marca con años encima puede permitirse fricción: la gente ya sabe que el
+          producto llega. Una tienda nueva no tiene ese crédito. Todo lo que en un sitio
+          conocido es un detalle —un plazo vago, un costo que aparece tarde, una foto que
+          no coincide con lo que dice el texto— en una tienda nueva es motivo suficiente
+          para cerrar la pestaña.
+        </p>
+        <p>
+          En dropshipping el problema se agrava: los plazos son largos, el vendedor no
+          tiene el producto en la mano y el comprador lo intuye. Así que el proyecto no se
+          planteó como «hacer una tienda linda» sino como una pregunta más concreta:
+          <b>qué tiene que pasar en cada pantalla para que alguien que llegó hace treinta
+          segundos decida confiar</b>.
+        </p>
+        <p>
+          La respuesta que guía todo el sitio es una sola: <b>adelantar la información
+          incómoda</b>. El costo del envío, el plazo real, qué pasa si no llega, cómo se
+          devuelve. Todo lo que una tienda suele esconder hasta el último paso, acá está
+          antes de que lo pregunten.
+        </p>
+      </section>
+
+      <!-- ============ 3 · TRES DECISIONES DIFÍCILES ============ -->
+      <section class="bloque" aria-labelledby="t-decisiones">
+        <p class="bloque__n">02</p>
+        <h2 class="t-seccion" id="t-decisiones">Tres decisiones difíciles</h2>
+        <p class="bloque__entrada">
+          Difíciles porque en las tres la opción correcta cuesta algo. Van con su contra,
+          porque una decisión sin costo no era una decisión.
+        </p>
+
+        {decisiones.map((d) => (
+          <article class="decision">
+            <header class="decision__cabeza">
+              <span class="decision__n tabular" aria-hidden="true">{d.n}</span>
+              <div>
+                <h3 class="decision__titulo">{d.titulo}</h3>
+                <p class="decision__resumen">{d.resumen}</p>
+              </div>
+            </header>
+            <div class="decision__cuerpo">
+              {d.cuerpo.map((p) => <p set:html={p} />)}
+            </div>
+            <p class="decision__contra">
+              <b>La contra:</b> {d.contra}
+            </p>
+          </article>
+        ))}
+      </section>
+
+      <!-- ============ 4 · EL SISTEMA ============ -->
+      <section class="bloque" aria-labelledby="t-sistema">
+        <p class="bloque__n">03</p>
+        <h2 class="t-seccion" id="t-sistema">El sistema</h2>
+        <p class="bloque__entrada">
+          Nada se decide dos veces. Un color, una medida y una regla viven en un solo
+          lugar y el resto del sitio los consulta.
+        </p>
+        <p>
+          El color, la tipografía, el espaciado y los radios son variables de CSS. Cambiar
+          el fondo del sitio entero fue editar una línea. Cuando el alto del logo tenía
+          que igualar al del buscador, no se sincronizaron dos números: se creó uno solo
+          que usan los dos.
+        </p>
+        <p>
+          Lo mismo con las reglas de negocio. Si un producto está agotado, si le quedan
+          últimas unidades, cuánto se ahorra y si supera el umbral de envío gratis de
+          {' '}{precio(UMBRAL_ENVIO_GRATIS)} son funciones que viven junto a los tipos de
+          datos. Ninguna vista las reimplementa, así que ninguna puede contradecir a otra.
+        </p>
+        <p>
+          El catálogo se valida al construir el sitio: si un producto sale sin precio, sin
+          foto o con un descuento imposible, <b>la compilación falla y dice cuál</b>. Con
+          {' '}{totalProductos} productos y dieciocho campos cada uno, ese aviso es la
+          diferencia entre encontrar el error ahora o descubrirlo en producción.
+        </p>
+
+        <div class="prueba-sistema">
+          <p class="prueba-sistema__titulo">La prueba de que el sistema escala</p>
+          <p>
+            El sitio nació con {totalDeco} productos de decoración. Sumar el segundo rubro
+            —{totalInteligente} productos de electrónica para el hogar, con cinco
+            categorías nuevas— <b>no cambió una sola línea de las plantillas</b>. La página
+            de categoría pasó de cuatro rutas a nueve leyendo otra lista. La ficha, la
+            grilla, los filtros y el carrito son exactamente los mismos.
+          </p>
+          <a class="prueba-sistema__enlace" href="/sistema">Ver el sistema de diseño completo</a>
+        </div>
+      </section>
+
+      <!-- ============ 5 · ALTERNATIVAS DESCARTADAS ============ -->
+      <section class="bloque" aria-labelledby="t-alternativas">
+        <p class="bloque__n">04</p>
+        <h2 class="t-seccion" id="t-alternativas">Alternativas descartadas</h2>
+        <p class="bloque__entrada">
+          Casi todas eran defendibles. Lo que las descartó fue el tamaño real de este
+          proyecto, no una preferencia.
+        </p>
+
+        <ul class="alternativas" role="list">
+          {alternativas.map((a) => (
+            <li class="alternativa">
+              <p class="alternativa__par">
+                <span class="alternativa__no">{a.descartado}</span>
+                <span class="alternativa__flecha" aria-hidden="true">→</span>
+                <span class="alternativa__si">{a.elegido}</span>
+              </p>
+              <p class="alternativa__porque">{a.porque}</p>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <!-- ============ 6 · RESULTADOS ============ -->
+      <section class="bloque" aria-labelledby="t-resultados">
+        <p class="bloque__n">05</p>
+        <h2 class="t-seccion" id="t-resultados">Resultados verificables</h2>
+        <p class="bloque__entrada">
+          Todos salen de una medición que se repite con un comando. No hay métricas de
+          negocio: este proyecto no tuvo clientes, y una conversión inventada no prueba
+          nada.
+        </p>
+
+        <ul class="medidas" role="list">
+          {medidas.map((m) => (
+            <li class={`medida ${m.bueno ? '' : 'medida--pendiente'}`}>
+              <b class="medida__valor tabular">{m.valor}</b>
+              <span class="medida__rotulo">{m.rotulo}</span>
+              <span class="medida__nota">{m.nota}</span>
+            </li>
+          ))}
+        </ul>
+
+        <div class="honestidad">
+          <h3 class="honestidad__titulo">Lo que todavía no llega a la meta</h3>
+          <p>
+            El tiempo hasta la imagen más grande está entre 2,1 y 4,4 segundos, contra una
+            meta de 2. La causa está identificada y no es el código: <b>las fotos son
+            provisorias y las sirve un tercero</b>. Antes de pedir el primer byte hay que
+            resolver un DNS y negociar un TLS contra otro dominio. Se agregó conexión
+            anticipada, que ayuda, pero el techo lo pone la decisión de usar placeholders.
+          </p>
+          <p>
+            Con fotos propias, optimizadas y servidas desde el mismo dominio, este número
+            baja solo. Prefiero dejarlo escrito así antes que mostrar una captura de otra
+            pantalla y llamarlo resultado.
+          </p>
+        </div>
+      </section>
+
+      <!-- ============ 7 · QUÉ HARÍA DISTINTO ============ -->
+      <section class="bloque" aria-labelledby="t-distinto">
+        <p class="bloque__n">06</p>
+        <h2 class="t-seccion" id="t-distinto">Qué haría distinto</h2>
+        <p class="bloque__entrada">
+          Cuatro cosas, y las cuatro se aprendieron rompiendo algo.
+        </p>
+
+        <ol class="aprendizajes" role="list">
+          {aprendizajes.map((a) => (
+            <li class="aprendizaje">
+              <h3 class="aprendizaje__titulo">{a.titulo}</h3>
+              <p>{a.texto}</p>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      <!-- ============ 8 · CONTACTO ============ -->
+      <section class="cierre" aria-labelledby="t-cierre">
+        <h2 class="t-seccion" id="t-cierre">¿Trabajamos juntos?</h2>
+        <p class="cierre__texto">
+          Si estás por encarar una tienda, una landing o un producto donde la confianza
+          decide la venta, escribime. Puedo mostrarte el resto del proyecto: el sistema de
+          diseño con todos sus estados, el código comentado decisión por decisión, y la
+          auditoría completa con lo que salió bien y lo que no.
+        </p>
+        <div class="cierre__acciones">
+          <Boton href="/contacto" tamano="grande">Escribirme</Boton>
+          <Boton href="/" jerarquia="secundario" tamano="grande">Recorrer el sitio</Boton>
+        </div>
+        <p class="cierre__nota">
+          Proyecto conceptual propio. No hay cliente real, no se procesan pagos y no se
+          guarda ningún dato.
+        </p>
+      </section>
+    </div>
+  </article>
+
+  <Pie slot="pie" />
+</Base>
+
+<style>
+  /* ---- Portada ---- */
+  .caso__portada { padding-top: var(--e-6); }
+  .caso__portada-caja { max-width: 78ch; }
+  .caso__kicker { margin-top: var(--e-4); }
+  .caso__titulo { margin-top: var(--e-2); }
+  .caso__linea {
+    margin-top: var(--e-5);
+    font-size: clamp(1.0625rem, 1rem + .3vw, 1.25rem);
+    line-height: 1.6;
+    color: var(--gris-800);
+    max-width: 62ch;
+  }
+
+  .caso__datos {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--e-5) var(--e-6);
+    margin-top: var(--e-8);
+    padding-top: var(--e-6);
+    border-top: 1px solid var(--gris-200);
+  }
+  @media (min-width: 700px) { .caso__datos { grid-template-columns: repeat(4, auto); justify-content: start; gap: var(--e-10); } }
+  .caso__datos div { display: flex; flex-direction: column; gap: 2px; }
+  .caso__datos b {
+    font-size: clamp(1.75rem, 1.4rem + 1.5vw, 2.5rem);
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1;
+  }
+  .caso__datos span { font-size: var(--t-meta); color: var(--gris-texto); }
+
+  .caso__captura {
+    margin-top: var(--e-10);
+    background: var(--tinta);
+    overflow: hidden;
+  }
+  .caso__captura img {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+  }
+
+  /* ---- Cuerpo ---- */
+  .caso__cuerpo { max-width: 78ch; padding-block: var(--e-16); }
+
+  .bloque { padding-block: var(--e-12); border-top: 1px solid var(--gris-200); }
+  .bloque:first-child { border-top: 0; padding-top: 0; }
+  .bloque__n {
+    font-size: var(--t-meta);
+    font-weight: 700;
+    letter-spacing: .12em;
+    color: var(--naranja-texto);
+    margin-bottom: var(--e-2);
+    font-variant-numeric: tabular-nums;
+  }
+  .bloque__entrada {
+    font-size: clamp(1.0625rem, 1rem + .3vw, 1.1875rem);
+    line-height: 1.6;
+    color: var(--gris-800);
+    margin-block: var(--e-4) var(--e-6);
+    max-width: 58ch;
+  }
+  .bloque p { margin-bottom: var(--e-4); line-height: 1.7; }
+  .bloque p:last-child { margin-bottom: 0; }
+
+  /* ---- Decisiones ---- */
+  .decision {
+    padding: var(--e-6);
+    margin-top: var(--e-5);
+    background: var(--papel);
+    border: 1px solid var(--gris-200);
+    border-radius: var(--r-modal);
+  }
+  .decision__cabeza { display: flex; gap: var(--e-4); align-items: flex-start; }
+  .decision__n {
+    flex: none;
+    width: 34px; height: 34px;
+    display: grid; place-items: center;
+    background: var(--tinta);
+    color: var(--blanco);
+    border-radius: 50%;
+    font-size: 0.9375rem;
+    font-weight: 700;
+  }
+  .decision__titulo {
+    font-size: clamp(1.125rem, 1rem + .5vw, 1.375rem);
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    line-height: 1.3;
+  }
+  .decision__resumen { margin-top: var(--e-2); color: var(--gris-texto); font-size: var(--t-meta); }
+  .decision__cuerpo { margin-top: var(--e-5); }
+
+  /* La contra se marca en rojo suave y con su propio fondo: es la parte
+     que un lector escéptico busca, y esconderla sería lo contrario de
+     lo que este bloque intenta demostrar. */
+  .decision__contra {
+    margin-top: var(--e-5);
+    padding: var(--e-4);
+    background: var(--rojo-wash);
+    border-left: 3px solid var(--rojo);
+    border-radius: 0 var(--r-tarjeta) var(--r-tarjeta) 0;
+    font-size: 0.9375rem;
+    line-height: 1.6;
+  }
+  .decision__contra b { color: var(--rojo); }
+
+  /* ---- El sistema ---- */
+  .prueba-sistema {
+    margin-top: var(--e-6);
+    padding: var(--e-6);
+    background: var(--verde-wash);
+    border-radius: var(--r-modal);
+  }
+  .prueba-sistema__titulo { font-weight: 700; margin-bottom: var(--e-3); }
+  .prueba-sistema__enlace {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    margin-top: var(--e-2);
+    font-weight: 600;
+    color: var(--verde);
+  }
+
+  /* ---- Alternativas ---- */
+  .alternativas { display: flex; flex-direction: column; gap: var(--e-5); }
+  .alternativa { padding-left: var(--e-4); border-left: 2px solid var(--gris-200); }
+  .alternativa__par {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--e-2);
+    margin-bottom: var(--e-2);
+  }
+  .alternativa__no { color: var(--gris-texto); text-decoration: line-through; }
+  .alternativa__flecha { color: var(--gris-500); }
+  .alternativa__si { font-weight: 700; color: var(--tinta); }
+  .alternativa__porque { font-size: 0.9375rem; color: var(--gris-800); line-height: 1.65; }
+
+  /* ---- Medidas ---- */
+  .medidas {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: var(--e-3);
+    margin-bottom: var(--e-8);
+  }
+  .medida {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: var(--e-4);
+    background: var(--papel);
+    border: 1px solid var(--gris-200);
+    border-radius: var(--r-tarjeta);
+  }
+  .medida__valor { font-size: 1.625rem; font-weight: 700; letter-spacing: -0.02em; color: var(--verde); }
+  .medida__rotulo { font-weight: 600; font-size: 0.9375rem; }
+  .medida__nota { font-size: var(--t-meta); color: var(--gris-texto); }
+  /* Lo que no llega a la meta no se pinta de verde. */
+  .medida--pendiente { border-color: var(--amarillo-borde); background: var(--gris-050); }
+  .medida--pendiente .medida__valor { color: var(--gris-800); }
+
+  .honestidad {
+    padding: var(--e-6);
+    background: var(--gris-050);
+    border: 1px solid var(--gris-200);
+    border-radius: var(--r-modal);
+  }
+  .honestidad__titulo { font-size: 1.0625rem; font-weight: 700; margin-bottom: var(--e-3); }
+
+  /* ---- Aprendizajes ---- */
+  .aprendizajes { display: flex; flex-direction: column; gap: var(--e-6); counter-reset: ap; }
+  .aprendizaje { counter-increment: ap; }
+  .aprendizaje__titulo {
+    font-size: 1.0625rem;
+    font-weight: 700;
+    margin-bottom: var(--e-2);
+  }
+  .aprendizaje__titulo::before {
+    content: counter(ap) '. ';
+    color: var(--naranja-texto);
+  }
+
+  /* ---- Cierre ---- */
+  .cierre {
+    margin-top: var(--e-12);
+    padding: var(--e-10) var(--e-6);
+    background: var(--tinta);
+    border-radius: var(--r-modal);
+    text-align: center;
+  }
+  .cierre :global(.t-seccion) { color: var(--blanco); }
+  .cierre__texto {
+    margin: var(--e-4) auto var(--e-6);
+    max-width: 52ch;
+    color: var(--gris-200);
+    line-height: 1.7;
+  }
+  .cierre__acciones { display: flex; flex-wrap: wrap; gap: var(--e-3); justify-content: center; }
+  .cierre__nota { margin-top: var(--e-6); font-size: var(--t-meta); color: var(--gris-500); }
+</style>
