@@ -74,12 +74,42 @@ const PUERTO = 4321;
    versión .cmd hace exactamente lo mismo sin pasar por esa puerta. */
 const NPX = process.platform === 'win32' ? 'npx.cmd' : 'npx';
 
-const servidor = spawn(NPX, ['astro', 'preview', '--port', String(PUERTO)], {
-  cwd: path.join(AQUI, '..'),
-  stdio: 'ignore',
-  shell: process.platform === 'win32',
-});
-const cerrar = () => servidor.kill();
+const base = `http://localhost:${PUERTO}`;
+
+/** ¿Ya hay algo sirviendo en el puerto? */
+async function responde(url) {
+  try {
+    const c = new AbortController();
+    const t = setTimeout(() => c.abort(), 1500);
+    const r = await fetch(url, { signal: c.signal });
+    clearTimeout(t);
+    return r.ok;
+  } catch {
+    return false;
+  }
+}
+
+/* Si ya hay un servidor levantado —lo habitual mientras se trabaja— se
+   usa ése en vez de pelear por el puerto. Levantar un segundo sobre el
+   mismo puerto falla en silencio y después el diagnóstico es confuso. */
+const yaEstaba = await responde(base);
+let servidor = null;
+
+if (yaEstaba) {
+  console.log(`Uso el servidor que ya está en ${base}.`);
+} else {
+  console.log('Levanto el servidor…');
+  servidor = spawn(NPX, ['astro', 'preview', '--port', String(PUERTO)], {
+    cwd: path.join(AQUI, '..'),
+    stdio: 'ignore',
+    shell: process.platform === 'win32',
+  });
+  servidor.on('error', (e) => {
+    console.error(`\nNo se pudo lanzar el servidor: ${e.message}`);
+  });
+}
+
+const cerrar = () => servidor?.kill();
 process.on('exit', cerrar);
 process.on('SIGINT', () => { cerrar(); process.exit(130); });
 
@@ -95,20 +125,47 @@ async function esperar(url, intentos = 40) {
   return false;
 }
 
-const base = `http://localhost:${PUERTO}`;
 if (!(await esperar(base))) {
-  console.error('El servidor de vista previa no levantó. ¿Corriste npm run build?');
+  console.error(
+    '\nEl servidor no contestó en 20 segundos.\n' +
+    '  · ¿Corriste `npm run build` antes? Sin dist/ no hay nada que servir.\n' +
+    '  · ¿Hay otra cosa ocupando el puerto ' + PUERTO + '?\n'
+  );
   cerrar();
   process.exit(1);
 }
 
 fs.mkdirSync(INFORMES, { recursive: true });
-const chrome = await launch({ chromeFlags: ['--headless=new', '--no-sandbox'] });
+
+/**
+ * Chrome sin ventana.
+ *
+ * `--headless=new` era la forma correcta hasta Chrome 131; de la 132 en
+ * adelante quedó obsoleta y en algunas versiones directamente aborta el
+ * arranque. `--headless` a secas funciona en todas.
+ */
+let chrome;
+try {
+  chrome = await launch({ chromeFlags: ['--headless', '--no-sandbox', '--disable-gpu'] });
+} catch (e) {
+  console.error(
+    '\nNo se pudo abrir Chrome.\n' +
+    `  ${e.message}\n\n` +
+    'Suele ser una de dos cosas:\n' +
+    '  · Chrome no está instalado, o está en una ruta que el lanzador no busca.\n' +
+    '    Se le puede indicar a mano: setx CHROME_PATH "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"\n' +
+    '    y volver a abrir la terminal.\n' +
+    '  · Hay demasiadas instancias de Chrome abiertas. Cerralas y probá de nuevo.\n'
+  );
+  cerrar();
+  process.exit(1);
+}
 
 const fallos = [];
 const tabla = [];
 
 for (const ruta of RUTAS) {
+  process.stdout.write(`midiendo ${ruta} … `);
   const r = await lighthouse(base + ruta, {
     port: chrome.port,
     output: ['html', 'json'],
@@ -139,6 +196,7 @@ for (const ruta of RUTAS) {
     if (v > max) fallos.push(`${ruta} · ${n}: ${fila[n]}${unidad} (meta ${max}${unidad})`);
   }
   tabla.push(fila);
+  console.log('listo');
 }
 
 await chrome.kill();
