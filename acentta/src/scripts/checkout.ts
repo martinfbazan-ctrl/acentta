@@ -187,6 +187,9 @@ if (contenedor) {
   /* ============================================================
      PASOS
      ============================================================ */
+  /** Se apaga apenas se dibuja el primer paso. */
+  let inicial = true;
+
   function irAPaso(n: number) {
     pasoActual = n;
     for (const f of formas) f.hidden = Number(f.dataset.pasoForma) !== n;
@@ -197,13 +200,26 @@ if (contenedor) {
       if (num < n) p.dataset.estado = 'hecho';
       if (num === n) p.setAttribute('aria-current', 'step');
     }
+    /* El botón de confirmar vive en la tarjeta del pedido y sólo se
+       muestra en el paso de pago. En los dos primeros sería un botón
+       que promete terminar algo que todavía está a medias. */
+    const accion = document.querySelector<HTMLElement>('[data-ck-accion]');
+    if (accion) accion.hidden = n !== 3;
+
     /* Al cambiar de paso, el foco va al título: quien navega con
        teclado o lector de pantalla necesita saber que la pantalla
-       cambió, no descubrirlo tabulando. */
-    const titulo = formas[n - 1]?.querySelector<HTMLElement>('h1');
-    titulo?.setAttribute('tabindex', '-1');
-    titulo?.focus();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+       cambió, no descubrirlo tabulando.
+       No se hace en la primera carga —`inicial`— porque ahí nadie
+       cambió de pantalla: la página recién se abrió, el foco ya está
+       donde corresponde y lo único que lograba era dibujar un
+       recuadro alrededor del titular apenas entrar. */
+    if (!inicial) {
+      const titulo = formas[n - 1]?.querySelector<HTMLElement>('h1');
+      titulo?.setAttribute('tabindex', '-1');
+      titulo?.focus({ preventScroll: true });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    inicial = false;
   }
 
   for (const forma of formas) {
@@ -384,7 +400,11 @@ if (contenedor) {
      CONFIRMAR
      ============================================================ */
   function confirmar(forma: HTMLFormElement) {
-    const boton = forma.querySelector<HTMLButtonElement>('[data-pagar]')!;
+    /* El botón ya no está adentro del formulario: se mudó a la tarjeta
+       del pedido y se conecta con el atributo `form`. Se busca en el
+       documento, no dentro de la forma. */
+    void forma;
+    const boton = document.querySelector<HTMLButtonElement>('[data-pagar]')!;
     boton.dataset.cargando = 'true';
     boton.setAttribute('aria-busy', 'true');
     if (!boton.querySelector('.boton__girador')) {

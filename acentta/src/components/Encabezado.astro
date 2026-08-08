@@ -146,7 +146,17 @@ const categorias = [
     mix-blend-mode: overlay;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Cfilter id='r'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='40' height='40' filter='url(%23r)' opacity='.28'/%3E%3C/svg%3E");
   }
-  .cabecera > * { position: relative; z-index: 1; }
+  /* Cada hijo declara su capa por separado, y no con un `.cabecera > *`
+     general. Ese atajo costó un error difícil de ver: Astro le agrega
+     a cada selector un atributo de alcance, así que `.cabecera > *` se
+     compila como `.cabecera[attr] > [attr]` —una clase y dos
+     atributos— y le gana en especificidad a `.cabecera__fila[attr]`,
+     que es una clase y un atributo. El z-index: 2 de la fila nunca se
+     aplicaba y la barra de categorías seguía dibujándose encima del
+     panel de sugerencias.
+     La fila va arriba porque de ella cuelga ese panel. */
+  .cabecera__fila { position: relative; z-index: 2; }
+  .cabecera__nav  { position: relative; z-index: 1; }
 
   /* Sin backdrop-filter no hay satinado posible: se vuelve opaco.
      Mejor sólido que ilegible. */
@@ -160,13 +170,6 @@ const categorias = [
     align-items: center;
     gap: var(--e-4);
     min-height: 76px;
-    /* Por encima de la navegación, que es su hermana siguiente.
-       Las dos venían con z-index 1 por la regla `.cabecera > *`, y en
-       empate gana la que va después en el marcado: el panel de
-       sugerencias, aunque declara z-index 40, vive dentro de esta
-       fila y no podía salir de su capa. El resultado era la barra de
-       categorías dibujándose encima de los resultados. */
-    z-index: 2;
   }
   @media (min-width: 768px) { .cabecera__fila { min-height: 88px; } }
   .cabecera__logo { display: inline-flex; flex: none; }

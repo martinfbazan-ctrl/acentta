@@ -144,7 +144,7 @@ const pasos = [
         </form>
 
         <!-- ============ PASO 3 · PAGO ============ -->
-        <form class="paso" data-paso-forma="3" novalidate hidden>
+        <form class="paso" id="forma-pago" data-paso-forma="3" novalidate hidden>
           <h1 class="t-seccion">Pago</h1>
 
           <div class="simulacro">
@@ -205,11 +205,13 @@ const pasos = [
             </span>
           </label>
 
-          <div class="paso__acciones">
+          <!-- El botón de confirmar ya no vive acá: está en la tarjeta
+               del pedido, pegado al total y a las cuotas. Se conecta a
+               este formulario con el atributo `form`, así que sigue
+               enviándolo y sigue validándolo igual que si estuviera
+               adentro. -->
+          <div class="paso__acciones paso__acciones--solas">
             <button class="paso__volver" type="button" data-atras>Volver al envío</button>
-            <Boton tipo="submit" tamano="grande" data-pagar>
-              <span data-texto-pagar>Confirmar compra</span>
-            </Boton>
           </div>
         </form>
       </div>
@@ -250,6 +252,19 @@ const pasos = [
                sino la cuota, y tiene que estar donde está el número
                grande, no dos pantallas más abajo. -->
           <p class="resumen__cuotas" data-ck-cuotas></p>
+
+          <!-- Confirmar, justo debajo del plan de pago elegido y antes
+               de la fecha de llegada. Es el orden en que se decide:
+               cuánto, en cuántas cuotas, listo — y recién después
+               cuándo llega, que es lo que tranquiliza después de
+               haber apretado. Aparece sólo en el paso de pago: en los
+               dos primeros sería un botón que promete terminar algo
+               que todavía no está completo. -->
+          <div class="resumen-pedido__accion" hidden data-ck-accion>
+            <Boton tipo="submit" tamano="grande" ancho form="forma-pago" data-pagar>
+              <span data-texto-pagar>Confirmar compra</span>
+            </Boton>
+          </div>
 
           <p class="resumen-pedido__entrega" data-ck-entrega></p>
         </div>
@@ -435,6 +450,21 @@ const pasos = [
   @media (min-width: 900px) { .resumen-pedido__toggle { display: none; } }
 
   .resumen-pedido__contenido { display: flex; flex-direction: column; gap: var(--e-4); }
+
+  .resumen-pedido__accion { display: flex; flex-direction: column; gap: var(--e-2); }
+
+  /* Cuando el paso sólo tiene el enlace de volver, se alinea a la
+     izquierda en vez de quedar solo contra el borde derecho. */
+  .paso__acciones--solas { justify-content: flex-start; }
+
+  /* Al cambiar de paso, el foco va al titular para que un lector de
+     pantalla anuncie la pantalla nueva. El titular no es interactivo
+     —sólo recibe foco por guion, con tabindex -1— así que el anillo
+     no orienta a nadie: es un recuadro negro alrededor de un texto
+     que nadie va a tocar. La función accesible se cumple igual sin
+     dibujarlo. */
+  .paso h1:focus,
+  .paso h1:focus-visible { outline: none; }
 
   .resumen-pedido__items { display: flex; flex-direction: column; gap: var(--e-3); }
   .resumen-pedido__entrega {
