@@ -32,12 +32,12 @@ if (forma) {
   };
 
   const reglas: Record<string, (v: string) => string | null> = {
-    'ct-nombre': (v) => (v.trim().length >= 2 ? null : 'Escribí tu nombre para saber cómo dirigirnos a vos.'),
+    'ct-nombre': (v) => (v.trim().length >= 2 ? null : 'Escribe tu nombre para saber cómo dirigirnos a ti.'),
     'ct-email': (v) =>
       /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim())
         ? null
         : 'El correo va con arroba y un punto, por ejemplo nombre@ejemplo.com',
-    'ct-mensaje': (v) => (v.trim().length >= 10 ? null : 'Contanos un poco más para poder ayudarte.'),
+    'ct-mensaje': (v) => (v.trim().length >= 10 ? null : 'Cuéntanos un poco más para poder ayudarte.'),
   };
 
   forma.addEventListener('submit', (e) => {

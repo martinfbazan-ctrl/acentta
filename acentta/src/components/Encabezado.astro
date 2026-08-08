@@ -15,11 +15,18 @@ interface Props {
 }
 const { items = 0 } = Astro.props;
 
+/* La navegación lleva las cuatro categorías de decoración —el rubro
+   protagonista— y el segundo rubro como una sola entrada.
+   Poner las nueve categorías al mismo nivel sería honesto con la
+   base de datos y desastroso para el visitante: una barra de nueve
+   enlaces no se lee, se escanea y se abandona. Deco inteligente
+   entra como puerta única y adentro se abre en cinco. */
 const categorias = [
   { nombre: 'Iluminación', href: '/categoria/iluminacion' },
   { nombre: 'Textil', href: '/categoria/textil' },
   { nombre: 'Alfombras', href: '/categoria/alfombras' },
   { nombre: 'Muebles chicos', href: '/categoria/muebles-chicos' },
+  { nombre: 'Deco inteligente', href: '/deco-inteligente' },
   { nombre: 'Ofertas', href: '/ofertas', destacado: true },
 ];
 ---

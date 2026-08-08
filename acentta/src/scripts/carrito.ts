@@ -119,7 +119,7 @@ function pintarMini(items: ItemCarrito[]) {
 
   caja.dataset.logrado = String(estado.logrado);
   texto.innerHTML = estado.logrado
-    ? '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" fill="currentColor"><path d="M6.2 11.4 3.3 8.5l-1.1 1.1 4 4 7.6-7.6-1.1-1.1z"/></svg> Tenés envío gratis'
+    ? '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" fill="currentColor"><path d="M6.2 11.4 3.3 8.5l-1.1 1.1 4 4 7.6-7.6-1.1-1.1z"/></svg> Tienes envío gratis'
     : `Te faltan <b>${fPrecio(estado.falta)}</b> para el envío gratis`;
   barra.setAttribute('aria-valuenow', String(estado.progreso));
   relleno.style.setProperty('--progreso', `${estado.progreso}%`);

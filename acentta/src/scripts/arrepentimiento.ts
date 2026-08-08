@@ -34,7 +34,7 @@ if (forma) {
       /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim())
         ? null
         : 'El correo va con arroba y un punto, por ejemplo nombre@ejemplo.com',
-    'ar-nombre': (v) => (v.trim().length >= 4 ? null : 'Escribí tu nombre y apellido completos.'),
+    'ar-nombre': (v) => (v.trim().length >= 4 ? null : 'Escribe tu nombre y apellido completos.'),
   };
 
   forma.addEventListener('submit', (e) => {

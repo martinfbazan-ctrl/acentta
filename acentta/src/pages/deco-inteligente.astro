@@ -1,0 +1,132 @@
+---
+/**
+ * Vista del segundo rubro.
+ * ---------------------------------------------------------------
+ * Esta página existe por una razón que no es comercial sino
+ * estructural: demostrar que el sistema no estaba hecho para
+ * lámparas y alfombras, sino para productos.
+ *
+ * Todo lo que se ve acá —la grilla, la tarjeta, los filtros, el
+ * orden, la ficha a la que se llega, el carrito— es exactamente el
+ * mismo código que sirve al rubro de decoración. No hay una
+ * TarjetaProducto para deco y otra para electrónica. Lo único
+ * distinto son los datos.
+ *
+ * Por eso el encabezado de la página dice de dónde viene el rubro
+ * en vez de vender: quien mira este proyecto tiene que entender en
+ * cinco segundos que el segundo rubro costó agregar doce filas en
+ * un archivo de datos, y nada más.
+ */
+import Base from '@layouts/Base.astro';
+import Encabezado from '@componentes/Encabezado.astro';
+import Pie from '@componentes/Pie.astro';
+import Listado from '@componentes/Listado.astro';
+import { foto, srcset } from '@lib/imagenes';
+import { precio } from '@lib/formato';
+import { porRubro, categoriasDeDecoInteligente } from '@lib/catalogo';
+
+const productos = porRubro('deco-inteligente');
+const categorias = categoriasDeDecoInteligente();
+
+const descripcion =
+  'Electrónica pensada para el ambiente, no para el escritorio: proyectores, robots de limpieza, aromatizadores, cámaras y wi-fi que llega a toda la casa.';
+---
+
+<Base titulo="Deco inteligente · acentta" descripcion={descripcion}>
+  <Encabezado slot="encabezado" />
+
+  <!-- Las cinco categorías del rubro, antes de la grilla. Con doce
+       productos la grilla sola alcanzaría, pero entonces la página
+       no diría qué tipo de cosas hay acá: diría qué doce cosas hay. -->
+  <section class="rubro contenedor" aria-label="Categorías de Deco inteligente">
+    <ul class="rubro__categorias" role="list">
+      {categorias.map((c) => (
+        <li>
+          <a class="rubro__categoria" href={`/categoria/${c.clave}`}>
+            <span class="rubro__categoria-marco">
+              <img
+                src={foto(c.imagen.src, 400)}
+                srcset={srcset(c.imagen.src)}
+                sizes="(min-width: 900px) 180px, 40vw"
+                alt=""
+                width="400" height="500" loading="lazy" decoding="async"
+              />
+            </span>
+            <span class="rubro__categoria-nombre">{c.nombre}</span>
+            <span class="rubro__categoria-detalle">{c.descripcion}</span>
+            <span class="rubro__categoria-desde tabular">Desde {precio(c.desde)}</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+  </section>
+
+  <Listado
+    titulo="Deco inteligente"
+    descripcion={descripcion}
+    productos={productos}
+    migas={[{ nombre: 'Inicio', href: '/' }, { nombre: 'Deco inteligente' }]}
+  />
+
+  <Pie slot="pie" />
+</Base>
+
+<script>
+  import '../scripts/listado';
+</script>
+
+<style>
+  .rubro { padding-block: var(--e-8) 0; }
+
+  .rubro__categorias {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--e-3);
+  }
+  @media (min-width: 720px) {
+    /* Cinco categorías: en escritorio entran las cinco en una fila.
+       En móvil van de a dos y la quinta queda sola, que es preferible
+       a achicarlas hasta que el nombre no se lea. */
+    .rubro__categorias { grid-template-columns: repeat(5, 1fr); }
+  }
+
+  .rubro__categoria {
+    display: grid;
+    gap: var(--e-1);
+    padding: var(--e-3);
+    background: var(--papel);
+    border: 1px solid var(--gris-200);
+    border-radius: var(--r-tarjeta);
+    text-decoration: none;
+    color: var(--tinta);
+    height: 100%;
+    transition: border-color var(--v-rapido) var(--curva),
+                transform var(--v-rapido) var(--curva);
+  }
+  .rubro__categoria:hover {
+    border-color: var(--gris-500);
+    transform: translateY(-2px);
+  }
+
+  .rubro__categoria-marco {
+    display: block;
+    border-radius: 6px;
+    overflow: hidden;
+    background: var(--gris-050);
+    margin-bottom: var(--e-2);
+  }
+  .rubro__categoria-marco img {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    display: block;
+  }
+
+  .rubro__categoria-nombre { font-weight: 600; font-size: var(--t-producto); }
+  .rubro__categoria-detalle { font-size: var(--t-meta); color: var(--gris-texto); }
+  .rubro__categoria-desde { font-size: var(--t-meta); color: var(--gris-texto); margin-top: auto; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .rubro__categoria:hover { transform: none; }
+  }
+</style>

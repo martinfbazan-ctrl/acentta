@@ -101,7 +101,7 @@ export const opinionesPorProducto: Record<string, Opinion[]> = {
       puntaje: 5,
       fecha: '2026-07-25',
       texto:
-        'Pedí que me avisen si bajaba y me avisaron. Compré con 24 % de descuento y el envío salió gratis por poco. Todo claro desde el principio.',
+        'Pide que me avisen si bajaba y me avisaron. Compré con 24 % de descuento y el envío salió gratis por poco. Todo claro desde el principio.',
       compraVerificada: true,
     },
     {

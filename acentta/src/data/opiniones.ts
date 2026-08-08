@@ -42,7 +42,7 @@ export const opinionesDestacadas: OpinionDestacada[] = [
     ciudad: 'La Plata, Buenos Aires',
     puntaje: 5,
     texto:
-      'Pedí que me avisen si bajaba y me avisaron. Compré con 24 % de descuento y el envío salió gratis por poco. Todo claro desde el principio.',
+      'Pide que me avisen si bajaba y me avisaron. Compré con 24 % de descuento y el envío salió gratis por poco. Todo claro desde el principio.',
     producto: 'Alfombra Bereber Trenzada',
     productoSlug: 'alfombra-bereber-trenzada-160x230',
   },

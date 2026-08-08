@@ -122,7 +122,7 @@ export function estadoEnvioGratis(subtotal: number, umbral: number): EstadoEnvio
     falta,
     progreso,
     mensaje: logrado
-      ? 'Tenés envío gratis'
+      ? 'Tienes envío gratis'
       : `Te faltan ${precio(falta)} para el envío gratis`,
   };
 }

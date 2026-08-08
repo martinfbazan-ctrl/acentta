@@ -128,7 +128,7 @@ export interface Producto {
   /** Solo se muestra si el dato es real. Ausente = no se inventa un contador. */
   unidadesVendidas?: number;
 
-  /** IDs de productos para "completá el ambiente". */
+  /** IDs de productos para "completa el ambiente". */
   crossSell: string[];
 }
 

@@ -114,7 +114,7 @@ if (carro) {
     const barra = document.querySelector<HTMLElement>('[data-carro-barra]')!;
     caja.dataset.logrado = String(estado.logrado);
     texto.innerHTML = estado.logrado
-      ? '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" fill="currentColor"><path d="M6.2 11.4 3.3 8.5l-1.1 1.1 4 4 7.6-7.6-1.1-1.1z"/></svg> Tenés envío gratis'
+      ? '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" fill="currentColor"><path d="M6.2 11.4 3.3 8.5l-1.1 1.1 4 4 7.6-7.6-1.1-1.1z"/></svg> Tienes envío gratis'
       : `Te faltan <b>${fPrecio(estado.falta)}</b> para el envío gratis`;
     barra.setAttribute('aria-valuenow', String(estado.progreso));
     barra.querySelector<HTMLElement>('.envio-gratis__relleno')!
@@ -145,7 +145,7 @@ if (carro) {
         error.setAttribute('role', 'alert');
         campoCP.appendChild(error);
       }
-      error.textContent = 'El código postal lleva cuatro números. Probá con 1425.';
+      error.textContent = 'El código postal lleva cuatro números. Prueba con 1425.';
       entradaCP.focus();
       return;
     }

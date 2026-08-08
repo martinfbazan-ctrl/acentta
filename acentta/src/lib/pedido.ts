@@ -62,7 +62,7 @@ export const PASOS: PasoEstado[] = [
   {
     clave: 'entregado',
     nombre: 'Entregado',
-    detalle: 'Llegó. Desde hoy tenés 30 días para devolverlo sin cargo si no te convence.',
+    detalle: 'Llegó. Desde hoy tienes 30 días para devolverlo sin cargo si no te convence.',
     horas: 168,
   },
 ];

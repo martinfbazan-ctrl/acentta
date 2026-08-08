@@ -132,10 +132,47 @@ const NOMBRES_CATEGORIA: Record<string, { nombre: string; descripcion: string }>
   textil: { nombre: 'Textil', descripcion: 'Mesa, sillón y cama' },
   alfombras: { nombre: 'Alfombras', descripcion: 'Lana, kilim y yute' },
   'muebles-chicos': { nombre: 'Muebles chicos', descripcion: 'Mesitas, banquetas y puffs' },
+  proyectores: { nombre: 'Proyectores', descripcion: 'Veladores y cielos de estrellas' },
+  limpieza: { nombre: 'Limpieza', descripcion: 'Robots que trabajan solos' },
+  aromatizacion: { nombre: 'Aromatización', descripcion: 'Difusores y aromatizadores' },
+  seguridad: { nombre: 'Seguridad', descripcion: 'Cámaras y sensores' },
+  conectividad: { nombre: 'Conectividad', descripcion: 'Extensores y wi-fi en malla' },
 };
 
-export function categoriasDeDecoracion(): ResumenCategoria[] {
-  const claves: Categoria[] = ['iluminacion', 'textil', 'alfombras', 'muebles-chicos'];
+/* Las claves de cada rubro viven acá y no repartidas por las
+   páginas. Cuando entre un tercer rubro se agrega una constante y
+   una entrada en el mapa de nombres; ninguna plantilla cambia. */
+export const CATEGORIAS_DECORACION: Categoria[] = [
+  'iluminacion',
+  'textil',
+  'alfombras',
+  'muebles-chicos',
+];
+
+export const CATEGORIAS_DECO_INTELIGENTE: Categoria[] = [
+  'proyectores',
+  'limpieza',
+  'aromatizacion',
+  'seguridad',
+  'conectividad',
+];
+
+export const CATEGORIAS_TODAS: Categoria[] = [
+  ...CATEGORIAS_DECORACION,
+  ...CATEGORIAS_DECO_INTELIGENTE,
+];
+
+/** A qué rubro pertenece una categoría. Lo usan las migas de pan. */
+export function rubroDeCategoria(c: Categoria): Rubro {
+  return CATEGORIAS_DECORACION.includes(c) ? 'decoracion' : 'deco-inteligente';
+}
+
+export const NOMBRE_RUBRO: Record<Rubro, string> = {
+  decoracion: 'Decoración',
+  'deco-inteligente': 'Deco inteligente',
+};
+
+function resumir(claves: Categoria[]): ResumenCategoria[] {
   return claves.map((clave) => {
     const items = porCategoria(clave);
     const primera = items[0]!;
@@ -148,6 +185,14 @@ export function categoriasDeDecoracion(): ResumenCategoria[] {
       imagen: { src: primera.imagenes[0]!.src, alt: primera.imagenes[0]!.alt },
     };
   });
+}
+
+export function categoriasDeDecoracion(): ResumenCategoria[] {
+  return resumir(CATEGORIAS_DECORACION);
+}
+
+export function categoriasDeDecoInteligente(): ResumenCategoria[] {
+  return resumir(CATEGORIAS_DECO_INTELIGENTE);
 }
 
 export { estaAgotado, esUltimasUnidades, tieneDescuento, ahorroEnPorcentaje, stockTotal };
@@ -213,6 +258,16 @@ export const DESCRIPCION_CATEGORIA: Record<string, string> = {
     'Lana, kilim y yute. Delimitan un ambiente mejor que una pared, y se pueden mover.',
   'muebles-chicos':
     'Mesitas de living, banquetas y puffs. Piezas que entran donde no entra un mueble grande.',
+  proyectores:
+    'Veladores y proyectores de luz. Cambian un ambiente entero apagando el resto de las luces.',
+  limpieza:
+    'Robots que aspiran, pasan el trapo y limpian vidrios. Devuelven una hora por semana.',
+  aromatizacion:
+    'Difusores y aromatizadores programables. El ambiente listo antes de llegar, no media hora después.',
+  seguridad:
+    'Cámaras y sensores para adentro y para afuera. Con almacenamiento local, sin abono obligatorio.',
+  conectividad:
+    'Extensores y wi-fi en malla. Para que la señal llegue al fondo de la casa igual que al living.',
 };
 
 /**

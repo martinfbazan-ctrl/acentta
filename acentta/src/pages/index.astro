@@ -21,13 +21,21 @@ import Campo from '@componentes/Campo.astro';
 import { foto, srcset } from '@lib/imagenes';
 import { precio, decimal, numero } from '@lib/formato';
 import { UMBRAL_ENVIO_GRATIS } from '@tipos/catalogo';
-import { masVendidos, enOferta, categoriasDeDecoracion, todos, porSlug } from '@lib/catalogo';
+import {
+  masVendidos,
+  enOferta,
+  categoriasDeDecoracion,
+  categoriasDeDecoInteligente,
+  todos,
+  porSlug,
+} from '@lib/catalogo';
 import { opinionesDestacadas } from '../data/opiniones';
 
 const destacado = porSlug('lampara-de-pie-arco')!;
 const ranking = masVendidos(4);
 const ofertas = enOferta(4);
 const categorias = categoriasDeDecoracion();
+const categoriasInteligentes = categoriasDeDecoInteligente();
 
 /* Las cifras de prueba social se calculan del catálogo. Si mañana
    cambian los datos, cambian solas: no hay ningún número escrito a mano. */
@@ -81,7 +89,7 @@ const promedio =
         </svg>
         <p class="bento__envio-titulo">Envío gratis superando {precio(UMBRAL_ENVIO_GRATIS)}</p>
         <p class="bento__envio-texto">
-          A todo el país. Y si no llegás al monto, el costo exacto se calcula en la
+          A todo el país. Y si no llegas al monto, el costo exacto se calcula en la
           ficha del producto — no aparece recién en el checkout.
         </p>
         <a class="bento__envio-enlace" href="/envios">Cómo funciona el envío</a>
@@ -106,14 +114,56 @@ const promedio =
             <s>{precio(destacado.precioAnterior!)}</s>
           </p>
           <p class="bento__destacado-ahorro">
-            Ahorrás {precio(destacado.precioAnterior! - destacado.precio)}
+            Ahorras {precio(destacado.precioAnterior! - destacado.precio)}
           </p>
         </div>
       </article>
     </div>
   </section>
 
-  <!-- ============ 2 · MÁS VENDIDOS ============ -->
+  <!-- ============ 3 · EL SEGUNDO RUBRO ============
+       Va después de las categorías de decoración y antes de los más
+       vendidos, y no al final: al final se lee como un apéndice.
+       Acá se lee como lo que es, una segunda puerta de entrada.
+       Se muestra como una franja y no como cuatro tarjetas más
+       porque no compite con la decoración, la complementa. -->
+  <section class="franja-rubro" aria-labelledby="tit-rubro2">
+    <div class="contenedor franja-rubro__fila">
+      <div class="franja-rubro__texto">
+        <p class="etiqueta">Segundo rubro</p>
+        <h2 id="tit-rubro2" class="t-seccion">Deco inteligente</h2>
+        <p class="franja-rubro__bajada">
+          Lo que se enchufa y también decora: proyectores de luz, robots que limpian
+          solos, aromatizadores programables, cámaras y wi-fi que llega hasta el fondo.
+        </p>
+        <a class="franja-rubro__enlace" href="/deco-inteligente">
+          Ver los 12 productos
+        </a>
+      </div>
+
+      <ul class="franja-rubro__categorias" role="list">
+        {categoriasInteligentes.map((c) => (
+          <li>
+            <a class="franja-rubro__categoria" href={`/categoria/${c.clave}`}>
+              <span class="franja-rubro__marco">
+                <img
+                  src={foto(c.imagen.src, 300)}
+                  srcset={srcset(c.imagen.src)}
+                  sizes="140px"
+                  alt=""
+                  width="300" height="300" loading="lazy" decoding="async"
+                />
+              </span>
+              <span class="franja-rubro__nombre">{c.nombre}</span>
+              <span class="franja-rubro__desde tabular">Desde {precio(c.desde)}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </section>
+
+  <!-- ============ 4 · MÁS VENDIDOS ============ -->
   <section class="seccion contenedor" aria-labelledby="tit-vendidos">
     <header class="encabezado-seccion">
       <div>
@@ -223,7 +273,7 @@ const promedio =
         />
         <Boton tipo="submit" tamano="grande">Avisame</Boton>
         <p class="captura__legal">
-          Podés darte de baja con un clic desde cualquier correo.
+          Puedes darte de baja con un clic desde cualquier correo.
           No compartimos tu dirección con nadie.
           <a href="/privacidad">Política de privacidad</a>
         </p>
@@ -383,6 +433,85 @@ const promedio =
   /* ============================================================
      OPINIONES
      ============================================================ */
+  /* ---- Franja del segundo rubro ----
+     Fondo propio para que se lea como un territorio distinto sin
+     necesitar un título que lo aclare. Es el mismo recurso que usa
+     la zona de ofertas: cambiar el piso en vez de sumar un cartel. */
+  .franja-rubro {
+    background: var(--gris-050);
+    border-block: 1px solid var(--gris-200);
+    padding-block: var(--e-10);
+    margin-block: var(--e-12);
+  }
+
+  .franja-rubro__fila {
+    display: grid;
+    gap: var(--e-7);
+  }
+  @media (min-width: 900px) {
+    .franja-rubro__fila {
+      grid-template-columns: minmax(240px, 300px) 1fr;
+      align-items: center;
+      gap: var(--e-9);
+    }
+  }
+
+  .franja-rubro__bajada {
+    color: var(--gris-texto);
+    margin-block: var(--e-2) var(--e-4);
+    max-width: 46ch;
+  }
+
+  .franja-rubro__enlace {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    font-weight: 600;
+    color: var(--naranja-texto);
+    text-decoration: none;
+    border-bottom: 2px solid currentColor;
+  }
+  .franja-rubro__enlace:hover { color: var(--naranja-accion-hover); }
+
+  .franja-rubro__categorias {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--e-3);
+  }
+  @media (min-width: 560px) { .franja-rubro__categorias { grid-template-columns: repeat(3, 1fr); } }
+  @media (min-width: 900px) { .franja-rubro__categorias { grid-template-columns: repeat(5, 1fr); } }
+
+  .franja-rubro__categoria {
+    display: grid;
+    gap: 2px;
+    padding: var(--e-2);
+    background: var(--papel);
+    border: 1px solid var(--gris-200);
+    border-radius: var(--r-tarjeta);
+    text-decoration: none;
+    color: var(--tinta);
+    height: 100%;
+    transition: border-color var(--v-rapido) var(--curva);
+  }
+  .franja-rubro__categoria:hover { border-color: var(--gris-500); }
+
+  .franja-rubro__marco {
+    display: block;
+    border-radius: 6px;
+    overflow: hidden;
+    background: var(--gris-050);
+    margin-bottom: var(--e-2);
+  }
+  .franja-rubro__marco img {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    display: block;
+  }
+
+  .franja-rubro__nombre { font-size: var(--t-producto); font-weight: 500; }
+  .franja-rubro__desde { font-size: var(--t-meta); color: var(--gris-texto); margin-top: auto; }
+
   .seccion-opiniones {
     padding-block: var(--e-16);
     margin-top: var(--e-12);

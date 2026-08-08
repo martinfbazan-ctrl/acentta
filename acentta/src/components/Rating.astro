@@ -25,13 +25,22 @@ const Etiqueta = href ? 'a' : 'div';
 ---
 
 <Etiqueta class={clases} href={href}>
-  <span class="rating__estrellas" aria-hidden="true">
-    {[1, 2, 3, 4, 5].map((i) => (
-      <svg class={`rating__estrella ${i > llenas ? 'rating__estrella--vacia' : ''}`} viewBox="0 0 24 24">
-        <path d="M12 2.5l2.9 6.1 6.6.9-4.8 4.6 1.2 6.6-5.9-3.2-5.9 3.2 1.2-6.6L2.5 9.5l6.6-.9z" />
-      </svg>
-    ))}
-  </span>
+  {/*
+    Sin opiniones no se dibujan las estrellas.
+    Cinco estrellas vacías no comunican "todavía nadie opinó": comunican
+    "cero de cinco", que es la peor calificación posible. El producto
+    nuevo queda peor puntuado que el mediocre, y eso es una mentira que
+    cuesta ventas. Con el texto solo, la ausencia se lee como ausencia.
+  */}
+  {!sinOpiniones && (
+    <span class="rating__estrellas" aria-hidden="true">
+      {[1, 2, 3, 4, 5].map((i) => (
+        <svg class={`rating__estrella ${i > llenas ? 'rating__estrella--vacia' : ''}`} viewBox="0 0 24 24">
+          <path d="M12 2.5l2.9 6.1 6.6.9-4.8 4.6 1.2 6.6-5.9-3.2-5.9 3.2 1.2-6.6L2.5 9.5l6.6-.9z" />
+        </svg>
+      ))}
+    </span>
+  )}
   {soloEstrellas ? (
     <span class="vo">{decimal(puntaje ?? 0)} de 5</span>
   ) : sinOpiniones ? (

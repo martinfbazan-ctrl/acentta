@@ -99,7 +99,7 @@ export function calcularEnvio(entrada: string, pesoKg: number): ResultadoEnvio {
   if (cp === null) {
     return {
       ok: false,
-      error: 'El código postal lleva cuatro números. Si tenés el formato nuevo, escribilo completo (por ejemplo C1425DKE).',
+      error: 'El código postal lleva cuatro números. Si tienes el formato nuevo, escribilo completo (por ejemplo C1425DKE).',
     };
   }
 
@@ -108,7 +108,7 @@ export function calcularEnvio(entrada: string, pesoKg: number): ResultadoEnvio {
   if (!zona) {
     return {
       ok: false,
-      error: `Todavía no llegamos al código postal ${cp}. Escribinos y vemos si podemos coordinar una entrega.`,
+      error: `Todavía no llegamos al código postal ${cp}. Escríbenos y vemos si podemos coordinar una entrega.`,
     };
   }
 

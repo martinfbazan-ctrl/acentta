@@ -31,7 +31,7 @@ if (contenedor) {
       /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim())
         ? null
         : 'El correo va con arroba y un punto, por ejemplo nombre@ejemplo.com',
-    nombre: (v) => (v.trim().length >= 2 ? null : 'Escribí tu nombre para poder facturar el pedido.'),
+    nombre: (v) => (v.trim().length >= 2 ? null : 'Escribe tu nombre para poder facturar el pedido.'),
     apellido: (v) => (v.trim().length >= 2 ? null : 'Falta el apellido.'),
     dni: (v) =>
       /^\d{7,8}$/.test(v.replace(/\D/g, ''))
@@ -43,18 +43,18 @@ if (contenedor) {
         : 'Un teléfono con característica, por ejemplo 11 2345 6789.',
     'cp-checkout': (v) =>
       normalizarCP(v) === null
-        ? 'El código postal lleva cuatro números. Probá con 1425.'
+        ? 'El código postal lleva cuatro números. Prueba con 1425.'
         : calcularEnvio(v, 1).ok
           ? null
-          : 'Todavía no llegamos a ese código postal. Escribinos y lo vemos.',
+          : 'Todavía no llegamos a ese código postal. Escríbenos y lo vemos.',
     provincia: (v) => (v.trim().length >= 3 ? null : 'Falta la provincia.'),
     ciudad: (v) => (v.trim().length >= 2 ? null : 'Falta la ciudad o localidad.'),
     calle: (v) => (v.trim().length >= 3 ? null : 'Falta el nombre de la calle.'),
-    numero: (v) => (v.trim().length >= 1 ? null : 'Falta la altura. Si no tiene, escribí S/N.'),
+    numero: (v) => (v.trim().length >= 1 ? null : 'Falta la altura. Si no tiene, escribe S/N.'),
     tarjeta: (v) => {
       const n = v.replace(/\D/g, '');
       if (n.length < 13) return 'Faltan números. Una tarjeta tiene entre 13 y 19.';
-      return luhn(n) ? null : 'Ese número no es válido. Revisá si se coló un dígito de más.';
+      return luhn(n) ? null : 'Ese número no es válido. Revisa si se coló un dígito de más.';
     },
     titular: (v) => (v.trim().length >= 4 ? null : 'El nombre tal como figura impreso en la tarjeta.'),
     vencimiento: (v) => {

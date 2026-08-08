@@ -3,14 +3,22 @@ import Base from '@layouts/Base.astro';
 import Encabezado from '@componentes/Encabezado.astro';
 import Pie from '@componentes/Pie.astro';
 import Listado from '@componentes/Listado.astro';
-import { porCategoria, NOMBRE_CATEGORIA, DESCRIPCION_CATEGORIA } from '@lib/catalogo';
+import {
+  porCategoria,
+  NOMBRE_CATEGORIA,
+  DESCRIPCION_CATEGORIA,
+  CATEGORIAS_TODAS,
+  rubroDeCategoria,
+  NOMBRE_RUBRO,
+} from '@lib/catalogo';
 import type { Categoria } from '@tipos/catalogo';
 
-/* Una plantilla, todas las categorías. Cuando el catálogo pase de 14
-   a 36 productos y sumemos el segundo rubro, esta página no cambia. */
+/* Una plantilla, las nueve categorías de los dos rubros.
+   Esta página es la prueba de que el sistema escalaba: cuando entró
+   Deco inteligente con cinco categorías nuevas, acá no se tocó una
+   línea de marcado. Sólo cambió de dónde sale la lista de claves. */
 export function getStaticPaths() {
-  const claves: Categoria[] = ['iluminacion', 'textil', 'alfombras', 'muebles-chicos'];
-  return claves.map((clave) => ({ params: { clave } }));
+  return CATEGORIAS_TODAS.map((clave) => ({ params: { clave } }));
 }
 
 const { clave } = Astro.params;
@@ -18,6 +26,19 @@ const categoria = clave as Categoria;
 const productos = porCategoria(categoria);
 const nombre = NOMBRE_CATEGORIA[categoria]!;
 const descripcion = DESCRIPCION_CATEGORIA[categoria]!;
+
+/* Las migas muestran el rubro cuando la categoría pertenece al
+   segundo. Sin ese escalón, "Seguridad" cuelga de "Inicio" y no se
+   entiende de dónde salió. */
+const rubro = rubroDeCategoria(categoria);
+const migas =
+  rubro === 'deco-inteligente'
+    ? [
+        { nombre: 'Inicio', href: '/' },
+        { nombre: NOMBRE_RUBRO[rubro], href: '/deco-inteligente' },
+        { nombre },
+      ]
+    : [{ nombre: 'Inicio', href: '/' }, { nombre }];
 ---
 
 <Base titulo={`${nombre} · acentta`} descripcion={descripcion}>
@@ -26,7 +47,7 @@ const descripcion = DESCRIPCION_CATEGORIA[categoria]!;
     titulo={nombre}
     descripcion={descripcion}
     productos={productos}
-    migas={[{ nombre: 'Inicio', href: '/' }, { nombre: nombre }]}
+    migas={migas}
     sinCategoria
   />
   <Pie slot="pie" />
