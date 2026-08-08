@@ -1,0 +1,80 @@
+nombre: Juego de almohadones Lino Arena
+id: p06
+rubro: decoracion
+categoria: textil
+precio: 28400
+precioAnterior: 41900
+variantes:
+  - tipo: color
+    nombre: Arena
+    muestra: "#D9CBB8"
+    stock: 24
+    imagen: 0
+  - tipo: color
+    nombre: Piedra
+    muestra: "#A8A29A"
+    stock: 16
+    imagen: 1
+  - tipo: color
+    nombre: Terracota
+    muestra: "#B5654A"
+    stock: 11
+    imagen: 2
+  - tipo: color
+    nombre: Verde salvia
+    muestra: "#8A9A82"
+    stock: 8
+    imagen: 0
+  - tipo: color
+    nombre: Azul niebla
+    muestra: "#8FA3B0"
+    stock: 6
+    imagen: 1
+  - tipo: color
+    nombre: Carbón
+    muestra: "#3A3A3A"
+    stock: 4
+    imagen: 2
+imagenes:
+  - idRemoto: photo-1698936061086-2bf99c7b9fc5
+    alt: Sillón gris con cuatro almohadones de lino combinados
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1606885118474-c8baf907e998
+    alt: Detalle de la textura del lino de los almohadones
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1534889156217-d643df14f14a
+    alt: Los almohadones sobre un sillón verde azulado
+    ancho: 800
+    alto: 1000
+descripcion: Cuatro fundas de lino lavado de 45 × 45 cm con cierre invisible. Se lavan en lavarropas y quedan mejor arrugadas que planchadas.
+especificaciones:
+  - clave: Medida
+    valor: 45 × 45 cm cada uno
+  - clave: Unidades
+    valor: 4 fundas
+  - clave: Material
+    valor: 100 % lino lavado
+  - clave: Relleno
+    valor: No incluido
+  - clave: Lavado
+    valor: Lavarropas, agua fría
+dimensiones:
+  alto: 45
+  ancho: 45
+  profundidad: 8
+peso: 1.1
+plazoEnvio:
+  min: 4
+  max: 7
+rating: 4.6
+cantidadOpiniones: 210
+unidadesVendidas: 486
+badges:
+  - mas_vendido
+  - oferta
+crossSell:
+  - p07
+  - p09
+  - p13

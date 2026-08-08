@@ -1,0 +1,61 @@
+nombre: Aplique de pared Media Luna
+id: p15
+rubro: decoracion
+categoria: iluminacion
+precio: 41800
+variantes:
+  - tipo: color
+    nombre: Blanco yeso
+    muestra: "#F2EFE9"
+    stock: 14
+    imagen: 0
+  - tipo: color
+    nombre: Negro grafito
+    muestra: "#2B2B2B"
+    stock: 9
+    imagen: 1
+  - tipo: color
+    nombre: Latón
+    muestra: "#B08D57"
+    stock: 5
+    imagen: 2
+imagenes:
+  - idRemoto: photo-1718049720099-a035f05e539a
+    alt: Aplique de pared encendido junto a un sillón blanco
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1560448204-603b3fc33ddc
+    alt: El aplique visto en el conjunto del ambiente
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1638189311070-d4e5dcc86902
+    alt: Detalle del cuerpo metálico del aplique
+    ancho: 800
+    alto: 1000
+descripcion: Luz indirecta contra la pared, sin lámpara que ocupe la mesa de luz. Se instala con dos tarugos y se orienta a mano.
+especificaciones:
+  - clave: Ancho
+    valor: 24 cm
+  - clave: Saliente de pared
+    valor: 11 cm
+  - clave: Material
+    valor: Metal con pintura mate
+  - clave: Portalámparas
+    valor: E14, hasta 8 W LED
+  - clave: Instalación
+    valor: A caja de pared o a tomacorriente
+dimensiones:
+  alto: 14
+  ancho: 24
+  profundidad: 11
+peso: 1.1
+plazoEnvio:
+  min: 5
+  max: 9
+rating: 4.4
+cantidadOpiniones: 37
+badges: []
+crossSell:
+  - p02
+  - p05
+  - p12

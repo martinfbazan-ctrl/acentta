@@ -1,0 +1,62 @@
+nombre: Proyector de cielo estrellado Aurora
+id: p25
+rubro: deco-inteligente
+categoria: proyectores
+precio: 64900
+precioAnterior: 92000
+variantes:
+  - tipo: color
+    nombre: Blanco
+    muestra: "#F2EFE9"
+    stock: 15
+    imagen: 0
+  - tipo: color
+    nombre: Negro
+    muestra: "#2B2B2B"
+    stock: 9
+    imagen: 1
+imagenes:
+  - idRemoto: photo-1755414718613-3d45827fb9eb
+    alt: Proyector encendido dibujando luces de colores en el techo
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1757223167463-9daae3787a4d
+    alt: Detalle del cielo de puntos proyectado sobre una pared oscura
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1784126689159-72024d2c26e0
+    alt: Reflejos de luz proyectados en una habitación a oscuras
+    ancho: 800
+    alto: 1000
+descripcion: Proyecta una nebulosa y un campo de estrellas sobre el techo. Se controla desde el teléfono y se apaga solo a la hora que se le indique.
+especificaciones:
+  - clave: Cobertura
+    valor: Hasta 25 m² de techo
+  - clave: Colores
+    valor: 16 millones, regulables
+  - clave: Control
+    valor: Aplicación, control remoto y voz
+  - clave: Temporizador
+    valor: 30, 60 y 90 minutos
+  - clave: Alimentación
+    valor: USB-C, fuente incluida
+  - clave: Consumo
+    valor: 9 W
+dimensiones:
+  alto: 16
+  ancho: 12
+  profundidad: 12
+peso: 0.7
+plazoEnvio:
+  min: 7
+  max: 14
+rating: 4.6
+cantidadOpiniones: 143
+unidadesVendidas: 267
+badges:
+  - oferta
+  - mas_vendido
+crossSell:
+  - p05
+  - p26
+  - p30

@@ -1,0 +1,59 @@
+nombre: Manta de lana liviana Pampa
+id: p17
+rubro: decoracion
+categoria: textil
+precio: 46200
+variantes:
+  - tipo: color
+    nombre: Crudo
+    muestra: "#E8E0D2"
+    stock: 10
+    imagen: 0
+  - tipo: color
+    nombre: Gris piedra
+    muestra: "#9A968E"
+    stock: 7
+    imagen: 1
+  - tipo: color
+    nombre: Verde salvia
+    muestra: "#8A9A82"
+    stock: 4
+    imagen: 2
+imagenes:
+  - idRemoto: photo-1616395442106-1b927fee41cd
+    alt: Manta de lana liviana desplegada sobre una cama
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1608724553456-89e963624dbb
+    alt: Detalle del tejido de la manta
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1534889156217-d643df14f14a
+    alt: La manta doblada a los pies de la cama
+    ancho: 800
+    alto: 1000
+descripcion: Lana merino lavada, de las que abrigan sin pesar. Sirve de sobrecama en verano y de segunda capa en invierno.
+especificaciones:
+  - clave: Medida
+    valor: 180 × 220 cm
+  - clave: Composición
+    valor: 70 % lana merino, 30 % algodón
+  - clave: Gramaje
+    valor: 480 g/m²
+  - clave: Lavado
+    valor: En seco o a mano, agua fría
+dimensiones:
+  alto: 10
+  ancho: 45
+  profundidad: 32
+peso: 1.8
+plazoEnvio:
+  min: 5
+  max: 10
+rating: 4.7
+cantidadOpiniones: 88
+badges: []
+crossSell:
+  - p06
+  - p16
+  - p13

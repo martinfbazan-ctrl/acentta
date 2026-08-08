@@ -1,0 +1,62 @@
+nombre: Alfombra de pasillo Kilim 80 × 300
+id: p21
+rubro: decoracion
+categoria: alfombras
+precio: 67300
+variantes:
+  - tipo: color
+    nombre: Ocre
+    muestra: "#C08A2E"
+    stock: 6
+    imagen: 0
+  - tipo: color
+    nombre: Índigo
+    muestra: "#3B4E6B"
+    stock: 5
+    imagen: 1
+  - tipo: color
+    nombre: Terracota
+    muestra: "#B5654A"
+    stock: 2
+    imagen: 2
+imagenes:
+  - idRemoto: photo-1671576563965-23993d69eb17
+    alt: Alfombra de pasillo con motivos kilim
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1572123979839-3749e9973aba
+    alt: Detalle de los motivos geométricos del kilim
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1594040226829-7f251ab46d80
+    alt: La alfombra extendida en un ambiente
+    ancho: 800
+    alto: 1000
+descripcion: Tres metros de largo para pasillos, cocinas angostas o el pie de una cama grande. Tejido plano, así que las puertas siguen abriendo.
+especificaciones:
+  - clave: Medida
+    valor: 80 × 300 cm
+  - clave: Material
+    valor: Lana y algodón
+  - clave: Altura
+    valor: 6 mm
+  - clave: Tejido
+    valor: Plano, reversible
+  - clave: Limpieza
+    valor: Aspirado y lavado en seco
+dimensiones:
+  alto: 14
+  ancho: 50
+  profundidad: 32
+peso: 6.8
+plazoEnvio:
+  min: 6
+  max: 12
+rating: 4.5
+cantidadOpiniones: 41
+badges:
+  - nuevo
+crossSell:
+  - p10
+  - p09
+  - p12

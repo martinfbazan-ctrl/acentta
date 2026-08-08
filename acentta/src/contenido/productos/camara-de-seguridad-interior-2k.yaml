@@ -1,0 +1,61 @@
+nombre: Cámara de seguridad interior 2K
+id: p32
+rubro: deco-inteligente
+categoria: seguridad
+precio: 56300
+precioAnterior: 74000
+variantes:
+  - tipo: color
+    nombre: Blanco
+    muestra: "#F2EFE9"
+    stock: 17
+    imagen: 0
+  - tipo: color
+    nombre: Negro
+    muestra: "#2B2B2B"
+    stock: 10
+    imagen: 1
+imagenes:
+  - idRemoto: photo-1589935447067-5531094415d1
+    alt: Cámara de interior blanca apoyada sobre su base
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1585206031650-9e9a7c87dcfe
+    alt: La cámara conectada con su cable de alimentación
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1520697830682-bbb6e85e2b0b
+    alt: Detalle del lente de la cámara
+    ancho: 800
+    alto: 1000
+descripcion: Gira 360°, distingue personas de mascotas y guarda en tarjeta local, sin abono mensual obligatorio. Con obturador físico para tapar el lente cuando hay gente en casa.
+especificaciones:
+  - clave: Resolución
+    valor: 2K, 2560 × 1440
+  - clave: Giro
+    valor: 360° horizontal, 110° vertical
+  - clave: Visión nocturna
+    valor: Infrarroja, hasta 10 m
+  - clave: Almacenamiento
+    valor: MicroSD hasta 256 GB o nube
+  - clave: Privacidad
+    valor: Obturador físico del lente
+  - clave: Conexión
+    valor: Wi-Fi 2,4 y 5 GHz
+dimensiones:
+  alto: 12
+  ancho: 8
+  profundidad: 8
+peso: 0.3
+plazoEnvio:
+  min: 8
+  max: 15
+rating: 4.4
+cantidadOpiniones: 167
+unidadesVendidas: 231
+badges:
+  - oferta
+crossSell:
+  - p33
+  - p34
+  - p36

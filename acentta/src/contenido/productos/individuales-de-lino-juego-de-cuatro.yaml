@@ -1,0 +1,61 @@
+nombre: Individuales de lino, juego de cuatro
+id: p18
+rubro: decoracion
+categoria: textil
+precio: 24900
+precioAnterior: 33200
+variantes:
+  - tipo: color
+    nombre: Arena
+    muestra: "#D9CBB8"
+    stock: 22
+    imagen: 0
+  - tipo: color
+    nombre: Terracota
+    muestra: "#B5654A"
+    stock: 11
+    imagen: 1
+  - tipo: color
+    nombre: Gris piedra
+    muestra: "#9A968E"
+    stock: 15
+    imagen: 2
+imagenes:
+  - idRemoto: photo-1616046229478-9901c5536a45
+    alt: Mesa de madera puesta con individuales de lino y platos
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1606885118474-c8baf907e998
+    alt: Detalle de la trama del lino
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1608724553456-89e963624dbb
+    alt: Los individuales apilados sobre la mesa
+    ancho: 800
+    alto: 1000
+descripcion: "Lino lavado con dobladillo a mano. Se arruga, y esa es la idea: es la única tela que mejora con el uso."
+especificaciones:
+  - clave: Medida
+    valor: 33 × 48 cm cada uno
+  - clave: Cantidad
+    valor: 4 unidades
+  - clave: Composición
+    valor: 100 % lino lavado
+  - clave: Lavado
+    valor: Máquina, agua fría
+dimensiones:
+  alto: 4
+  ancho: 34
+  profundidad: 25
+peso: 0.6
+plazoEnvio:
+  min: 4
+  max: 8
+rating: 4.3
+cantidadOpiniones: 52
+badges:
+  - oferta
+crossSell:
+  - p08
+  - p12
+  - p02

@@ -1,0 +1,52 @@
+nombre: Camino de mesa Telar Natural
+id: p08
+rubro: decoracion
+categoria: textil
+precio: 15800
+precioAnterior: 22500
+variantes:
+  - tipo: medida
+    nombre: 40 × 140 cm
+    stock: 19
+    imagen: 0
+  - tipo: medida
+    nombre: 40 × 180 cm
+    stock: 12
+    imagen: 1
+imagenes:
+  - idRemoto: photo-1608724553456-89e963624dbb
+    alt: Camino de mesa tejido en telar con motivos geométricos
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1606885118474-c8baf907e998
+    alt: Detalle de la trama del camino de mesa
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1616046229478-9901c5536a45
+    alt: El camino puesto sobre una mesa de madera con sillas
+    ancho: 800
+    alto: 1000
+descripcion: Algodón crudo tejido en telar manual. Suma textura a la mesa sin taparla, que es justo lo que una mesa de madera necesita.
+especificaciones:
+  - clave: Medida
+    valor: 40 × 140 cm o 40 × 180 cm
+  - clave: Material
+    valor: 100 % algodón
+  - clave: Lavado
+    valor: Lavarropas, ciclo delicado
+dimensiones:
+  alto: 180
+  ancho: 40
+  profundidad: 1
+peso: 0.5
+plazoEnvio:
+  min: 4
+  max: 7
+rating: 4.3
+cantidadOpiniones: 37
+badges:
+  - oferta
+crossSell:
+  - p12
+  - p06
+  - p05

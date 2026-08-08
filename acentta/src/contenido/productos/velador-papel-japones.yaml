@@ -1,0 +1,52 @@
+nombre: Velador Papel Japonés
+id: p05
+rubro: decoracion
+categoria: iluminacion
+precio: 21900
+precioAnterior: 28900
+variantes:
+  - tipo: medida
+    nombre: 25 cm
+    stock: 22
+    imagen: 0
+  - tipo: medida
+    nombre: 35 cm
+    stock: 14
+    imagen: 1
+imagenes:
+  - idRemoto: photo-1714926618653-39de3cf5b691
+    alt: Velador de papel japonés apoyado sobre piso de madera
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1685302874389-ed7790984a2e
+    alt: El velador encendido sobre una mesa auxiliar
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1743578666060-49a1747d61df
+    alt: Rincón cálido con el velador prendido
+    ancho: 800
+    alto: 1000
+descripcion: Papel de arroz sobre estructura de bambú. Da una luz suave y pareja, sin sombras duras. Se pliega para guardar.
+especificaciones:
+  - clave: Altura
+    valor: 25 o 35 cm según medida
+  - clave: Material
+    valor: Papel de arroz + bambú
+  - clave: Portalámparas
+    valor: E14, hasta 7 W LED
+dimensiones:
+  alto: 35
+  ancho: 25
+  profundidad: 25
+peso: 0.7
+plazoEnvio:
+  min: 4
+  max: 8
+rating: 4.2
+cantidadOpiniones: 12
+badges:
+  - oferta
+crossSell:
+  - p02
+  - p08
+  - p11

@@ -1,0 +1,56 @@
+nombre: Aromatizador automático programable
+id: p31
+rubro: deco-inteligente
+categoria: aromatizacion
+precio: 44600
+variantes:
+  - tipo: color
+    nombre: Blanco
+    muestra: "#F2EFE9"
+    stock: 12
+    imagen: 0
+  - tipo: color
+    nombre: Negro
+    muestra: "#2B2B2B"
+    stock: 8
+    imagen: 1
+imagenes:
+  - idRemoto: photo-1732229033839-c76b4071c449
+    alt: Aromatizador cilíndrico apoyado sobre una mesa
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1630404387821-f4958041b9ac
+    alt: El aromatizador junto a un frasco de aceite esencial
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1632322831476-f8c68bef7dba
+    alt: Frascos de aroma sobre una superficie blanca
+    ancho: 800
+    alto: 1000
+descripcion: Programa hasta seis disparos por día y elige los horarios. Sirve para que el ambiente esté listo antes de llegar, no media hora después.
+especificaciones:
+  - clave: Programación
+    valor: Hasta 6 horarios por día
+  - clave: Carga
+    valor: Cartucho de 250 ml
+  - clave: Rendimiento
+    valor: Hasta 3000 disparos por carga
+  - clave: Alimentación
+    valor: 2 pilas AA, incluidas
+  - clave: Montaje
+    valor: De pared o de apoyo
+dimensiones:
+  alto: 22
+  ancho: 10
+  profundidad: 8
+peso: 0.4
+plazoEnvio:
+  min: 8
+  max: 14
+cantidadOpiniones: 0
+badges:
+  - nuevo
+crossSell:
+  - p30
+  - p25
+  - p16

@@ -1,0 +1,82 @@
+nombre: Difusor ultrasónico de aroma
+id: p30
+rubro: deco-inteligente
+categoria: aromatizacion
+precio: 29800
+precioAnterior: 39900
+variantes:
+  - tipo: color
+    nombre: Blanco
+    muestra: "#F2EFE9"
+    stock: 20
+    imagen: 0
+  - tipo: color
+    nombre: Arena
+    muestra: "#D9CBB8"
+    stock: 14
+    imagen: 1
+  - tipo: color
+    nombre: Terracota
+    muestra: "#B5654A"
+    stock: 9
+    imagen: 2
+  - tipo: color
+    nombre: Verde salvia
+    muestra: "#8A9A82"
+    stock: 6
+    imagen: 0
+  - tipo: color
+    nombre: Gris piedra
+    muestra: "#9A968E"
+    stock: 0
+    imagen: 1
+  - tipo: color
+    nombre: Negro mate
+    muestra: "#2B2B2B"
+    stock: 11
+    imagen: 2
+imagenes:
+  - idRemoto: photo-1732229035217-e7e42f61af4b
+    alt: Difusor de aroma sobre una mesada junto a una planta
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1672925216623-f32a54d732e0
+    alt: El difusor apoyado sobre una superficie clara
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1634681896994-0027a701b1d7
+    alt: Detalle del vapor saliendo del difusor
+    ancho: 800
+    alto: 1000
+descripcion: Nebuliza agua con aceite esencial sin calentarla, así que el aroma no se quema. Con luz cálida regulable, para que también sirva de velador.
+especificaciones:
+  - clave: Capacidad
+    valor: 300 ml
+  - clave: Autonomía
+    valor: Hasta 10 horas en modo intermitente
+  - clave: Apagado automático
+    valor: Al quedarse sin agua
+  - clave: Luz
+    valor: 7 colores, regulable
+  - clave: Ruido
+    valor: Menos de 30 dB
+  - clave: Cobertura
+    valor: Hasta 20 m²
+dimensiones:
+  alto: 17
+  ancho: 14
+  profundidad: 14
+peso: 0.6
+plazoEnvio:
+  min: 7
+  max: 13
+rating: 4.5
+cantidadOpiniones: 312
+unidadesVendidas: 524
+badges:
+  - oferta
+  - mas_vendido
+crossSell:
+  - p31
+  - p26
+  - p07

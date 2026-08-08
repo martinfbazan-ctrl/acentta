@@ -1,0 +1,54 @@
+nombre: Extensor de wi-fi de doble banda con puerto Ethernet y repetición automática de la red del hogar
+id: p35
+rubro: deco-inteligente
+categoria: conectividad
+precio: 33900
+precioAnterior: 45000
+variantes:
+  - tipo: color
+    nombre: Blanco
+    muestra: "#F2EFE9"
+    stock: 24
+    imagen: 0
+imagenes:
+  - idRemoto: photo-1606904825846-647eb07f5be2
+    alt: Extensor de wi-fi blanco apoyado sobre una mesa clara
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1554098415-cae1af5e4f1a
+    alt: El extensor encendido con sus luces de estado
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1745847768408-b7b83796cae6
+    alt: Detalle de las antenas y el puerto de red
+    ancho: 800
+    alto: 1000
+descripcion: "Se enchufa en el punto donde la señal empieza a caer y repite la red con el mismo nombre y la misma contraseña. Sin configuración: se aprieta un botón en el módem y otro acá."
+especificaciones:
+  - clave: Velocidad
+    valor: Hasta 1200 Mbps combinados
+  - clave: Bandas
+    valor: 2,4 y 5 GHz simultáneas
+  - clave: Puerto
+    valor: 1 Ethernet gigabit
+  - clave: Cobertura agregada
+    valor: Hasta 90 m²
+  - clave: Configuración
+    valor: Botón WPS o aplicación
+dimensiones:
+  alto: 12
+  ancho: 7
+  profundidad: 5
+peso: 0.2
+plazoEnvio:
+  min: 7
+  max: 13
+rating: 4.2
+cantidadOpiniones: 128
+unidadesVendidas: 197
+badges:
+  - oferta
+crossSell:
+  - p36
+  - p32
+  - p28

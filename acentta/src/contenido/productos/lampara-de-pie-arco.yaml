@@ -1,0 +1,65 @@
+nombre: Lámpara de pie Arco
+id: p01
+rubro: decoracion
+categoria: iluminacion
+precio: 89900
+precioAnterior: 129900
+variantes:
+  - tipo: color
+    nombre: Negro mate
+    muestra: "#1C1C1C"
+    stock: 12
+    imagen: 0
+  - tipo: color
+    nombre: Latón
+    muestra: "#B08D57"
+    stock: 7
+    imagen: 1
+  - tipo: color
+    nombre: Blanco
+    muestra: "#F2F2F0"
+    stock: 4
+    imagen: 2
+imagenes:
+  - idRemoto: photo-1673939859210-23d8444237ff
+    alt: Lámpara de pie de arco junto a un sillón en un living luminoso
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1675767528117-963ce219b52a
+    alt: La misma lámpara vista desde el otro extremo del living
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1688918511009-0b3992e6b020
+    alt: Detalle de la pantalla de la lámpara encendida al atardecer
+    ancho: 800
+    alto: 1000
+descripcion: Un arco de 2,10 m que lleva la luz al centro del ambiente sin ocupar el centro del ambiente. Base de mármol para que no se mueva y pantalla orientable.
+especificaciones:
+  - clave: Altura
+    valor: 210 cm
+  - clave: Alcance del arco
+    valor: 160 cm
+  - clave: Base
+    valor: Mármol Carrara
+  - clave: Portalámparas
+    valor: E27, hasta 15 W LED
+  - clave: Cable
+    valor: 2,5 m con interruptor de pie
+dimensiones:
+  alto: 210
+  ancho: 160
+  profundidad: 35
+peso: 14.2
+plazoEnvio:
+  min: 5
+  max: 9
+rating: 4.7
+cantidadOpiniones: 128
+unidadesVendidas: 312
+badges:
+  - mas_vendido
+  - oferta
+crossSell:
+  - p13
+  - p09
+  - p06

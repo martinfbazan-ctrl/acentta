@@ -1,0 +1,54 @@
+nombre: Manta tejida Sierra
+id: p07
+rubro: decoracion
+categoria: textil
+precio: 32900
+variantes:
+  - tipo: color
+    nombre: Crudo
+    muestra: "#E8E2D8"
+    stock: 15
+    imagen: 0
+  - tipo: color
+    nombre: Gris piedra
+    muestra: "#9A9A96"
+    stock: 10
+    imagen: 1
+imagenes:
+  - idRemoto: photo-1616395442106-1b927fee41cd
+    alt: Manta tejida con patrón geométrico en tonos tierra
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1608724553456-89e963624dbb
+    alt: Detalle del tejido de la manta
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1698936061086-2bf99c7b9fc5
+    alt: La manta doblada sobre el respaldo de un sillón
+    ancho: 800
+    alto: 1000
+descripcion: "Tejida en telar con lana y algodón. Mide 130 × 170 cm: alcanza para taparse en el sillón sin que sobre por los costados."
+especificaciones:
+  - clave: Medida
+    valor: 130 × 170 cm
+  - clave: Material
+    valor: 60 % lana, 40 % algodón
+  - clave: Terminación
+    valor: Flecos tejidos a mano
+  - clave: Lavado
+    valor: Lavado en seco
+dimensiones:
+  alto: 170
+  ancho: 130
+  profundidad: 4
+peso: 1.8
+plazoEnvio:
+  min: 5
+  max: 9
+cantidadOpiniones: 0
+badges:
+  - nuevo
+crossSell:
+  - p06
+  - p13
+  - p02

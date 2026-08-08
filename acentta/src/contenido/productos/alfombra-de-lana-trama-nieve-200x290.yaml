@@ -1,0 +1,58 @@
+nombre: Alfombra de lana Trama Nieve 200 × 290
+id: p19
+rubro: decoracion
+categoria: alfombras
+precio: 214900
+precioAnterior: 268000
+variantes:
+  - tipo: color
+    nombre: Nieve
+    muestra: "#EFEAE1"
+    stock: 4
+    imagen: 0
+  - tipo: color
+    nombre: Avena
+    muestra: "#D6C7AE"
+    stock: 3
+    imagen: 1
+imagenes:
+  - idRemoto: photo-1594040226829-7f251ab46d80
+    alt: Alfombra de lana clara vista desde arriba en un living
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1621700052663-f1170e9b26ec
+    alt: La alfombra completa sobre piso claro
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1695632953654-78815eee7296
+    alt: Detalle del pelo de lana de la alfombra
+    ancho: 800
+    alto: 1000
+descripcion: "Lana virgen anudada a mano, 2 cm de pelo. Es la pieza que define un living entero: conviene medir el ambiente antes, no después."
+especificaciones:
+  - clave: Medida
+    valor: 200 × 290 cm
+  - clave: Material
+    valor: 100 % lana virgen
+  - clave: Altura de pelo
+    valor: 20 mm
+  - clave: Base
+    valor: Algodón tejido
+  - clave: Limpieza
+    valor: Aspirado semanal, lavado profesional
+dimensiones:
+  alto: 22
+  ancho: 60
+  profundidad: 60
+peso: 21.4
+plazoEnvio:
+  min: 8
+  max: 15
+rating: 4.9
+cantidadOpiniones: 31
+badges:
+  - oferta
+crossSell:
+  - p01
+  - p13
+  - p12

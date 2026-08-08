@@ -1,12 +1,27 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 
-// https://astro.build/config
+/**
+ * Configuración del SITIO. El panel de administración no está acá.
+ * ---------------------------------------------------------------
+ * Salida 100 % estática: el build produce archivos .html y nada más.
+ * Mismo techo de velocidad que escribirlos a mano, sin mantenerlos a
+ * mano, y sin un proceso de servidor que pueda caerse.
+ *
+ * El panel de carga de productos vive en `astro.admin.config.mjs` y se
+ * levanta aparte con `npm run admin`. La separación no es un detalle
+ * de organización, es una decisión con tres consecuencias:
+ *
+ *   · El sitio publicado no lleva React ni el código del panel. Quien
+ *     entra a comprar descarga exactamente lo mismo que antes.
+ *   · El build sigue siendo un directorio de HTML plano, así que el
+ *     generador de vista previa y las cuatro auditorías funcionan sin
+ *     cambios.
+ *   · El panel no queda expuesto en internet. Se usa en la máquina de
+ *     quien carga los productos, y lo que publica son archivos.
+ */
 export default defineConfig({
   site: 'https://acentta.vercel.app',
-
-  // Salida 100% estática: el build produce archivos .html.
-  // Mismo techo de velocidad que escribirlos a mano, sin mantenerlos a mano.
   output: 'static',
 
   /* Astro comprime el HTML por defecto y, al hacerlo, elimina el
@@ -26,7 +41,7 @@ export default defineConfig({
   },
 
   // Imágenes remotas permitidas mientras el catálogo usa fotos provisorias.
-  // Cuando lleguen las fotos propias, se borran estos dominios.
+  // Cuando todas las fotos sean propias, se borran estos dominios.
   image: {
     domains: ['images.unsplash.com', 'images.pexels.com'],
     remotePatterns: [{ protocol: 'https' }],

@@ -1,0 +1,58 @@
+nombre: Cámara exterior con panel solar
+id: p33
+rubro: deco-inteligente
+categoria: seguridad
+precio: 97800
+variantes:
+  - tipo: color
+    nombre: Blanco
+    muestra: "#F2EFE9"
+    stock: 9
+    imagen: 0
+  - tipo: color
+    nombre: Gris grafito
+    muestra: "#57534E"
+    stock: 4
+    imagen: 1
+imagenes:
+  - idRemoto: photo-1549109926-58f039549485
+    alt: Cámara de exterior montada en una pared
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1528312635006-8ea0bc49ec63
+    alt: La cámara instalada sobre un poste
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1510849911856-cdc9335e5597
+    alt: La cámara vista de día contra el cielo
+    ancho: 800
+    alto: 1000
+descripcion: "Sin cables: el panel solar la mantiene cargada todo el año. Resiste lluvia y sol directo, y avisa al teléfono solo cuando detecta una persona, no cuando pasa un auto."
+especificaciones:
+  - clave: Resolución
+    valor: 2K, 2560 × 1440
+  - clave: Alimentación
+    valor: Panel solar + batería de 9600 mAh
+  - clave: Resistencia
+    valor: IP66, lluvia y polvo
+  - clave: Detección
+    valor: Personas y vehículos, por inteligencia local
+  - clave: Visión nocturna
+    valor: A color, con foco LED
+  - clave: Temperatura de trabajo
+    valor: De −20 °C a 50 °C
+dimensiones:
+  alto: 14
+  ancho: 21
+  profundidad: 12
+peso: 1.2
+plazoEnvio:
+  min: 9
+  max: 16
+rating: 4.6
+cantidadOpiniones: 89
+badges: []
+crossSell:
+  - p32
+  - p34
+  - p35

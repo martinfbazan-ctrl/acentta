@@ -1,0 +1,54 @@
+nombre: Lámpara de pie Trípode Roble
+id: p04
+rubro: decoracion
+categoria: iluminacion
+precio: 78900
+variantes:
+  - tipo: color
+    nombre: Roble natural
+    muestra: "#C4A484"
+    stock: 9
+    imagen: 0
+  - tipo: color
+    nombre: Nogal
+    muestra: "#6B4A2F"
+    stock: 5
+    imagen: 1
+imagenes:
+  - idRemoto: photo-1675767528183-628d7e46ae59
+    alt: Lámpara de pie con trípode de madera junto a un sillón
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1646107543597-e95b90ba4081
+    alt: La lámpara en un living con sillón y butaca
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1693578616322-c8abe6c7393d
+    alt: Vista lateral del trípode de madera maciza
+    ancho: 800
+    alto: 1000
+descripcion: "Trípode de roble macizo con pantalla de lino crudo. Sube 155 cm y ocupa poco piso: entra en el hueco entre el sillón y la pared."
+especificaciones:
+  - clave: Altura
+    valor: 155 cm
+  - clave: Diámetro de pantalla
+    valor: 45 cm
+  - clave: Material
+    valor: Roble macizo + lino
+  - clave: Portalámparas
+    valor: E27, hasta 15 W LED
+dimensiones:
+  alto: 155
+  ancho: 45
+  profundidad: 45
+peso: 6.4
+plazoEnvio:
+  min: 5
+  max: 10
+rating: 4.4
+cantidadOpiniones: 89
+badges: []
+crossSell:
+  - p09
+  - p13
+  - p02

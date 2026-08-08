@@ -1,0 +1,57 @@
+nombre: Alfombra Bereber Trenzada 160 × 230
+id: p09
+rubro: decoracion
+categoria: alfombras
+precio: 74500
+precioAnterior: 98000
+variantes:
+  - tipo: medida
+    nombre: 160 × 230 cm
+    stock: 8
+    imagen: 0
+  - tipo: medida
+    nombre: 200 × 290 cm
+    stock: 4
+    imagen: 1
+imagenes:
+  - idRemoto: photo-1600166898405-da9535204843
+    alt: Alfombra bereber de lana cruda con flecos
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1594040226829-7f251ab46d80
+    alt: La alfombra en un ambiente, vista desde arriba
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1695632953654-78815eee7296
+    alt: Detalle del trenzado y los flecos de la alfombra
+    ancho: 800
+    alto: 1000
+descripcion: "Lana cruda trenzada a mano con flecos en los dos extremos. Pelo alto de 2 cm: abriga el piso de verdad, no sólo a la vista."
+especificaciones:
+  - clave: Medida
+    valor: 160 × 230 cm o 200 × 290 cm
+  - clave: Material
+    valor: 100 % lana
+  - clave: Altura de pelo
+    valor: 20 mm
+  - clave: Base
+    valor: Algodón antideslizante
+  - clave: Limpieza
+    valor: Aspirado suave, limpieza en seco
+dimensiones:
+  alto: 230
+  ancho: 160
+  profundidad: 2
+peso: 9.8
+plazoEnvio:
+  min: 7
+  max: 13
+rating: 4.7
+cantidadOpiniones: 96
+unidadesVendidas: 154
+badges:
+  - oferta
+crossSell:
+  - p01
+  - p13
+  - p06

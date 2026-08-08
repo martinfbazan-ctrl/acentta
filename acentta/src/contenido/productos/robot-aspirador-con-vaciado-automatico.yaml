@@ -1,0 +1,62 @@
+nombre: Robot aspirador con vaciado automático
+id: p28
+rubro: deco-inteligente
+categoria: limpieza
+precio: 249900
+precioAnterior: 329000
+variantes:
+  - tipo: color
+    nombre: Negro
+    muestra: "#2B2B2B"
+    stock: 6
+    imagen: 0
+  - tipo: color
+    nombre: Blanco
+    muestra: "#F2EFE9"
+    stock: 4
+    imagen: 1
+imagenes:
+  - idRemoto: photo-1653990480360-31a12ce9723e
+    alt: Robot aspirador negro sobre piso de madera
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1762500824321-de3c2f316156
+    alt: Robot aspirador blanco sobre una superficie metálica
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1647940990395-967898eb0d65
+    alt: El robot trabajando junto a un sillón
+    ancho: 800
+    alto: 1000
+descripcion: Aspira, pasa el trapo y vuelve solo a la base, que le vacía el depósito. Con eso se pasa de vaciarlo todos los días a hacerlo una vez cada dos meses.
+especificaciones:
+  - clave: Succión
+    valor: 6000 Pa
+  - clave: Base
+    valor: Vaciado automático, bolsa de 2,5 L
+  - clave: Autonomía
+    valor: Hasta 180 minutos
+  - clave: Navegación
+    valor: Láser, con mapa de la casa
+  - clave: Altura
+    valor: 9,8 cm, pasa bajo la mayoría de los muebles
+  - clave: Control
+    valor: Aplicación, voz y botón
+dimensiones:
+  alto: 10
+  ancho: 35
+  profundidad: 35
+peso: 8.4
+plazoEnvio:
+  min: 9
+  max: 16
+rating: 4.7
+cantidadOpiniones: 208
+unidadesVendidas: 189
+badges:
+  - oferta
+  - mas_vendido
+crossSell:
+  - p29
+  - p20
+  - p36

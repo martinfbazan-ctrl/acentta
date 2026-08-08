@@ -1,0 +1,42 @@
+nombre: Robot limpiavidrios magnético
+id: p29
+rubro: deco-inteligente
+categoria: limpieza
+precio: 118400
+variantes:
+  - tipo: color
+    nombre: Gris grafito
+    muestra: "#57534E"
+    stock: 8
+imagenes:
+  - idRemoto: photo-1603618090561-412154b4bd1b
+    alt: Robot limpiavidrios circular adherido a un vidrio
+    ancho: 800
+    alto: 1000
+descripcion: Se pega al vidrio por succión y recorre la ventana solo. Trae cable de seguridad para los pisos altos, que es lo primero que hay que atar.
+especificaciones:
+  - clave: Succión
+    valor: 2800 Pa, con respaldo de batería
+  - clave: Vidrios
+    valor: De 3 a 27 mm de espesor
+  - clave: Seguridad
+    valor: Cable de acero de 4,5 m
+  - clave: Autonomía de emergencia
+    valor: 25 minutos sin corriente
+  - clave: Paños
+    valor: 4 de microfibra incluidos
+dimensiones:
+  alto: 9
+  ancho: 24
+  profundidad: 24
+peso: 1.4
+plazoEnvio:
+  min: 9
+  max: 16
+rating: 4.1
+cantidadOpiniones: 34
+badges: []
+crossSell:
+  - p28
+  - p32
+  - p36

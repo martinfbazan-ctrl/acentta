@@ -1,0 +1,52 @@
+nombre: Banqueta Nórdica Fresno
+id: p14
+rubro: decoracion
+categoria: muebles-chicos
+precio: 29700
+variantes:
+  - tipo: material
+    nombre: Fresno natural
+    stock: 0
+    imagen: 0
+  - tipo: material
+    nombre: Fresno negro
+    stock: 0
+    imagen: 1
+imagenes:
+  - idRemoto: photo-1586023492125-27b2c045efd7
+    alt: Banqueta de madera de fresno con asiento tapizado
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1566386429501-fe1523f35f40
+    alt: La banqueta junto a una butaca
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1607809714110-e34f71c7b2ed
+    alt: La banqueta usada como asiento en una mesa
+    ancho: 800
+    alto: 1000
+descripcion: Patas de fresno macizo y asiento tapizado en tela texturada. Apilable de a tres, para cuando llega gente de más.
+especificaciones:
+  - clave: Altura de asiento
+    valor: 45 cm
+  - clave: Material
+    valor: Fresno macizo + tela
+  - clave: Apilable
+    valor: Hasta 3 unidades
+  - clave: Soporta
+    valor: Hasta 120 kg
+dimensiones:
+  alto: 45
+  ancho: 38
+  profundidad: 38
+peso: 4.6
+plazoEnvio:
+  min: 6
+  max: 11
+rating: 4.1
+cantidadOpiniones: 45
+badges: []
+crossSell:
+  - p12
+  - p13
+  - p11

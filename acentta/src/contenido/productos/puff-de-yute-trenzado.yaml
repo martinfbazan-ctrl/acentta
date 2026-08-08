@@ -1,0 +1,54 @@
+nombre: Puff de yute trenzado
+id: p23
+rubro: decoracion
+categoria: muebles-chicos
+precio: 38900
+variantes:
+  - tipo: color
+    nombre: Yute natural
+    muestra: "#C9A87C"
+    stock: 13
+    imagen: 0
+  - tipo: color
+    nombre: Yute teñido negro
+    muestra: "#3A3A3A"
+    stock: 6
+    imagen: 1
+imagenes:
+  - idRemoto: photo-1606425288528-4cebbfc69de7
+    alt: Puff de fibra trenzada junto a una butaca blanca
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1603913996638-c01100417b4a
+    alt: El puff con una planta al lado
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1566386429501-fe1523f35f40
+    alt: El puff usado como apoyapiés
+    ancho: 800
+    alto: 1000
+descripcion: "Sirve de asiento extra, de apoyapiés o de mesita si le apoyas una bandeja encima. Pesa poco: se mueve con una mano."
+especificaciones:
+  - clave: Diámetro
+    valor: 45 cm
+  - clave: Altura
+    valor: 38 cm
+  - clave: Material
+    valor: Yute trenzado sobre estructura de MDF
+  - clave: Soporta
+    valor: Hasta 100 kg
+dimensiones:
+  alto: 38
+  ancho: 45
+  profundidad: 45
+peso: 3.9
+plazoEnvio:
+  min: 6
+  max: 11
+rating: 4.4
+cantidadOpiniones: 97
+badges: []
+crossSell:
+  - p13
+  - p11
+  - p22

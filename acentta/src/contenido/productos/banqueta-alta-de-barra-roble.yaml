@@ -1,0 +1,58 @@
+nombre: Banqueta alta de barra Roble
+id: p24
+rubro: decoracion
+categoria: muebles-chicos
+precio: 52700
+variantes:
+  - tipo: material
+    nombre: Roble natural
+    stock: 9
+    imagen: 0
+  - tipo: material
+    nombre: Roble ahumado
+    stock: 5
+    imagen: 1
+  - tipo: material
+    nombre: Roble laqueado blanco
+    stock: 3
+    imagen: 2
+imagenes:
+  - idRemoto: photo-1586023492125-27b2c045efd7
+    alt: Banqueta alta de madera con respaldo bajo
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1607809714110-e34f71c7b2ed
+    alt: La banqueta junto a una mesa alta
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1646107543597-e95b90ba4081
+    alt: Detalle del asiento y el apoyapiés
+    ancho: 800
+    alto: 1000
+descripcion: Asiento a 65 cm, la altura de barra estándar de una isla de cocina. Con apoyapiés de metal, que es lo que decide si se puede estar sentado media hora.
+especificaciones:
+  - clave: Altura de asiento
+    valor: 65 cm
+  - clave: Altura total
+    valor: 92 cm
+  - clave: Material
+    valor: Roble macizo y acero
+  - clave: Soporta
+    valor: Hasta 130 kg
+  - clave: Armado
+    valor: Sin herramientas
+dimensiones:
+  alto: 92
+  ancho: 42
+  profundidad: 45
+peso: 6.1
+plazoEnvio:
+  min: 7
+  max: 13
+rating: 4.5
+cantidadOpiniones: 74
+badges: []
+crossSell:
+  - p14
+  - p22
+  - p18

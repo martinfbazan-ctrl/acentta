@@ -1,0 +1,55 @@
+nombre: Lámpara colgante Domo de latón cepillado con cable textil regulable de hasta 180 cm
+id: p03
+rubro: decoracion
+categoria: iluminacion
+precio: 62400
+variantes:
+  - tipo: color
+    nombre: Latón cepillado
+    muestra: "#B08D57"
+    stock: 11
+    imagen: 0
+  - tipo: color
+    nombre: Negro grafito
+    muestra: "#2B2B2B"
+    stock: 8
+    imagen: 1
+imagenes:
+  - idRemoto: photo-1638189311070-d4e5dcc86902
+    alt: Lámpara colgante de latón sobre una mesa auxiliar
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1718049720099-a035f05e539a
+    alt: El colgante iluminando un living con sillón blanco
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1560448204-603b3fc33ddc
+    alt: Vista general del ambiente con el colgante encendido
+    ancho: 800
+    alto: 1000
+descripcion: Domo de latón cepillado de 30 cm con cable textil regulable. Va bien solo sobre una mesa o en fila de tres sobre una isla.
+especificaciones:
+  - clave: Diámetro
+    valor: 30 cm
+  - clave: Largo de cable
+    valor: Regulable hasta 180 cm
+  - clave: Material
+    valor: Latón cepillado
+  - clave: Portalámparas
+    valor: E27, hasta 15 W LED
+dimensiones:
+  alto: 22
+  ancho: 30
+  profundidad: 30
+peso: 1.9
+plazoEnvio:
+  min: 6
+  max: 11
+rating: 4.8
+cantidadOpiniones: 23
+badges:
+  - nuevo
+crossSell:
+  - p12
+  - p01
+  - p10

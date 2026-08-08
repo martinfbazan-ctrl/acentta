@@ -1,0 +1,57 @@
+nombre: Proyector de galaxia con bocina
+id: p27
+rubro: deco-inteligente
+categoria: proyectores
+precio: 81200
+variantes:
+  - tipo: color
+    nombre: Negro
+    muestra: "#2B2B2B"
+    stock: 11
+    imagen: 0
+  - tipo: color
+    nombre: Blanco
+    muestra: "#F2EFE9"
+    stock: 7
+    imagen: 1
+imagenes:
+  - idRemoto: photo-1602554771321-8ec4ea08f4c5
+    alt: Proyector con dibujo de estrellas apoyado sobre una superficie clara
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1615743893538-c502749d04a0
+    alt: Luces de colores reflejadas sobre una pared
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1757223167463-9daae3787a4d
+    alt: Puntos de luz proyectados sobre fondo oscuro
+    ancho: 800
+    alto: 1000
+descripcion: Suma bocina Bluetooth al proyector, y las luces siguen el ritmo de lo que se esté escuchando. Pensado para el cuarto de un adolescente más que para el living.
+especificaciones:
+  - clave: Bocina
+    valor: Bluetooth 5.3, 5 W
+  - clave: Modos de luz
+    valor: 12, con sincronía de audio
+  - clave: Cobertura
+    valor: Hasta 30 m² de techo
+  - clave: Control
+    valor: Aplicación y control remoto
+  - clave: Alimentación
+    valor: USB-C, fuente incluida
+dimensiones:
+  alto: 19
+  ancho: 14
+  profundidad: 14
+peso: 0.9
+plazoEnvio:
+  min: 8
+  max: 15
+rating: 4.3
+cantidadOpiniones: 58
+badges:
+  - nuevo
+crossSell:
+  - p25
+  - p26
+  - p30

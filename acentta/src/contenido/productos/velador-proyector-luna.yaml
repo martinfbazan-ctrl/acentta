@@ -1,0 +1,56 @@
+nombre: Velador proyector Luna
+id: p26
+rubro: deco-inteligente
+categoria: proyectores
+precio: 37500
+variantes:
+  - tipo: color
+    nombre: Blanco luna
+    muestra: "#F2EFE9"
+    stock: 1
+    imagen: 0
+  - tipo: color
+    nombre: Gris cráter
+    muestra: "#9A968E"
+    stock: 0
+    imagen: 1
+imagenes:
+  - idRemoto: photo-1481728236344-b5c828da9edf
+    alt: Velador encendido en un cuarto a media luz
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1541545705343-80ecdec063ff
+    alt: El cuarto iluminado apenas por el velador
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1538587049046-4af04d161055
+    alt: Detalle de la esfera de luz encendida
+    ancho: 800
+    alto: 1000
+descripcion: Una esfera de luz cálida con relieve de cráteres, que además proyecta un halo suave en la pared. Regulable en tres intensidades por toque.
+especificaciones:
+  - clave: Diámetro
+    valor: 15 cm
+  - clave: Intensidades
+    valor: 3, por toque
+  - clave: Batería
+    valor: 1800 mAh, hasta 8 horas
+  - clave: Carga
+    valor: USB-C, 2 horas
+  - clave: Temperatura de luz
+    valor: 2700 K, cálida
+dimensiones:
+  alto: 18
+  ancho: 15
+  profundidad: 15
+peso: 0.5
+plazoEnvio:
+  min: 6
+  max: 12
+rating: 4.8
+cantidadOpiniones: 96
+badges: []
+crossSell:
+  - p25
+  - p05
+  - p02

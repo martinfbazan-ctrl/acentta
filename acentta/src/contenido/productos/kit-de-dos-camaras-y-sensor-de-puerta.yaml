@@ -1,0 +1,56 @@
+nombre: Kit de dos cámaras y sensor de puerta
+id: p34
+rubro: deco-inteligente
+categoria: seguridad
+precio: 142500
+precioAnterior: 189000
+variantes:
+  - tipo: material
+    nombre: Kit de interior
+    stock: 5
+    imagen: 0
+  - tipo: material
+    nombre: Kit mixto, interior y exterior
+    stock: 3
+    imagen: 1
+imagenes:
+  - idRemoto: photo-1563920443079-783e5c786b83
+    alt: Dos cámaras de seguridad montadas juntas
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1496368077930-c1e31b4e5b44
+    alt: Par de cámaras instaladas en una pared exterior
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1557597774-9d273605dfa9
+    alt: Varias cámaras de seguridad de distintos modelos
+    ancho: 800
+    alto: 1000
+descripcion: Dos cámaras y un sensor magnético de apertura, todo en la misma aplicación. Es el punto donde deja de ser un aparato suelto y pasa a ser un sistema.
+especificaciones:
+  - clave: Incluye
+    valor: 2 cámaras 2K + 1 sensor de puerta
+  - clave: Almacenamiento
+    valor: Base con 32 GB, ampliable
+  - clave: Alcance del sensor
+    valor: Hasta 30 m de la base
+  - clave: Batería del sensor
+    valor: Hasta 2 años
+  - clave: Aplicación
+    valor: Única, para todos los dispositivos
+dimensiones:
+  alto: 18
+  ancho: 32
+  profundidad: 22
+peso: 2.3
+plazoEnvio:
+  min: 9
+  max: 17
+rating: 4.5
+cantidadOpiniones: 62
+badges:
+  - oferta
+crossSell:
+  - p32
+  - p33
+  - p36

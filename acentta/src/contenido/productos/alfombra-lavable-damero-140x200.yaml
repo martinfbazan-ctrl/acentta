@@ -1,0 +1,59 @@
+nombre: Alfombra lavable Damero 140 × 200
+id: p20
+rubro: decoracion
+categoria: alfombras
+precio: 35600
+precioAnterior: 89000
+variantes:
+  - tipo: color
+    nombre: Blanco y negro
+    muestra: "#3A3A3A"
+    stock: 18
+    imagen: 0
+  - tipo: color
+    nombre: Arena y crudo
+    muestra: "#D9CBB8"
+    stock: 12
+    imagen: 1
+imagenes:
+  - idRemoto: photo-1621700052663-f1170e9b26ec
+    alt: Alfombra con dibujo geométrico sobre piso claro
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1603913996638-c01100417b4a
+    alt: La alfombra con una planta apoyada encima
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1671576563965-23993d69eb17
+    alt: Detalle del dibujo a damero
+    ancho: 800
+    alto: 1000
+descripcion: Entra en el lavarropas y sale seca en pocas horas. Pensada para cocina, entrada o cuarto de chicos, donde una alfombra de lana dura un mes.
+especificaciones:
+  - clave: Medida
+    valor: 140 × 200 cm
+  - clave: Material
+    valor: Poliéster reciclado
+  - clave: Altura
+    valor: 5 mm
+  - clave: Base
+    valor: Antideslizante
+  - clave: Lavado
+    valor: Lavarropas, ciclo delicado 30 °C
+dimensiones:
+  alto: 12
+  ancho: 45
+  profundidad: 45
+peso: 4.2
+plazoEnvio:
+  min: 5
+  max: 9
+rating: 4.2
+cantidadOpiniones: 176
+unidadesVendidas: 341
+badges:
+  - oferta
+crossSell:
+  - p11
+  - p18
+  - p14

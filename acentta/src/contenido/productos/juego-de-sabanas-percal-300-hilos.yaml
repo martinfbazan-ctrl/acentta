@@ -1,0 +1,66 @@
+nombre: Juego de sábanas Percal 300 hilos
+id: p16
+rubro: decoracion
+categoria: textil
+precio: 58400
+precioAnterior: 79900
+variantes:
+  - tipo: medida
+    nombre: Una plaza y media
+    stock: 12
+    imagen: 0
+  - tipo: medida
+    nombre: Dos plazas
+    stock: 16
+    imagen: 0
+  - tipo: medida
+    nombre: Queen
+    stock: 8
+    imagen: 1
+  - tipo: medida
+    nombre: King
+    stock: 3
+    imagen: 2
+imagenes:
+  - idRemoto: photo-1534889156217-d643df14f14a
+    alt: Cama tendida con juego de sábanas de algodón en tono neutro
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1606885118474-c8baf907e998
+    alt: Detalle de la textura del percal
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1616395442106-1b927fee41cd
+    alt: La cama tendida vista desde los pies
+    ancho: 800
+    alto: 1000
+descripcion: "Percal de 300 hilos: fresco en verano y sin ese brillo plástico del satén barato. Incluye sábana ajustable, encimera y dos fundas."
+especificaciones:
+  - clave: Composición
+    valor: 100 % algodón peinado
+  - clave: Densidad
+    valor: 300 hilos
+  - clave: Incluye
+    valor: Ajustable, encimera y 2 fundas
+  - clave: Alto de colchón
+    valor: Hasta 35 cm
+  - clave: Lavado
+    valor: Máquina, agua fría
+dimensiones:
+  alto: 8
+  ancho: 40
+  profundidad: 30
+peso: 2.1
+plazoEnvio:
+  min: 4
+  max: 8
+rating: 4.6
+cantidadOpiniones: 214
+unidadesVendidas: 486
+badges:
+  - mas_vendido
+  - oferta
+crossSell:
+  - p07
+  - p06
+  - p17

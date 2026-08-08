@@ -1,0 +1,54 @@
+nombre: Mesa auxiliar Roble Macizo
+id: p12
+rubro: decoracion
+categoria: muebles-chicos
+precio: 62400
+variantes:
+  - tipo: material
+    nombre: Roble natural
+    stock: 14
+    imagen: 0
+  - tipo: material
+    nombre: Roble ahumado
+    stock: 7
+    imagen: 1
+imagenes:
+  - idRemoto: photo-1607809714110-e34f71c7b2ed
+    alt: Mesa auxiliar redonda de roble con dos sillas
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1616046229478-9901c5536a45
+    alt: La mesa de roble vista en un comedor
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1693578616322-c8abe6c7393d
+    alt: La mesa auxiliar junto a un sillón
+    ancho: 800
+    alto: 1000
+descripcion: "Roble macizo con aceite natural, sin barniz plástico. Tapa de 50 cm: entra al lado del sillón y sostiene una taza, un libro y una lámpara."
+especificaciones:
+  - clave: Diámetro de tapa
+    valor: 50 cm
+  - clave: Altura
+    valor: 52 cm
+  - clave: Material
+    valor: Roble macizo aceitado
+  - clave: Armado
+    valor: Tres tornillos, sin herramientas especiales
+dimensiones:
+  alto: 52
+  ancho: 50
+  profundidad: 50
+peso: 8.3
+plazoEnvio:
+  min: 7
+  max: 12
+rating: 4.8
+cantidadOpiniones: 143
+unidadesVendidas: 267
+badges:
+  - mas_vendido
+crossSell:
+  - p02
+  - p03
+  - p10

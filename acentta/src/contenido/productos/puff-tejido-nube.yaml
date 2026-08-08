@@ -1,0 +1,63 @@
+nombre: Puff tejido Nube
+id: p13
+rubro: decoracion
+categoria: muebles-chicos
+precio: 38900
+precioAnterior: 51900
+variantes:
+  - tipo: color
+    nombre: Crudo
+    muestra: "#E8E2D8"
+    stock: 16
+    imagen: 0
+  - tipo: color
+    nombre: Gris piedra
+    muestra: "#9A9A96"
+    stock: 9
+    imagen: 1
+  - tipo: color
+    nombre: Mostaza
+    muestra: "#D0A03C"
+    stock: 5
+    imagen: 2
+imagenes:
+  - idRemoto: photo-1606425288528-4cebbfc69de7
+    alt: Puff tejido junto a una butaca blanca
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1566386429501-fe1523f35f40
+    alt: El puff usado como apoyapiés frente a un sillón
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1646107543597-e95b90ba4081
+    alt: El puff en el living, visto de lejos
+    ancho: 800
+    alto: 1000
+descripcion: Trenzado grueso de algodón sobre relleno firme. Sirve de apoyapiés, de asiento extra y de mesita si le apoyas una bandeja arriba.
+especificaciones:
+  - clave: Diámetro
+    valor: 45 cm
+  - clave: Altura
+    valor: 38 cm
+  - clave: Material
+    valor: Algodón trenzado
+  - clave: Relleno
+    valor: Espuma de alta densidad
+  - clave: Soporta
+    valor: Hasta 110 kg
+dimensiones:
+  alto: 38
+  ancho: 45
+  profundidad: 45
+peso: 3.9
+plazoEnvio:
+  min: 5
+  max: 9
+rating: 4.6
+cantidadOpiniones: 88
+badges:
+  - oferta
+crossSell:
+  - p09
+  - p06
+  - p04

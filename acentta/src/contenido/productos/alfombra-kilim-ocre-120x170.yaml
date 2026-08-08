@@ -1,0 +1,52 @@
+nombre: Alfombra Kilim Ocre 120 × 170
+id: p10
+rubro: decoracion
+categoria: alfombras
+precio: 52300
+variantes:
+  - tipo: medida
+    nombre: 120 × 170 cm
+    stock: 13
+    imagen: 0
+  - tipo: medida
+    nombre: 160 × 230 cm
+    stock: 6
+    imagen: 1
+imagenes:
+  - idRemoto: photo-1572123979839-3749e9973aba
+    alt: Alfombra kilim con motivos geométricos en tonos ocre
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1671576563965-23993d69eb17
+    alt: Detalle del dibujo del kilim
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1621700052663-f1170e9b26ec
+    alt: La alfombra kilim vista completa sobre piso claro
+    ancho: 800
+    alto: 1000
+descripcion: Tejido plano, sin pelo. Liviana, se dobla y se lleva, y es la única que sobrevive a un comedor con sillas que se arrastran.
+especificaciones:
+  - clave: Medida
+    valor: 120 × 170 cm o 160 × 230 cm
+  - clave: Material
+    valor: Lana y algodón
+  - clave: Tipo de tejido
+    valor: Plano, reversible
+  - clave: Limpieza
+    valor: Aspirado, lavable en seco
+dimensiones:
+  alto: 170
+  ancho: 120
+  profundidad: 0.5
+peso: 4.2
+plazoEnvio:
+  min: 6
+  max: 11
+rating: 4.5
+cantidadOpiniones: 54
+badges: []
+crossSell:
+  - p12
+  - p03
+  - p07

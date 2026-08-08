@@ -1,0 +1,54 @@
+nombre: Alfombra Yute Redonda 150 cm
+id: p11
+rubro: decoracion
+categoria: alfombras
+precio: 41200
+precioAnterior: 58900
+variantes:
+  - tipo: medida
+    nombre: 150 cm
+    stock: 2
+    imagen: 0
+  - tipo: medida
+    nombre: 180 cm
+    stock: 1
+    imagen: 1
+imagenes:
+  - idRemoto: photo-1603913996638-c01100417b4a
+    alt: Alfombra redonda de yute con una planta encima
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1714926618653-39de3cf5b691
+    alt: La alfombra de yute sobre piso de madera
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1600166898405-da9535204843
+    alt: Detalle del trenzado del yute
+    ancho: 800
+    alto: 1000
+descripcion: "Yute natural trenzado en espiral. Áspera al tacto y resistente: va bien en entrada, cocina o debajo de una mesa redonda."
+especificaciones:
+  - clave: Diámetro
+    valor: 150 cm o 180 cm
+  - clave: Material
+    valor: 100 % yute natural
+  - clave: Altura de pelo
+    valor: 8 mm
+  - clave: Limpieza
+    valor: Aspirado, paño húmedo
+dimensiones:
+  alto: 150
+  ancho: 150
+  profundidad: 0.8
+peso: 7.1
+plazoEnvio:
+  min: 6
+  max: 12
+rating: 4.4
+cantidadOpiniones: 71
+badges:
+  - oferta
+crossSell:
+  - p14
+  - p05
+  - p08

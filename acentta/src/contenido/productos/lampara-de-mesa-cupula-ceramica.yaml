@@ -1,0 +1,61 @@
+nombre: Lámpara de mesa Cúpula Cerámica
+id: p02
+rubro: decoracion
+categoria: iluminacion
+precio: 34500
+precioAnterior: 46000
+variantes:
+  - tipo: color
+    nombre: Arena
+    muestra: "#D9CBB8"
+    stock: 18
+    imagen: 0
+  - tipo: color
+    nombre: Terracota
+    muestra: "#B5654A"
+    stock: 9
+    imagen: 1
+  - tipo: color
+    nombre: Verde salvia
+    muestra: "#8A9A82"
+    stock: 6
+    imagen: 2
+imagenes:
+  - idRemoto: photo-1685302874389-ed7790984a2e
+    alt: Lámpara de mesa de cerámica sobre una mesa blanca junto a una planta
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1513694203232-719a280e022f
+    alt: La lámpara encendida sobre una cómoda de madera
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1743578666060-49a1747d61df
+    alt: Rincón con la lámpara y objetos de decoración vintage
+    ancho: 800
+    alto: 1000
+descripcion: Cerámica esmaltada a mano, así que no hay dos iguales. Luz cálida y difusa, pensada para mesa de luz o para un rincón de lectura.
+especificaciones:
+  - clave: Altura
+    valor: 38 cm
+  - clave: Diámetro de pantalla
+    valor: 26 cm
+  - clave: Material
+    valor: Cerámica esmaltada + lino
+  - clave: Portalámparas
+    valor: E27, hasta 12 W LED
+dimensiones:
+  alto: 38
+  ancho: 26
+  profundidad: 26
+peso: 2.6
+plazoEnvio:
+  min: 4
+  max: 8
+rating: 4.5
+cantidadOpiniones: 64
+badges:
+  - oferta
+crossSell:
+  - p07
+  - p12
+  - p05

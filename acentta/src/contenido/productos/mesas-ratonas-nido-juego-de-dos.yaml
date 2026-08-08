@@ -1,0 +1,55 @@
+nombre: Mesas ratonas nido, juego de dos
+id: p22
+rubro: decoracion
+categoria: muebles-chicos
+precio: 94500
+precioAnterior: 118000
+variantes:
+  - tipo: material
+    nombre: Roble natural
+    stock: 7
+    imagen: 0
+  - tipo: material
+    nombre: Nogal oscuro
+    stock: 4
+    imagen: 1
+imagenes:
+  - idRemoto: photo-1607809714110-e34f71c7b2ed
+    alt: Dos mesas ratonas de madera, una debajo de la otra
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1693578616322-c8abe6c7393d
+    alt: Las mesas separadas junto a un sillón
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1616046229478-9901c5536a45
+    alt: Detalle de la unión de la pata con la tapa
+    ancho: 800
+    alto: 1000
+descripcion: Una entra debajo de la otra cuando no se usan, y salen las dos cuando hay visitas. Resuelve el living chico sin dejar de ser un mueble lindo.
+especificaciones:
+  - clave: Mesa grande
+    valor: 55 × 55 × 45 cm
+  - clave: Mesa chica
+    valor: 42 × 42 × 38 cm
+  - clave: Material
+    valor: Madera maciza con laca al agua
+  - clave: Armado
+    valor: Cuatro tornillos, llave incluida
+dimensiones:
+  alto: 45
+  ancho: 55
+  profundidad: 55
+peso: 12.3
+plazoEnvio:
+  min: 7
+  max: 13
+rating: 4.6
+cantidadOpiniones: 63
+unidadesVendidas: 158
+badges:
+  - oferta
+crossSell:
+  - p13
+  - p19
+  - p01

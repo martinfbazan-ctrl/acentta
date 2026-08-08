@@ -1,0 +1,58 @@
+nombre: Sistema de wi-fi en malla, dos nodos
+id: p36
+rubro: deco-inteligente
+categoria: conectividad
+precio: 128700
+variantes:
+  - tipo: color
+    nombre: Blanco
+    muestra: "#F2EFE9"
+    stock: 7
+    imagen: 0
+  - tipo: color
+    nombre: Negro
+    muestra: "#2B2B2B"
+    stock: 2
+    imagen: 1
+imagenes:
+  - idRemoto: photo-1681383064412-171e5bee5f6e
+    alt: Dos nodos de wi-fi en malla sobre una mesa
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1750712263185-edde9f359e33
+    alt: Un nodo apoyado sobre una mesa de madera
+    ancho: 800
+    alto: 1000
+  - idRemoto: photo-1750711158632-5273ec9b9b86
+    alt: El nodo junto a un conmutador de red
+    ancho: 800
+    alto: 1000
+descripcion: Dos nodos que arman una sola red y se pasan el teléfono entre ellos sin que la llamada se corte. Es lo que corresponde cuando la casa tiene dos pisos o paredes gruesas.
+especificaciones:
+  - clave: Velocidad
+    valor: Hasta 3000 Mbps combinados
+  - clave: Cobertura
+    valor: Hasta 260 m² con los dos nodos
+  - clave: Dispositivos
+    valor: Hasta 100 conectados
+  - clave: Puertos por nodo
+    valor: 2 Ethernet gigabit
+  - clave: Ampliable
+    valor: Hasta 6 nodos en la misma red
+  - clave: Control parental
+    valor: Por dispositivo y por horario
+dimensiones:
+  alto: 16
+  ancho: 26
+  profundidad: 14
+peso: 1.1
+plazoEnvio:
+  min: 8
+  max: 15
+rating: 4.7
+cantidadOpiniones: 74
+badges: []
+crossSell:
+  - p35
+  - p28
+  - p32
