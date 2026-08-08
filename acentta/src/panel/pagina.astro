@@ -1,0 +1,18 @@
+---
+/**
+ * La pantalla del panel. Vive en `src/panel/` y no en `src/pages/`
+ * a propósito: todo lo que está en `src/pages` se convierte en una
+ * página del sitio, y esta pantalla no tiene que existir en el sitio
+ * publicado. Se transforma en ruta sólo cuando la agrega
+ * `astro.admin.config.mjs`.
+ *
+ * `client:only="react"` porque el panel es una aplicación entera que
+ * lee y escribe archivos: no hay nada que renderizar en el servidor,
+ * y hacerlo sólo agregaría un parpadeo.
+ */
+import { Panel } from './aplicacion';
+
+export const prerender = false;
+---
+
+<Panel client:only="react" />
