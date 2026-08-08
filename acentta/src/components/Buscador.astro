@@ -124,6 +124,10 @@ const paquete = {
     left: 0;
     right: 0;
     z-index: 40;
+    /* Opaco de verdad. El encabezado es de vidrio esmerilado y todo
+       lo que hereda esa transparencia deja ver la navegación por
+       debajo; en un panel de resultados eso no es un efecto, es texto
+       encima de texto. */
     background: var(--papel);
     border: 1px solid var(--gris-200);
     border-radius: var(--r-tarjeta);
@@ -135,33 +139,50 @@ const paquete = {
 
   .sugerencias__lista { display: block; }
 
-  .sugerencias__item {
+  /* ---- Filas de sugerencia ----
+     Van con :global() y no scopeadas. Astro marca cada elemento del
+     marcado con un atributo propio y limita el CSS a ese atributo;
+     estas filas las crea el guion con innerHTML, así que nacen sin la
+     marca y ninguna regla scopeada las alcanza. El síntoma era exacto:
+     foto, nombre y precio amontonados en una línea, sin grilla ni
+     fondo, porque el navegador no aplicaba nada.
+     Quedan colgadas de `.sugerencias`, que sí está en el marcado, así
+     que siguen sin ser reglas realmente sueltas. */
+  .sugerencias :global(.sugerencias__item) {
     display: grid;
-    grid-template-columns: 44px 1fr auto;
+    grid-template-columns: 52px minmax(0, 1fr) auto;
     align-items: center;
     gap: var(--e-3);
-    padding: var(--e-2) var(--e-3);
+    padding: var(--e-3);
+    min-height: 68px;
     cursor: pointer;
     border-bottom: 1px solid var(--gris-050);
   }
-  .sugerencias__item:last-child { border-bottom: 0; }
+  .sugerencias :global(.sugerencias__item:last-child) { border-bottom: 0; }
 
   /* El resaltado se dispara con un atributo y no con :hover, para que
      el teclado y el mouse produzcan exactamente el mismo estado. */
-  .sugerencias__item[aria-selected='true'] { background: var(--arena-honda); }
+  .sugerencias :global(.sugerencias__item[aria-selected='true']) {
+    background: var(--arena-honda);
+  }
 
-  .sugerencias__foto {
-    width: 44px; height: 44px;
+  .sugerencias :global(.sugerencias__foto) {
+    width: 52px;
+    height: 52px;
     border-radius: 6px;
     object-fit: cover;
     background: var(--gris-050);
     display: block;
   }
 
-  .sugerencias__datos { min-width: 0; }
-  .sugerencias__nombre {
-    display: block;
+  .sugerencias :global(.sugerencias__datos) {
+    min-width: 0;
+    display: grid;
+    gap: 2px;
+  }
+  .sugerencias :global(.sugerencias__nombre) {
     font-size: var(--t-producto);
+    line-height: 1.35;
     color: var(--tinta);
     /* Un nombre de 96 caracteres no puede empujar el precio fuera de
        la caja: se corta en dos renglones y sigue. */
@@ -170,11 +191,23 @@ const paquete = {
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
-  .sugerencias__rotulo { display: block; font-size: var(--t-meta); color: var(--gris-texto); }
-  .sugerencias__nombre :global(b) { font-weight: 700; }
+  .sugerencias :global(.sugerencias__nombre b) { font-weight: 700; }
+  .sugerencias :global(.sugerencias__rotulo) {
+    font-size: var(--t-meta);
+    color: var(--gris-texto);
+  }
 
-  .sugerencias__precio { font-size: var(--t-producto); font-weight: 600; white-space: nowrap; }
-  .sugerencias__agotado { font-size: var(--t-meta); color: var(--gris-texto); white-space: nowrap; }
+  .sugerencias :global(.sugerencias__precio) {
+    font-size: var(--t-producto);
+    font-weight: 700;
+    white-space: nowrap;
+    color: var(--tinta);
+  }
+  .sugerencias :global(.sugerencias__agotado) {
+    font-size: var(--t-meta);
+    color: var(--gris-texto);
+    white-space: nowrap;
+  }
 
   .sugerencias__todo {
     display: block;

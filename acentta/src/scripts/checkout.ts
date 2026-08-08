@@ -282,18 +282,21 @@ if (contenedor) {
 
     const rotulo = document.querySelector<HTMLElement>('[data-ck-envio-rotulo]')!;
     const valorEnvio = document.querySelector<HTMLElement>('[data-ck-envio]')!;
+    /* El verde del envío gratis se pone con una clase y no con estilo
+       en línea. Un color escrito en el elemento le gana a la hoja y
+       deja de poder cambiarse desde el sistema de diseño. */
+    const filaEnvio = valorEnvio.closest('.resumen__linea')!;
+    filaEnvio.classList.toggle('resumen__linea--gratis', r.envioGratis);
+
     if (r.envioGratis) {
       rotulo.textContent = 'Envío';
       valorEnvio.textContent = 'Gratis';
-      valorEnvio.style.color = 'var(--verde)';
     } else if (r.envioEstimado) {
       rotulo.textContent = 'Envío (estimado)';
       valorEnvio.textContent = `desde ${fPrecio(envio)}`;
-      valorEnvio.style.color = '';
     } else {
       rotulo.textContent = `Envío a ${r.zona}`;
       valorEnvio.textContent = fPrecio(envio);
-      valorEnvio.style.color = '';
     }
 
     const filaDesc = document.querySelector<HTMLElement>('[data-ck-descuento-fila]')!;
@@ -302,6 +305,11 @@ if (contenedor) {
 
     for (const nodo of document.querySelectorAll<HTMLElement>('[data-ck-total], [data-ck-total-2]')) {
       nodo.textContent = fPrecio(total);
+    }
+
+    const nodoCuotas = document.querySelector<HTMLElement>('[data-ck-cuotas]');
+    if (nodoCuotas) {
+      nodoCuotas.innerHTML = `o 12 cuotas sin interés de <b>${cuota(total, 12)}</b>`;
     }
 
     /* Cuotas calculadas sobre el total real */

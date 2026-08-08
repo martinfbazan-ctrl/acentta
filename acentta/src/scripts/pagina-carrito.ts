@@ -88,18 +88,19 @@ if (carro) {
     const rotulo = document.querySelector<HTMLElement>('[data-carro-envio-rotulo]')!;
     const valor = document.querySelector<HTMLElement>('[data-carro-envio]')!;
 
+    /* Mismo criterio que en el checkout: el verde lo pone una clase,
+       no un estilo en línea que la hoja después no puede tocar. */
+    valor.closest('.resumen__linea')!.classList.toggle('resumen__linea--gratis', r.envioGratis);
+
     if (r.envioGratis) {
       rotulo.textContent = 'Envío';
       valor.textContent = 'Gratis';
-      valor.style.color = 'var(--verde)';
     } else if (r.envioEstimado) {
       rotulo.textContent = 'Envío (estimado)';
       valor.textContent = `desde ${fPrecio(r.envio)}`;
-      valor.style.color = 'var(--gris-800)';
     } else {
       rotulo.textContent = `Envío a ${r.zona}`;
       valor.textContent = fPrecio(r.envio);
-      valor.style.color = '';
     }
 
     /* Cuotas sobre el total, no sobre el subtotal: la cuota que

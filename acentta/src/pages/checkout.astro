@@ -245,6 +245,12 @@ const pasos = [
             </div>
           </dl>
 
+          <!-- La cuota va pegada al total y no en la sección de pago:
+               en Latam, para mucha gente la decisión no es el precio
+               sino la cuota, y tiene que estar donde está el número
+               grande, no dos pantallas más abajo. -->
+          <p class="resumen__cuotas" data-ck-cuotas></p>
+
           <p class="resumen-pedido__entrega" data-ck-entrega></p>
         </div>
 
@@ -318,7 +324,12 @@ const pasos = [
   /* ---- Cuerpo ---- */
   .checkout__cuerpo { display: grid; gap: var(--e-8); align-items: start; }
   @media (min-width: 900px) {
-    .checkout__cuerpo { grid-template-columns: minmax(0, 1fr) 380px; gap: var(--e-12); }
+    /* La columna del resumen pasó de 380 px a 420. Es la que lleva
+       el total, las cuotas y la fecha de entrega: los tres datos que
+       alguien mira antes de dar la tarjeta. Con 380 el total quedaba
+       apretado contra su rótulo y las líneas de garantía cortaban en
+       dos renglones. */
+    .checkout__cuerpo { grid-template-columns: minmax(0, 1fr) 420px; gap: var(--e-12); }
   }
 
   .paso { display: flex; flex-direction: column; gap: var(--e-5); }
@@ -397,7 +408,7 @@ const pasos = [
 
   /* ---- Resumen ---- */
   .resumen-pedido {
-    padding: var(--e-5);
+    padding: var(--e-6);
     background: var(--papel);
     border: 1px solid var(--gris-200);
     border-radius: var(--r-modal);
@@ -405,7 +416,7 @@ const pasos = [
   }
   @media (min-width: 900px) { .resumen-pedido { position: sticky; top: var(--e-6); } }
 
-  .resumen-pedido__titulo { font-size: 1rem; font-weight: 700; }
+  .resumen-pedido__titulo { font-size: 1.125rem; font-weight: 700; letter-spacing: -0.01em; }
 
   /* En móvil el resumen se pliega: ocupar media pantalla con el
      detalle mientras se completa un formulario es un estorbo, pero

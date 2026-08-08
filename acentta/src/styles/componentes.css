@@ -838,3 +838,97 @@
   .avisos { left: var(--e-3); right: var(--e-3); }
   .avisos .toast { max-width: none; }
 }
+
+/* ============================================================
+   RESUMEN DE PEDIDO
+   ------------------------------------------------------------
+   Vive acá y no dentro de una página por una razón que costó un
+   error: Astro aísla el CSS por archivo. Estas reglas estaban
+   escritas en carrito.astro, y el checkout —que usa exactamente el
+   mismo marcado— quedaba sin ninguna de ellas. El resultado era una
+   lista suelta de "Subtotal / $ 195.700 / Envío / Gratis" con cada
+   rótulo y cada monto en su propio renglón, sin alineación ni
+   jerarquía. Un resumen de compra ilegible es de las cosas más
+   caras que puede tener un checkout.
+
+   Compartido por el carrito y por el checkout: un solo lugar donde
+   cambiar cómo se lee el dinero en todo el sitio.
+   ============================================================ */
+
+.resumen__lineas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e-3);
+  /* Los montos se leen en columna, uno debajo del otro, así que
+     tienen que ser de ancho fijo o la coma baila entre renglones. */
+  font-variant-numeric: tabular-nums;
+}
+
+.resumen__linea {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--e-4);
+  font-size: 1rem;
+}
+.resumen__linea dt { color: var(--gris-800); }
+.resumen__linea dd {
+  margin: 0;
+  font-weight: 600;
+  color: var(--tinta);
+  font-size: 1.0625rem;
+  white-space: nowrap;
+}
+
+/* Lo que resta plata se dice en verde y con signo, no sólo en verde:
+   el color solo no es información para quien no lo distingue. */
+.resumen__linea--ahorro dt,
+.resumen__linea--ahorro dd { color: var(--verde); }
+
+/* El envío gratis es la promesa más fuerte del sitio: se muestra
+   como palabra, no como "$ 0", y con el mismo verde del ahorro. */
+.resumen__linea--gratis dd { color: var(--verde); font-weight: 700; }
+
+.resumen__linea--total {
+  padding-top: var(--e-4);
+  margin-top: var(--e-2);
+  border-top: 2px solid var(--gris-200);
+}
+.resumen__linea--total dt {
+  color: var(--tinta);
+  font-weight: 600;
+  font-size: 1.125rem;
+}
+.resumen__linea--total dd {
+  /* El total es el número que decide la compra. Es, con el titular
+     del hero, el texto más grande del sitio, y a propósito: si hay
+     una cifra que no se puede leer de un vistazo, es ésta. */
+  font-size: clamp(1.5rem, 1.15rem + 1.4vw, 2rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.resumen__cuotas {
+  font-size: var(--t-cuotas);
+  color: var(--gris-800);
+  font-variant-numeric: tabular-nums;
+}
+.resumen__cuotas b { color: var(--tinta); }
+
+.resumen__garantias {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e-2);
+  padding-top: var(--e-4);
+  border-top: 1px solid var(--gris-200);
+}
+.resumen__garantias li {
+  display: flex;
+  gap: var(--e-2);
+  align-items: flex-start;
+  font-size: var(--t-meta);
+  color: var(--gris-800);
+  line-height: 1.45;
+}
+.resumen__garantias svg { flex: none; margin-top: 1px; color: var(--verde); }

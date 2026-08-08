@@ -160,6 +160,13 @@ const categorias = [
     align-items: center;
     gap: var(--e-4);
     min-height: 76px;
+    /* Por encima de la navegación, que es su hermana siguiente.
+       Las dos venían con z-index 1 por la regla `.cabecera > *`, y en
+       empate gana la que va después en el marcado: el panel de
+       sugerencias, aunque declara z-index 40, vive dentro de esta
+       fila y no podía salir de su capa. El resultado era la barra de
+       categorías dibujándose encima de los resultados. */
+    z-index: 2;
   }
   @media (min-width: 768px) { .cabecera__fila { min-height: 88px; } }
   .cabecera__logo { display: inline-flex; flex: none; }
