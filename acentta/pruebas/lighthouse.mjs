@@ -18,6 +18,11 @@
  * package.json porque pesan más de 100 MB y sólo hacen falta acá:
  *
  *   npm i -D lighthouse chrome-launcher
+ *
+ * En Windows, si PowerShell contesta "la ejecución de scripts está
+ * deshabilitada en este sistema", usá `npm.cmd` en lugar de `npm`. Es
+ * el mismo programa: `npm` a secas resuelve al envoltorio npm.ps1, que
+ * la política de ejecución bloquea de fábrica.
  */
 
 import fs from 'node:fs';
@@ -61,7 +66,15 @@ try {
 
 /* ---- Servidor ---- */
 const PUERTO = 4321;
-const servidor = spawn('npx', ['astro', 'preview', '--port', String(PUERTO)], {
+
+/* En Windows hay que invocar `npx.cmd` y no `npx`. El segundo resuelve
+   a npx.ps1, y PowerShell lo bloquea si la política de ejecución está
+   restringida —que es lo que viene de fábrica—: "no se puede cargar el
+   archivo porque la ejecución de scripts está deshabilitada". La
+   versión .cmd hace exactamente lo mismo sin pasar por esa puerta. */
+const NPX = process.platform === 'win32' ? 'npx.cmd' : 'npx';
+
+const servidor = spawn(NPX, ['astro', 'preview', '--port', String(PUERTO)], {
   cwd: path.join(AQUI, '..'),
   stdio: 'ignore',
   shell: process.platform === 'win32',

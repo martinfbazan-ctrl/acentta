@@ -102,3 +102,11 @@ npm run auditar:lighthouse   # LCP, INP, CLS y puntajes — necesita Chrome
 ```
 
 Las cuatro primeras corren en segundos y no necesitan nada instalado además del proyecto.
+
+**En Windows**, si PowerShell contesta *«no se puede cargar el archivo npm.ps1 porque la ejecución de scripts está deshabilitada»*, usá `npm.cmd` en lugar de `npm`:
+
+```
+npm.cmd run auditar
+```
+
+Es el mismo programa. `npm` a secas resuelve al envoltorio `npm.ps1`, y la política de ejecución de PowerShell lo bloquea de fábrica; la versión `.cmd` hace lo mismo sin pasar por ahí. No hace falta cambiar ninguna configuración de seguridad del sistema.
