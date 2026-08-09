@@ -39,7 +39,14 @@ Vercel publica leyendo un repositorio. El repositorio local ya existe y tiene to
 **Con GitHub Desktop**, que ya está instalado:
 
 1. `File → Add local repository`
-2. Elegir la carpeta **`Proyecto 4`** — la de arriba, no `acentta`. Es donde está el `.git`.
+2. En el campo de texto, **pegar esta ruta tal cual** en lugar de navegar con `Choose...`:
+
+   ```
+   C:\Users\Martín Bazán\Downloads\Martin\PORTFOLIO\Proyecto 4
+   ```
+
+   > **La carpeta es `Proyecto 4`, entera.** No `acentta`, que está adentro, y no `.git`, que es una carpeta oculta que usa Git para su propio funcionamiento. Si se selecciona cualquiera de esas dos, GitHub Desktop contesta *«this directory does not appear to be a Git repository»*. Con la ruta correcta el mensaje desaparece solo y el botón `Add repository` se habilita.
+
 3. `Publish repository`
 4. Nombre: `acentta`. **Destildar «Keep this code private»** si se quiere que el código sea visible como parte del portafolio; dejarlo tildado si no.
 
