@@ -4,6 +4,9 @@
   "private": true,
   "type": "module",
   "description": "acentta — marketplace de dropshipping. Pieza de portafolio.",
+  "engines": {
+    "node": ">=20.19.0"
+  },
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
@@ -12,15 +15,17 @@
     "preview": "astro preview",
     "check": "astro check",
     "vista-previa": "astro build && node generar-vista-previa.mjs",
-    "auditar": "npm run check && npm run vista-previa && node pruebas/auditoria.mjs && node pruebas/buscador.mjs && node pruebas/teclado.mjs",
+    "auditar": "npm run check && npm run vista-previa && node pruebas/auditoria.mjs && node pruebas/buscador.mjs && node pruebas/teclado.mjs && node pruebas/publicacion.mjs",
     "auditar:a11y": "node pruebas/auditoria.mjs",
     "auditar:teclado": "node pruebas/teclado.mjs",
     "auditar:buscador": "node pruebas/buscador.mjs",
-    "auditar:lighthouse": "node pruebas/lighthouse.mjs"
+    "auditar:lighthouse": "node pruebas/lighthouse.mjs",
+    "auditar:publicacion": "node pruebas/publicacion.mjs"
   },
   "dependencies": {
     "@astrojs/node": "^11.1.0",
     "@astrojs/react": "^6.0.2",
+    "@astrojs/sitemap": "^3.7.3",
     "@keystatic/astro": "^5.2.0",
     "@keystatic/core": "^0.6.4",
     "astro": "^7.1.6",

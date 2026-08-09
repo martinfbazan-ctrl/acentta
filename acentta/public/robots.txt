@@ -1,0 +1,26 @@
+# acentta · qué pueden recorrer los buscadores
+# ---------------------------------------------------------------
+# Todo el catálogo es público y se quiere indexado. Lo único que se
+# bloquea son las tres pantallas que sólo tienen sentido con un
+# carrito cargado: recorrerlas sin sesión da páginas vacías que no le
+# sirven a nadie y gastan presupuesto de rastreo.
+#
+# Las páginas internas del proyecto —sistema, etapas, botones— NO se
+# bloquean acá a propósito, aunque no queremos que aparezcan en
+# resultados. Llevan la etiqueta `noindex` en su HTML, y para que un
+# buscador la lea primero tiene que poder entrar. Bloquear por
+# robots.txt una página que ya dice `noindex` es el error clásico:
+# el buscador nunca ve la etiqueta y puede terminar listando la
+# dirección igual, sin descripción.
+#
+#   Bloquear el rastreo  ≠  pedir que no se indexe.
+#   Lo primero se hace acá. Lo segundo, en el HTML.
+
+User-agent: *
+Allow: /
+
+Disallow: /carrito
+Disallow: /checkout
+Disallow: /confirmacion
+
+Sitemap: https://acentta.vercel.app/sitemap-index.xml

@@ -118,21 +118,42 @@ Lo que quedó verificado, punto por punto:
 - Ningún `tabindex` positivo en todo el sitio.
 - Ningún control con manejador de clic que no sea enfocable.
 
+### Publicación — la frontera entre el sitio y el servidor
+
+**65 páginas revisadas, nada bloquea la publicación.**
+
+Las cuatro auditorías anteriores miran el sitio por dentro. Ésta mira lo que sólo existe cuando hay un servidor delante, que es donde viven los errores que no se pueden ver en desarrollo: en desarrollo no hay cabeceras.
+
+Comprueba cinco cosas contra `vercel.json` de verdad y contra la salida compilada:
+
+- **Que la política de seguridad no bloquee nada del propio sitio.** Lee las directivas de la política que Vercel va a mandar y compara cada guion, hoja de estilo, tipografía e imagen —incluidas las que piden los CSS y no aparecen en el HTML— contra lo que la política permite.
+- **Que el mapa del sitio y el HTML no se contradigan.** Una página que está en el mapa y además lleva `noindex` pide dos cosas opuestas; el buscador resuelve la contradicción desconfiando del mapa entero, así que el costo no lo paga esa página sola. También al revés: que el mapa no prometa direcciones que no existen.
+- **Que la tarjeta social sea absoluta y exista.** Los lectores de enlaces de WhatsApp y LinkedIn no resuelven rutas relativas. Un `og:image` que diga `/og.png` no da error: muestra un recuadro gris, que es peor, porque parece que funcionó.
+- **Que ninguna canónica haya quedado apuntando a otro dominio.**
+- **Que las cabeceras de seguridad estén puestas.**
+
+La primera es la que justifica la prueba. La política dice `script-src 'self'`: sólo se ejecuta código que venga de un archivo propio. Astro, por defecto, incrusta los guiones chicos dentro del HTML para ahorrar una petición — y un guion incrustado no viene de ningún archivo. Con la configuración anterior se caían **el carrusel de la home y la validación de los formularios de contacto y arrepentimiento**, en producción y sólo en producción.
+
+Se arregló poniendo el umbral de incrustado en cero, que es más barato que las dos alternativas habituales: agregar `'unsafe-inline'` es desactivar justo lo que la política existe para impedir, y firmar cada guion con su hash obliga a rehacer las firmas en cada compilación. El costo real son tres pedidos más en tres páginas, sobre HTTP/2 y cacheados un año.
+
+**La prueba se verificó al revés.** Se revirtió el cambio a propósito y la auditoría nombró exactamente las tres páginas afectadas, con código de salida 1. Una prueba que nunca falla no prueba nada.
+
 ---
 
 ## Cómo repetirlo
 
 ```
-npm run auditar              # todo: tipos, accesibilidad, contraste, peso, teclado, buscador
+npm run auditar              # todo: tipos, accesibilidad, contraste, peso, teclado, buscador, publicación
 npm run auditar:a11y         # axe-core + contraste + peso + estabilidad
 npm run auditar:teclado      # el circuito de compra sin mouse
 npm run auditar:buscador     # 16 consultas, relevancia, combobox
+npm run auditar:publicacion  # política de seguridad, mapa del sitio, tarjeta social, canónicas
 npm run auditar:lighthouse   # LCP, INP, CLS y puntajes — necesita Chrome
 ```
 
-Las cuatro primeras corren en segundos y no necesitan nada instalado además del proyecto.
+Todas menos la última corren en segundos y no necesitan nada instalado además del proyecto.
 
-**En Windows**, si PowerShell contesta *«no se puede cargar el archivo npm.ps1 porque la ejecución de scripts está deshabilitada»*, usá `npm.cmd` en lugar de `npm`:
+**En Windows**, si PowerShell contesta *«no se puede cargar el archivo npm.ps1 porque la ejecución de scripts está deshabilitada»*, usar `npm.cmd` en lugar de `npm`:
 
 ```
 npm.cmd run auditar

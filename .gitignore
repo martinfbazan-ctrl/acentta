@@ -40,3 +40,8 @@ npm-debug.log*
 
 # Informes de Lighthouse: los genera npm run auditar:lighthouse
 acentta/pruebas/informes/
+
+# Caché local de la herramienta de Vercel. Guarda el identificador del
+# proyecto y credenciales de la máquina: no va al repositorio.
+# `vercel.json` SÍ va — ése es configuración escrita a mano.
+.vercel/
