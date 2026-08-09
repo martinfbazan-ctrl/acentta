@@ -37,7 +37,7 @@ const AQUI = path.dirname(fileURLToPath(import.meta.url));
 const DIST = path.join(AQUI, '..', 'dist');
 
 if (!fs.existsSync(DIST)) {
-  console.error('No existe dist/. Corré primero: npm run build');
+  console.error('No existe dist/. Correr primero: npm run build');
   process.exit(1);
 }
 
@@ -385,6 +385,65 @@ else {
   for (const a of estabilidad.slice(0, 5)) console.log(`      ${a.ruta} · ${a.detalle}`);
 }
 
+/* ============================================================
+   VARIABLES DE CSS SIN DECLARAR
+   ------------------------------------------------------------
+   El error más caro de encontrar a mano que dio este proyecto, y el
+   único que el navegador esconde a propósito.
+
+   Cuando una hoja dice `padding: 0 110px 0 var(--e-11)` y `--e-11`
+   no existe, no pasa lo que uno supondría —usar cero, o ignorar ese
+   valor—. La declaración entera queda inválida: se caen también los
+   110 px de la derecha, y la propiedad vuelve a su valor heredado.
+   El resultado fue un campo de búsqueda con sangría cero, con el
+   texto escribiéndose por debajo de la lupa. Nada en la consola,
+   nada en el compilador, nada en `astro check`: sólo un campo que
+   se ve mal.
+
+   Aparecieron tres, y las tres por lo mismo: la escala de espaciado
+   salta —1, 2, 3, 4, 5, 6, 8, 10, 12, 16, 20, 24— y quien escribe
+   supone que existe el número del medio. `--e-7`, `--e-9`, `--e-11`.
+   Dos dejaron sin separación las filas de rubro de la portada.
+
+   Se revisa la salida compilada y no el código fuente, porque las
+   variables también se declaran en atributos `style` del HTML
+   —`style="--logo-base:44px"`— y una revisión que mire sólo el CSS
+   marcaría esas como inexistentes.
+   ============================================================ */
+const cssVars = (() => {
+  const declaradas = new Set();
+  const usadas = new Map(); // nombre -> archivo donde se usa
+
+  const anotar = (texto, donde) => {
+    for (const [, v] of texto.matchAll(/(--[A-Za-z0-9_-]+)\s*:/g)) declaradas.add(v);
+    /* Sólo cuenta como problema si no trae valor de reserva:
+       `var(--x, 8px)` es una decisión, no un olvido. */
+    for (const [, v, cierre] of texto.matchAll(/var\(\s*(--[A-Za-z0-9_-]+)\s*([,)])/g)) {
+      if (cierre === ')' && !usadas.has(v)) usadas.set(v, donde);
+    }
+  };
+
+  const dirAstro = path.join(DIST, '_astro');
+  if (fs.existsSync(dirAstro)) {
+    for (const f of fs.readdirSync(dirAstro).filter((x) => x.endsWith('.css'))) {
+      anotar(fs.readFileSync(path.join(dirAstro, f), 'utf8'), f);
+    }
+  }
+  for (const { ruta, archivo } of paginas()) {
+    const html = fs.readFileSync(archivo, 'utf8');
+    for (const [, bloque] of html.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)) anotar(bloque, ruta);
+    for (const [, attr] of html.matchAll(/\sstyle="([^"]*)"/g)) anotar(attr, ruta);
+  }
+
+  return [...usadas].filter(([v]) => !declaradas.has(v)).map(([v, donde]) => ({ v, donde }));
+})();
+
+console.log('\n=== VARIABLES DE CSS ===');
+if (cssVars.length === 0) console.log('  todas las variables usadas están declaradas');
+else for (const { v, donde } of cssVars) {
+  console.log(`  ✗ ${v} se usa sin estar declarada (${donde}) — invalida la propiedad entera, sin avisar`);
+}
+
 console.log('\n=== TECLADO ===');
 if (teclado.length === 0) console.log('  sin avisos');
 else {
@@ -396,6 +455,6 @@ else {
   }
 }
 
-const errores = problemas.length + fallaC.length + estabilidad.length + teclado.length;
+const errores = problemas.length + fallaC.length + estabilidad.length + teclado.length + cssVars.length;
 console.log(`\n${errores === 0 ? '✓ auditoría limpia' : `✗ ${errores} hallazgo(s)`}\n`);
 process.exit(errores === 0 ? 0 : 1);

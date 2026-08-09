@@ -164,25 +164,24 @@ if (contenedor) {
   /* El código postal completa la provincia: un dato menos para
      escribir es un dato menos para equivocarse. */
   const cpCheckout = document.querySelector<HTMLInputElement>('#cp-checkout');
-  const provincia = document.querySelector<HTMLInputElement>('#provincia');
   cpCheckout?.addEventListener('input', () => {
     const r = calcularEnvio(cpCheckout.value, 1);
-    if (r.ok && provincia && !provincia.dataset.tocado) {
-      provincia.value = r.zona!;
-      limpiarError(provincia);
+    if (r.ok) {
       guardarCP(cpCheckout.value);
       pintarResumen();
       pintarEnvio();
     }
   });
-  provincia?.addEventListener('input', () => { provincia.dataset.tocado = 'true'; });
-  if (cpCheckout) {
-    cpCheckout.value = leerCP();
-    if (cpCheckout.value) {
-      const r = calcularEnvio(cpCheckout.value, 1);
-      if (r.ok && provincia) provincia.value = r.zona!;
-    }
-  }
+
+  /* Los dos campos arrancan vacíos, mostrando su ejemplo.
+     Antes se rellenaba el código postal con el que se hubiera escrito
+     en el carrito. Suena a comodidad y en la práctica confunde: quien
+     abre el checkout se encuentra dos casillas con texto adentro y no
+     puede distinguir un dato propio de un relleno de la simulación,
+     y para corregirlo tiene que seleccionar y borrar.
+     El código postal del carrito no se pierde: sigue guardado y es el
+     que usa el resumen para estimar el envío hasta que se escriba uno
+     acá. Lo que cambia es que la casilla no miente sobre su estado. */
 
   /* ============================================================
      PASOS
@@ -205,6 +204,11 @@ if (contenedor) {
        que promete terminar algo que todavía está a medias. */
     const accion = document.querySelector<HTMLElement>('[data-ck-accion]');
     if (accion) accion.hidden = n !== 3;
+
+    /* Las filas de «lo elegido» dependen del paso: la entrega recién
+       vale cuando se pasó por el paso de envío, y el pago cuando se
+       llegó al de pago. */
+    pintarElegido();
 
     /* Al cambiar de paso, el foco va al título: quien navega con
        teclado o lector de pantalla necesita saber que la pantalla
@@ -347,6 +351,10 @@ if (contenedor) {
     entrega.textContent = leerCP()
       ? `Llega ${rangoDeEntrega(5 + extra - (sucursal ? 1 : 0), 10 + extra - (sucursal ? 1 : 0))}.`
       : 'La fecha exacta aparece al completar el código postal.';
+
+    /* El selector de cuotas se rehace acá arriba con el total nuevo,
+       así que la fila de pago tiene que volver a leerlo. */
+    pintarElegido();
   }
 
   function pintarEnvio() {
@@ -366,8 +374,81 @@ if (contenedor) {
     if (desc) desc.textContent = `− ${fPrecio(Math.round(subtotal() * 0.1))}`;
   }
 
+  /* ============================================================
+     LO ELEGIDO
+     ------------------------------------------------------------
+     La tarjeta mostraba cuánto sale y cuándo llega, pero no a dónde
+     va ni cómo se paga. Para repasar eso había que volver dos pasos
+     atrás, y volver atrás en un checkout es la forma más común de no
+     volver: se pierde el hilo, se relee todo y se cierra la pestaña.
+
+     Cada fila aparece sola cuando tiene algo que decir. Nada de
+     rótulos con la nada al lado: una tarjeta con tres campos vacíos
+     en el primer paso da la sensación de formulario incompleto justo
+     donde hace falta lo contrario.
+     ============================================================ */
+  function valor(id: string): string {
+    return (document.querySelector<HTMLInputElement>(`#${id}`)?.value ?? '').trim();
+  }
+
+  function fila(marca: string, nodo: string, texto: string) {
+    const contenedorFila = document.querySelector<HTMLElement>(`[${marca}]`);
+    const destino = document.querySelector<HTMLElement>(`[${nodo}]`);
+    if (!contenedorFila || !destino) return Boolean(texto);
+    destino.textContent = texto;
+    contenedorFila.hidden = !texto;
+    return Boolean(texto);
+  }
+
+  function pintarElegido() {
+    const bloque = document.querySelector<HTMLElement>('[data-ck-datos]');
+    if (!bloque) return;
+
+    /* Entrega: sólo tiene sentido una vez que se pasó por el paso de
+       envío. Antes, la opción marcada es la de fábrica y mostrarla
+       sería informar una decisión que nadie tomó todavía. */
+    const enSucursal = metodoEnvioRadios.find((r) => r.checked)?.value === 'sucursal';
+    const hayEntrega = fila(
+      'data-ck-fila-entrega', 'data-ck-metodo-envio',
+      pasoActual >= 2 ? (enSucursal ? 'Retiro en sucursal del correo' : 'A domicilio') : ''
+    );
+
+    /* Dirección: se arma con lo que haya. Un renglón a medias
+       —"Av. Colón 1234"— ya sirve para reconocer si uno se equivocó
+       de calle, que es para lo que está. */
+    const calle = [valor('calle'), valor('numero')].filter(Boolean).join(' ');
+    const localidad = [valor('ciudad'), valor('provincia')].filter(Boolean).join(', ');
+    const cp = valor('cp-checkout');
+    const direccion = [calle, valor('piso'), localidad, cp && `CP ${cp}`]
+      .filter(Boolean).join(' · ');
+    const hayDireccion = fila('data-ck-fila-direccion', 'data-ck-direccion', direccion);
+
+    /* Pago: con las cuotas elegidas, que es el dato que la gente
+       vuelve a mirar antes de apretar. */
+    let pago = '';
+    if (pasoActual >= 3) {
+      const porTarjeta = metodoPagoRadios.find((r) => r.checked)?.value === 'tarjeta';
+      if (!porTarjeta) {
+        pago = 'Transferencia bancaria · 10 % de descuento';
+      } else {
+        const sel = document.querySelector<HTMLSelectElement>('[data-cuotas]');
+        const elegida = sel?.selectedOptions[0]?.textContent?.trim();
+        pago = elegida ? `Tarjeta · ${elegida}` : 'Tarjeta de crédito o débito';
+      }
+    }
+    const hayPago = fila('data-ck-fila-pago', 'data-ck-metodo-pago', pago);
+
+    bloque.hidden = !(hayEntrega || hayDireccion || hayPago);
+  }
+
+  /* Se repinta con cualquier cosa que cambie alguno de esos datos. */
+  for (const id of ['calle', 'numero', 'piso', 'ciudad', 'provincia', 'cp-checkout']) {
+    document.querySelector(`#${id}`)?.addEventListener('input', pintarElegido);
+  }
+  document.querySelector('[data-cuotas]')?.addEventListener('change', pintarElegido);
+
   for (const r of [...metodoPagoRadios, ...metodoEnvioRadios]) {
-    r.addEventListener('change', () => { pintarResumen(); pintarEnvio(); });
+    r.addEventListener('change', () => { pintarResumen(); pintarEnvio(); pintarElegido(); });
   }
 
   /* Los campos de tarjeta se ocultan si se paga por transferencia:

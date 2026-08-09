@@ -142,16 +142,37 @@ Se arregló poniendo el umbral de incrustado en cero, que es más barato que las
 
 ## Cómo repetirlo
 
+### Lo que se rompió en móvil, y por qué no lo vio nadie
+
+Tres defectos que llegaron a estar publicados, los tres invisibles para las auditorías de arriba. Vale la pena la lista porque cada uno dejó una prueba nueva.
+
+**Una variable de CSS que no existía.** El campo de búsqueda decía `padding: 0 110px 0 var(--e-11)`, y `--e-11` no está en la escala —que salta 6, 8, 10, 12—. Una variable sin declarar no deja la propiedad en un valor parecido: **invalida la declaración entera**, así que se caían también los 110 px de la derecha. Sangría cero, y el texto escribiéndose por debajo de la lupa. Aparecieron tres casos, todos por suponer que existía el número del medio; dos dejaron sin separación las filas de rubro de la portada. Ninguno emite advertencia en el navegador, ni en el compilador, ni en `astro check`.
+
+**El botón de pagar, plegado.** En pantalla angosta el resumen arranca cerrado. El botón «Confirmar compra» y el plan de cuotas vivían adentro de la parte plegable, así que en un teléfono había que descubrir «Ver el detalle» para poder pagar. axe no lo ve —el botón está en el HTML y bien etiquetado— y la prueba de teclado tampoco, porque corre con el ancho de escritorio, donde el resumen nunca se pliega.
+
+**Media Argentina, cobrada como Buenos Aires.** La zona «Provincia de Buenos Aires» declaraba el rango 1901-8199 y la búsqueda devuelve la primera coincidencia, así que se comía enteras a «Centro y Cuyo» y a «Norte». Córdoba, Rosario, Mendoza, Tucumán y Salta pagaban $ 7.300 en lugar de $ 8.100 o $ 9.400, con dos días de plazo en lugar de tres o cuatro. Dos de las seis zonas eran código muerto. No hay excepción ni consola: la calculadora contestaba rápido y con una zona plausible.
+
+De paso apareció otro hueco: los códigos 8200-8299 no los cubría nadie.
+
+**Lo que tienen en común.** Ninguno rompe nada de forma visible para una máquina. Son errores de valor, no de estructura, y por eso hicieron falta preguntas nuevas: ¿existe cada variable que se usa?, ¿se puede pagar sin desplegar nada?, ¿alguna zona se pisa con otra?
+
+---
+
+## Cómo repetirlo
+
 ```
-npm run auditar              # todo: tipos, accesibilidad, contraste, peso, teclado, buscador, publicación
-npm run auditar:a11y         # axe-core + contraste + peso + estabilidad
+npm run auditar              # todo lo que corre sin navegador
+npm run auditar:a11y         # axe-core + contraste + peso + estabilidad + variables de CSS
+npm run auditar:envio        # solapamientos, huecos y 16 ciudades reales
 npm run auditar:teclado      # el circuito de compra sin mouse
 npm run auditar:buscador     # 16 consultas, relevancia, combobox
+npm run auditar:checkout     # el checkout a ancho de teléfono y de escritorio
 npm run auditar:publicacion  # política de seguridad, mapa del sitio, tarjeta social, canónicas
+npm run auditar:movil        # desborde horizontal y altura del precio — necesita Chrome
 npm run auditar:lighthouse   # LCP, INP, CLS y puntajes — necesita Chrome
 ```
 
-Todas menos la última corren en segundos y no necesitan nada instalado además del proyecto.
+Las siete primeras corren en segundos y no necesitan nada instalado además del proyecto. Las dos últimas abren un Chrome de verdad, porque miden cosas que sólo existen cuando hay layout: `auditar:movil` abre siete páginas a 390 y a 360 px y falla si alguna se puede arrastrar para el costado o si el precio de la ficha queda debajo del pliegue.
 
 **En Windows**, si PowerShell contesta *«no se puede cargar el archivo npm.ps1 porque la ejecución de scripts está deshabilitada»*, usar `npm.cmd` en lugar de `npm`:
 

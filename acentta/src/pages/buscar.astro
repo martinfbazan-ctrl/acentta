@@ -143,10 +143,23 @@ const atajos = CATEGORIAS_TODAS.map((c) => ({
     color: var(--gris-texto);
     pointer-events: none;
   }
+  /* Las sangrías no son decorativas: dejan libre el espacio donde
+     están la lupa y el botón de limpiar, que flotan encima del campo.
+     A la izquierda, la lupa arranca en 16 px y mide 19: con 48 px de
+     sangría quedan 13 de aire entre el ícono y la primera letra.
+
+     [ERROR CORREGIDO] Acá decía `var(--e-11)`, que no existe en la
+     escala —va 1, 2, 3, 4, 5, 6, 8, 10, 12…—. Una variable sin
+     declarar no deja la propiedad en un valor parecido: invalida la
+     declaración entera, y como `padding` es una sola declaración
+     abreviada, se caían también los 110 px de la derecha. El campo
+     terminaba con sangría cero y el texto se escribía por debajo de
+     la lupa. El síntoma se veía; la causa no aparecía por ningún
+     lado, porque el navegador no reporta nada. */
   .busqueda__campo {
     width: 100%;
     height: 52px;
-    padding: 0 110px 0 var(--e-11);
+    padding: 0 96px 0 var(--e-12);
     border: 1px solid var(--gris-500);
     border-radius: var(--r-tarjeta);
     background: var(--papel);

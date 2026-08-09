@@ -89,6 +89,24 @@ const unaSola = imagenes.length === 1;
     display: block;
   }
 
+  /* En una pantalla angosta, 4/5 a todo el ancho da una foto de más
+     de 440 px de alto. Sumada al encabezado y a las miniaturas, el
+     precio queda debajo del pliegue y hay que bajar para saber cuánto
+     sale — en la pantalla donde se decide la compra.
+
+     Pasa a cuadrada, que es la proporción que usan las tiendas en
+     móvil por este mismo motivo, y las miniaturas se achican. Se
+     recuperan unos 110 px: alcanza para que el nombre y el precio
+     entren sin bajar. La foto sigue completa a un toque, en el zoom.
+
+     Sólo por debajo de 900, que es donde la ficha es de una columna.
+     En escritorio la galería queda al lado del precio y el alto no
+     compite con nada. */
+  @media (max-width: 899px) {
+    .galeria__foto { aspect-ratio: 1 / 1; }
+    .galeria__tira { width: 62px; }
+  }
+
   .galeria__lupa {
     position: absolute;
     right: var(--e-3);

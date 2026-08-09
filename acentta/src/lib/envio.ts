@@ -35,14 +35,33 @@ export const ZONAS: Zona[] = [
   },
   {
     nombre: 'Gran Buenos Aires',
-    rangos: [[1600, 1900], [1650, 1900]],
+    rangos: [[1600, 1900]],
     base: 5400,
     porKiloExtra: 420,
     diasExtra: 1,
   },
   {
+    /* [ERROR CORREGIDO] Acá decía `[1500, 1599], [1901, 8199]`.
+       Ese segundo rango se comía enteras las dos zonas que vienen
+       abajo: la búsqueda devuelve la primera zona que coincide, y
+       Buenos Aires está antes en la lista, así que todo código postal
+       entre 1901 y 8199 caía acá. En la práctica:
+
+         Rosario, Córdoba, Mendoza, Tucumán, Salta, Santa Fe
+         → cobrados y prometidos como Provincia de Buenos Aires.
+
+       «Centro y Cuyo» y «Norte» existían en la tabla y no se usaban
+       nunca. La mitad del país pagaba $ 7.300 en lugar de $ 8.100 o
+       $ 9.400, y le prometíamos dos días extra en lugar de tres o
+       cuatro. El error no se veía: la calculadora contestaba rápido y
+       con una zona plausible.
+
+       Los códigos postales de la provincia no son un bloque: son
+       1500-1599, 1901-1999 y 6000-8299, con Santa Fe, Córdoba y el
+       norte intercalados en el medio. Escritos así, cada zona recibe
+       lo suyo y no hace falta que el orden de la lista salve nada. */
     nombre: 'Provincia de Buenos Aires',
-    rangos: [[1500, 1599], [1901, 8199]],
+    rangos: [[1500, 1599], [1901, 1999], [6000, 8299]],
     base: 7300,
     porKiloExtra: 520,
     diasExtra: 2,

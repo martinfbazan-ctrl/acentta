@@ -124,10 +124,29 @@ const pasos = [
 
           <div class="paso__campos">
             <div class="paso__par">
+              <!-- Los dos llevan ejemplo, no valor. Un ejemplo se
+                   borra solo al escribir la primera tecla; un valor
+                   escrito hay que seleccionarlo y borrarlo a mano, y
+                   quien lo ve no sabe si está mirando un dato suyo o
+                   un relleno de la demostración. Es la misma
+                   diferencia que hay entre el 0000 0000 0000 0000 del
+                   número de tarjeta y una tarjeta ya cargada. -->
               <Campo id="cp-checkout" etiqueta="Código postal" requerido modoEntrada="numeric"
-                     maxlargo={8} autocompletar="postal-code" />
+                     maxlargo={8} autocompletar="postal-code" marcador="5000" />
+              <!-- [ERROR CORREGIDO] Este campo se completaba solo con
+                   el resultado del cálculo de envío, y ese resultado
+                   no es una provincia: es una zona tarifaria. Quien
+                   escribía 5000 veía aparecer «Centro y Cuyo» en la
+                   casilla que dice «Provincia», y eso terminaba en la
+                   dirección del pedido y en la factura.
+                   Las zonas agrupan varias provincias por costo, así
+                   que no hay forma de deducir una de la otra. Se
+                   escribe; son dos palabras. El dato que sí importa
+                   para el precio —la zona— se muestra en el resumen,
+                   que es donde tiene sentido leerlo. -->
               <Campo id="provincia" etiqueta="Provincia" requerido autocompletar="address-level1"
-                     ayuda="Se completa sola con el código postal." />
+                     marcador="Córdoba"
+                     ayuda="Como figura en tu documento. Va en la factura." />
             </div>
             <Campo id="ciudad" etiqueta="Ciudad o localidad" requerido autocompletar="address-level2" />
             <div class="paso__par paso__par--calle">
@@ -252,28 +271,63 @@ const pasos = [
               <dd class="tabular" data-ck-total-2>$ 0</dd>
             </div>
           </dl>
-
-          <!-- La cuota va pegada al total y no en la sección de pago:
-               en Latam, para mucha gente la decisión no es el precio
-               sino la cuota, y tiene que estar donde está el número
-               grande, no dos pantallas más abajo. -->
-          <p class="resumen__cuotas" data-ck-cuotas></p>
-
-          <!-- Confirmar, justo debajo del plan de pago elegido y antes
-               de la fecha de llegada. Es el orden en que se decide:
-               cuánto, en cuántas cuotas, listo — y recién después
-               cuándo llega, que es lo que tranquiliza después de
-               haber apretado. Aparece sólo en el paso de pago: en los
-               dos primeros sería un botón que promete terminar algo
-               que todavía no está completo. -->
-          <div class="resumen-pedido__accion" hidden data-ck-accion>
-            <Boton tipo="submit" tamano="grande" ancho form="forma-pago" data-pagar>
-              <span data-texto-pagar>Confirmar compra</span>
-            </Boton>
-          </div>
-
-          <p class="resumen-pedido__entrega" data-ck-entrega></p>
         </div>
+
+        <!-- ATENCIÓN: de acá para abajo, todo vive FUERA del bloque
+             plegable, y no es un detalle de orden.
+
+             En móvil el detalle arranca plegado —ocupar media pantalla
+             con la lista de productos mientras se completa un
+             formulario es un estorbo—. Cuando la cuota y el botón de
+             confirmar estaban adentro, plegarlos plegaba también la
+             única forma de terminar la compra: en un teléfono había
+             que descubrir «Ver el detalle» para poder pagar. No era
+             un problema estético, era un callejón sin salida en la
+             última pantalla del embudo.
+
+             Lo que se pliega es el detalle. Lo que decide y lo que
+             concreta, no. -->
+
+        <!-- La cuota va pegada al total y no en la sección de pago:
+             en Latam, para mucha gente la decisión no es el precio
+             sino la cuota, y tiene que estar donde está el número
+             grande, no dos pantallas más abajo. -->
+        <p class="resumen__cuotas" data-ck-cuotas></p>
+
+        <!-- Confirmar, justo debajo del plan de pago elegido y antes
+             de la fecha de llegada. Es el orden en que se decide:
+             cuánto, en cuántas cuotas, listo — y recién después
+             cuándo llega, que es lo que tranquiliza después de
+             haber apretado. Aparece sólo en el paso de pago: en los
+             dos primeros sería un botón que promete terminar algo
+             que todavía no está completo. -->
+        <div class="resumen-pedido__accion" hidden data-ck-accion>
+          <Boton tipo="submit" tamano="grande" ancho form="forma-pago" data-pagar>
+            <span data-texto-pagar>Confirmar compra</span>
+          </Boton>
+        </div>
+
+        <p class="resumen-pedido__entrega" data-ck-entrega></p>
+
+        <!-- Lo elegido, en un solo lugar. Antes la tarjeta mostraba
+             el precio y la fecha, pero no a dónde va ni cómo se paga:
+             para repasarlo había que volver dos pasos atrás, y volver
+             atrás en un checkout es la forma más común de no volver.
+             Cada fila aparece sola cuando hay algo que mostrar. -->
+        <dl class="resumen-pedido__datos" data-ck-datos hidden>
+          <div class="resumen-pedido__dato" hidden data-ck-fila-entrega>
+            <dt>Entrega</dt>
+            <dd data-ck-metodo-envio></dd>
+          </div>
+          <div class="resumen-pedido__dato" hidden data-ck-fila-direccion>
+            <dt>Dirección</dt>
+            <dd data-ck-direccion></dd>
+          </div>
+          <div class="resumen-pedido__dato" hidden data-ck-fila-pago>
+            <dt>Pago</dt>
+            <dd data-ck-metodo-pago></dd>
+          </div>
+        </dl>
 
         <ul class="resumen__garantias">
           <li>
@@ -342,8 +396,23 @@ const pasos = [
   .progreso__paso[aria-current='step'] { border-top-color: var(--naranja-accion); color: var(--tinta); }
   .progreso__paso[aria-current='step'] .progreso__numero { background: var(--naranja-accion); color: var(--blanco); }
 
-  /* ---- Cuerpo ---- */
-  .checkout__cuerpo { display: grid; gap: var(--e-8); align-items: start; }
+  /* ---- Cuerpo ----
+     `minmax(0, 1fr)` y no el `1fr` implícito. Una columna de grilla
+     mide por defecto `auto`, que se niega a achicarse por debajo del
+     contenido más ancho que tenga adentro: basta un nombre de
+     producto largo o un total de siete cifras para que la columna
+     crezca más que la pantalla y la tarjeta del pedido termine
+     cortada por el borde derecho. Con `minmax(0, …)` la columna puede
+     achicarse y el contenido se acomoda adentro, que es lo que uno
+     espera que pase.
+     En escritorio ya estaba puesto; faltaba justo en el caso de una
+     sola columna, que es el de móvil. */
+  .checkout__cuerpo {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--e-8);
+    align-items: start;
+  }
   @media (min-width: 900px) {
     /* La columna del resumen pasó de 380 px a 420. Es la que lleva
        el total, las cuotas y la fecha de entrega: los tres datos que
@@ -478,6 +547,28 @@ const pasos = [
     padding: var(--e-3);
     background: var(--verde-wash);
     border-radius: var(--r-tarjeta);
+  }
+
+  /* ---- Lo elegido ---- */
+  .resumen-pedido__datos {
+    display: flex; flex-direction: column; gap: var(--e-2);
+    padding-top: var(--e-4);
+    border-top: 1px solid var(--gris-200);
+    font-size: var(--t-meta);
+  }
+  .resumen-pedido__dato {
+    display: grid;
+    grid-template-columns: 76px minmax(0, 1fr);
+    gap: var(--e-3);
+    align-items: baseline;
+  }
+  .resumen-pedido__dato dt { color: var(--gris-texto); }
+  .resumen-pedido__dato dd {
+    margin: 0; color: var(--tinta); font-weight: 500;
+    line-height: 1.45;
+    /* Una dirección larga se parte donde haga falta antes que
+       ensanchar la tarjeta. */
+    overflow-wrap: anywhere;
   }
 
   :global(.ck-item) { display: flex; gap: var(--e-3); align-items: flex-start; }

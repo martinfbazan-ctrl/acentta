@@ -15,11 +15,14 @@
     "preview": "astro preview",
     "check": "astro check",
     "vista-previa": "astro build && node generar-vista-previa.mjs",
-    "auditar": "npm run check && npm run vista-previa && node pruebas/auditoria.mjs && node pruebas/buscador.mjs && node pruebas/teclado.mjs && node pruebas/publicacion.mjs",
+    "auditar": "npm run check && npm run vista-previa && node pruebas/auditoria.mjs && node pruebas/envio.mjs && node pruebas/buscador.mjs && node pruebas/teclado.mjs && node pruebas/checkout.mjs && node pruebas/publicacion.mjs",
     "auditar:a11y": "node pruebas/auditoria.mjs",
     "auditar:teclado": "node pruebas/teclado.mjs",
     "auditar:buscador": "node pruebas/buscador.mjs",
+    "auditar:envio": "node pruebas/envio.mjs",
+    "auditar:checkout": "node pruebas/checkout.mjs",
     "auditar:lighthouse": "node pruebas/lighthouse.mjs",
+    "auditar:movil": "node pruebas/movil.mjs",
     "auditar:publicacion": "node pruebas/publicacion.mjs"
   },
   "dependencies": {

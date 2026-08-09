@@ -20,7 +20,7 @@
  *   npm i -D lighthouse chrome-launcher
  *
  * En Windows, si PowerShell contesta "la ejecución de scripts está
- * deshabilitada en este sistema", usá `npm.cmd` en lugar de `npm`. Es
+ * deshabilitada en este sistema", usar `npm.cmd` en lugar de `npm`. Es
  * el mismo programa: `npm` a secas resuelve al envoltorio npm.ps1, que
  * la política de ejecución bloquea de fábrica.
  */
@@ -57,7 +57,7 @@ try {
   ({ launch } = await import('chrome-launcher'));
 } catch {
   console.error(
-    'Faltan las dependencias de Lighthouse. Instalalas con:\n' +
+    'Faltan las dependencias de Lighthouse. Instalar con:\n' +
     '  npm i -D lighthouse chrome-launcher\n' +
     'Pesan bastante, por eso no vienen con el proyecto.'
   );
@@ -128,7 +128,7 @@ async function esperar(url, intentos = 40) {
 if (!(await esperar(base))) {
   console.error(
     '\nEl servidor no contestó en 20 segundos.\n' +
-    '  · ¿Corriste `npm run build` antes? Sin dist/ no hay nada que servir.\n' +
+    '  · ¿Se corrió `npm run build` antes? Sin dist/ no hay nada que servir.\n' +
     '  · ¿Hay otra cosa ocupando el puerto ' + PUERTO + '?\n'
   );
   cerrar();
@@ -155,7 +155,7 @@ try {
     '  · Chrome no está instalado, o está en una ruta que el lanzador no busca.\n' +
     '    Se le puede indicar a mano: setx CHROME_PATH "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"\n' +
     '    y volver a abrir la terminal.\n' +
-    '  · Hay demasiadas instancias de Chrome abiertas. Cerralas y probá de nuevo.\n'
+    '  · Hay demasiadas instancias de Chrome abiertas. Cerralas y probar de nuevo.\n'
   );
   cerrar();
   process.exit(1);

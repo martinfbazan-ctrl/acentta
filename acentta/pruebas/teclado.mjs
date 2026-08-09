@@ -28,7 +28,7 @@ const AQUI = path.dirname(fileURLToPath(import.meta.url));
 const VISTA = path.join(AQUI, '..', '..', 'vista-previa');
 
 if (!fs.existsSync(VISTA)) {
-  console.error('No existe vista-previa/. Corré primero: npm run vista-previa');
+  console.error('No existe vista-previa/. Correr primero: npm run vista-previa');
   process.exit(1);
 }
 

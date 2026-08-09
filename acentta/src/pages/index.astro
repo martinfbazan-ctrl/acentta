@@ -444,15 +444,20 @@ const promedio =
     margin-block: var(--e-12);
   }
 
+  /* [ERROR CORREGIDO] Decía `--e-7` y `--e-9`, que no existen: la
+     escala salta de 6 a 8 y de 8 a 10 a propósito, para que no haya
+     veinte separaciones casi iguales. Una variable sin declarar
+     invalida la propiedad entera, así que estas dos filas no tenían
+     separación ninguna — ni la de móvil ni la de escritorio. */
   .franja-rubro__fila {
     display: grid;
-    gap: var(--e-7);
+    gap: var(--e-8);
   }
   @media (min-width: 900px) {
     .franja-rubro__fila {
       grid-template-columns: minmax(240px, 300px) 1fr;
       align-items: center;
-      gap: var(--e-9);
+      gap: var(--e-10);
     }
   }
 
