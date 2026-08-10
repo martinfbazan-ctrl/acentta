@@ -53,7 +53,32 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-img, picture, svg, video { max-width: 100%; display: block; }
+/* `height: auto` no es decorativo, es lo que hace que `aspect-ratio`
+   funcione.
+   ---------------------------------------------------------------
+   Todas las imágenes del sitio declaran `width` y `height` en el
+   marcado, para que el navegador reserve el espacio antes de
+   descargarlas y nada se mueva al aparecer. El navegador convierte
+   esos dos atributos en un alto y un ancho de verdad.
+
+   Y `aspect-ratio` sólo entra en juego cuando una de las dos medidas
+   quedó en `auto`. Si el CSS pone `width: 100%` y el atributo ya fijó
+   el alto, las dos están fijadas: la proporción se ignora en
+   silencio y la imagen sale con el ancho de la columna y el alto del
+   atributo. Deformada, y enorme.
+
+   Eso es exactamente lo que pasaba con la foto de la ficha: 1250 px
+   de alto —el valor del atributo, clavado— en una columna de 358.
+   El precio quedaba a 1770 px, a dos pantallas y media de scroll. El
+   defecto estaba desde el principio y también en escritorio; se veía
+   como «la foto es muy grande», que es lo que uno tiende a corregir
+   cambiando la proporción, sin resultado, porque la proporción no se
+   estaba aplicando.
+
+   Con el alto en `auto`, cada regla `aspect-ratio` del sitio empieza
+   a funcionar. Los componentes que sí quieren un alto fijo lo
+   declaran ellos y le ganan a esta línea por especificidad. */
+img, picture, svg, video { max-width: 100%; height: auto; display: block; }
 input, button, textarea, select { font: inherit; color: inherit; }
 
 /* Sin scroll horizontal accidental.

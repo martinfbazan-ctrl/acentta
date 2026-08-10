@@ -158,6 +158,16 @@ De paso apareció otro hueco: los códigos 8200-8299 no los cubría nadie.
 
 **Flex sin permiso de encoger.** El mismo problema con otra propiedad. Un hijo de flex arranca con `min-width: auto`; un `<input>` tiene ancho natural de unos veinte caracteres, así que el botón de al lado se iba del borde. La calculadora de envío de la ficha se salía 41 px a 360 px de ancho. Cuatro casos.
 
+**`aspect-ratio` no se estaba aplicando en ninguna imagen del sitio.** El más caro de los cuatro, y el que explica de verdad la queja original de que «la foto es muy grande».
+
+Todas las imágenes declaran `width` y `height` en el marcado, para que el navegador reserve el espacio antes de descargarlas — eso es lo que mantiene el CLS en cero. El navegador convierte esos atributos en medidas reales, y **`aspect-ratio` sólo entra en juego cuando una de las dos medidas quedó en `auto`**. Como el CSS ponía el ancho y el atributo ya había puesto el alto, las dos estaban fijadas: la proporción se ignoraba en silencio.
+
+La foto de la ficha salía con **1250 px de alto** —el valor del atributo, clavado— dentro de una columna de 358. El precio quedaba a 1.770 px: dos pantallas y media de scroll. Y no era un problema de móvil: pasaba también en escritorio, y estaba desde el primer día.
+
+Lo instructivo es cómo se llegó. El síntoma («la foto ocupa demasiado») invita a cambiar la proporción, que es lo que se hizo primero — y no cambió nada, porque la proporción no se estaba aplicando. Sólo apareció cuando la medición mostró dos números juntos: **1250 px de alto, y casi idéntico a 390 y a 360 px de ancho**. Una foto que ocupa todo el ancho tiene que achicarse cuando la pantalla se angosta. Que no se moviera descartaba la foto como causa.
+
+Se arregla con una declaración: `height: auto` en la regla global de imágenes. Con eso las doce reglas de proporción del sitio empiezan a funcionar. Los componentes que sí quieren un alto fijo lo declaran ellos y le ganan por especificidad.
+
 **Lo que tienen en común.** Ninguno rompe nada de forma visible para una máquina. Son errores de valor y de omisión, no de estructura, y por eso hicieron falta preguntas nuevas: ¿existe cada variable que se usa?, ¿se puede pagar sin desplegar nada?, ¿alguna zona se pisa con otra?, ¿alguna grilla declara columnas sólo para pantalla ancha?
 
 **Y uno de los defectos lo encontró la prueba nueva, no una persona.** Los desbordes del carrito y de la calculadora no los reportó nadie: aparecieron la primera vez que se corrió `auditar:movil`. En la misma corrida quedó claro que la métrica de altura del precio estaba mal escrita —buscaba `[data-precio]`, que es el atributo de las tarjetas del listado, así que en las páginas de grilla medía la primera tarjeta y reportaba 2.441 px—. El número era real; el elemento, el equivocado.

@@ -280,6 +280,16 @@ const esquema = {
 
   /* ---- Columna de compra ---- */
   .ficha__compra { display: flex; flex-direction: column; gap: var(--e-4); min-width: 0; }
+
+  /* Ritmo más ajustado en pantalla angosta. En escritorio la columna
+     de compra tiene todo el alto que quiera al lado de la foto; en un
+     teléfono va debajo, y cada separación de más empuja el precio un
+     poco más lejos. Cuatro separaciones de 16 px entre los badges y el
+     precio son 64 px que en escritorio son aire y acá son scroll. */
+  @media (max-width: 899px) {
+    .ficha__cuerpo { gap: var(--e-5); }
+    .ficha__compra { gap: var(--e-3); }
+  }
   .ficha__marcas { display: flex; flex-wrap: wrap; gap: var(--e-2); }
   .ficha__nombre {
     font-size: clamp(1.5rem, 1.2rem + 1.3vw, 2rem);

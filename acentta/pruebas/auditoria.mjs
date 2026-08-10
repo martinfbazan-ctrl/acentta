@@ -484,7 +484,47 @@ const grillas = (() => {
   return hallazgos;
 })();
 
+/* ============================================================
+   LA REGLA QUE HACE FUNCIONAR A `aspect-ratio`
+   ------------------------------------------------------------
+   Todas las imágenes del sitio declaran `width` y `height` en el
+   marcado para reservar el espacio antes de descargarse. El
+   navegador convierte esos atributos en medidas reales, y
+   `aspect-ratio` sólo entra en juego cuando una de las dos quedó en
+   `auto`. Si el CSS pone el ancho y el atributo ya puso el alto,
+   las dos están fijadas: la proporción se ignora sin decir nada.
+
+   Eso tuvo a la foto de la ficha en 1250 px de alto —el valor del
+   atributo, clavado— dentro de una columna de 358, en móvil y en
+   escritorio. El precio quedaba a 1770 px. Se corrige con una sola
+   declaración global, `height: auto`, y por eso hay que vigilarla:
+   si alguien la saca, vuelven a romperse las doce reglas de
+   proporción del sitio a la vez, y ninguna avisa.
+   ============================================================ */
+const alturaAuto = (() => {
+  const dirAstro = path.join(DIST, '_astro');
+  if (!fs.existsSync(dirAstro)) return true;
+  const css = fs.readdirSync(dirAstro).filter((f) => f.endsWith('.css'))
+    .map((f) => fs.readFileSync(path.join(dirAstro, f), 'utf8')).join('');
+  /* Se recorren los pares «selector { cuerpo }». El patrón excluye
+     llaves adentro del cuerpo, así que una consulta de medios no lo
+     confunde: de `@media(...){.a{...}}` sale el `.a{...}` de adentro,
+     que es lo que interesa. */
+  for (const m of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+    const selector = m[1].trim();
+    /* La global es la que nombra al elemento sin clase, sin
+       identificador y sin atributo: `img` o `img,picture,svg,video`. */
+    if (/[.#[]|@/.test(selector)) continue;
+    if (!selector.split(',').some((s) => s.trim() === 'img')) continue;
+    if (/height:\s*auto/.test(m[2])) return true;
+  }
+  return false;
+})();
+
 console.log('\n=== CSS · lo que el navegador descarta sin avisar ===');
+if (!alturaAuto) {
+  console.log('  ✗ la regla global de <img> perdió `height: auto` — sin eso `aspect-ratio` no se aplica y las imágenes toman el alto del atributo');
+}
 if (cssVars.length === 0) console.log('  todas las variables usadas están declaradas');
 else for (const { v, donde } of cssVars) {
   console.log(`  ✗ ${v} se usa sin estar declarada (${donde}) — invalida la propiedad entera, sin avisar`);
@@ -505,6 +545,7 @@ else {
   }
 }
 
-const errores = problemas.length + fallaC.length + estabilidad.length + teclado.length + cssVars.length + grillas.length;
+const errores = problemas.length + fallaC.length + estabilidad.length + teclado.length
+  + cssVars.length + grillas.length + (alturaAuto ? 0 : 1);
 console.log(`\n${errores === 0 ? '✓ auditoría limpia' : `✗ ${errores} hallazgo(s)`}\n`);
 process.exit(errores === 0 ? 0 : 1);
