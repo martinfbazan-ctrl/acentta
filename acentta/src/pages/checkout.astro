@@ -536,6 +536,19 @@ const pasos = [
 
   .resumen-pedido__accion { display: flex; flex-direction: column; gap: var(--e-2); }
 
+  /* Si el cobro falla, el aviso va pegado al botón que se apretó, no
+     arriba de todo: quien acaba de tocar «Confirmar compra» está
+     mirando el botón, y un mensaje a dos pantallas de distancia es un
+     mensaje que no existe.
+     Va con `:global()` porque lo crea el guion, y lo que crea el
+     guion nace sin la marca de alcance que Astro le pone al marcado. */
+  .resumen-pedido__accion :global(.aviso-pago) {
+    font-size: var(--t-meta);
+    line-height: 1.45;
+    color: var(--rojo);
+    font-weight: 500;
+  }
+
   /* Cuando el paso sólo tiene el enlace de volver, se alinea a la
      izquierda en vez de quedar solo contra el borde derecho. */
   .paso__acciones--solas { justify-content: flex-start; }

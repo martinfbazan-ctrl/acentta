@@ -11,6 +11,7 @@ node_modules/
 
 # Salida de `astro build` y su caché de tipos.
 dist/
+dist-vercel/
 .astro/
 
 # Copia local para revisar el sitio sin servidor. La rehace

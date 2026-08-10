@@ -257,7 +257,7 @@ if (contenedor) {
 
       if (pasoActual < 3) { irAPaso(pasoActual + 1); return; }
 
-      confirmar(forma);
+      void confirmar(forma);
     });
 
     forma.querySelector('[data-atras]')?.addEventListener('click', () => irAPaso(pasoActual - 1));
@@ -482,7 +482,67 @@ if (contenedor) {
   /* ============================================================
      CONFIRMAR
      ============================================================ */
-  function confirmar(forma: HTMLFormElement) {
+  /**
+   * Manda el pedido a cobrar.
+   *
+   * Lo que viaja son identificadores y cantidades. Ni un precio: el
+   * total lo calcula la función del servidor leyendo el catálogo, y
+   * es el único que cuenta. Si acá se mandara un precio habría que
+   * decidir si creerle, y la respuesta correcta a esa pregunta
+   * siempre es que no.
+   *
+   * Devuelve el enlace de Mercado Pago, o null si el cobro todavía no
+   * está configurado en este despliegue —y entonces sigue el camino
+   * simulado, que es lo que hace hoy el sitio publicado—.
+   */
+  async function pedirCobro(): Promise<string | null> {
+    const campo = (id: string) => (document.querySelector<HTMLInputElement>(`#${id}`)?.value ?? '').trim();
+
+    const respuesta = await fetch('/api/crear-pago', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        items: leer().map((i) => ({ id: i.id, cantidad: i.cantidad, variante: i.variante })),
+        metodoEnvio: metodoEnvioRadios.find((r) => r.checked)?.value ?? 'domicilio',
+        metodoPago: metodoPagoRadios.find((r) => r.checked)?.value ?? 'tarjeta',
+        comprador: {
+          email: campo('email'), nombre: campo('nombre'), apellido: campo('apellido'),
+          dni: campo('dni'), telefono: campo('telefono'),
+        },
+        entrega: {
+          cp: campo('cp-checkout'), provincia: campo('provincia'), ciudad: campo('ciudad'),
+          calle: campo('calle'), numero: campo('numero'), piso: campo('piso'),
+          entre: campo('entre'), referencias: campo('referencias'),
+        },
+      }),
+    });
+
+    /* 503 es «este despliegue no tiene el cobro conectado». No es un
+       error que haya que mostrarle a nadie: es el estado normal
+       mientras el sitio sea una demostración. */
+    if (respuesta.status === 503) return null;
+
+    const datos = (await respuesta.json()) as { enlace?: string; error?: string };
+    if (!respuesta.ok || !datos.enlace) {
+      throw new Error(datos.error ?? 'No pudimos abrir el pago. Probá de nuevo en un momento.');
+    }
+    return datos.enlace;
+  }
+
+  function mostrarErrorDePago(mensaje: string) {
+    const donde = document.querySelector<HTMLElement>('[data-ck-accion]');
+    if (!donde) return;
+    let aviso = donde.querySelector<HTMLElement>('.aviso-pago');
+    if (!aviso) {
+      aviso = document.createElement('p');
+      aviso.className = 'aviso-pago';
+      aviso.setAttribute('role', 'alert');
+      donde.appendChild(aviso);
+    }
+    aviso.textContent = mensaje;
+  }
+
+  async function confirmar(forma: HTMLFormElement) {
     /* El botón ya no está adentro del formulario: se mudó a la tarjeta
        del pedido y se conecta con el atributo `form`. Se busca en el
        documento, no dentro de la forma. */
@@ -490,6 +550,7 @@ if (contenedor) {
     const boton = document.querySelector<HTMLButtonElement>('[data-pagar]')!;
     boton.dataset.cargando = 'true';
     boton.setAttribute('aria-busy', 'true');
+    boton.disabled = true;
     if (!boton.querySelector('.boton__girador')) {
       const girador = document.createElement('span');
       girador.className = 'boton__girador';
@@ -497,9 +558,29 @@ if (contenedor) {
       boton.appendChild(girador);
     }
 
-    /* El pedido se guarda para que la confirmación pueda mostrarlo.
-       No hay servidor: es lo más parecido a un pedido real que se
-       puede hacer sin inventar que existe uno. */
+    try {
+      const enlace = await pedirCobro();
+      if (enlace) {
+        /* El carrito NO se vacía acá. Todavía no se pagó nada: si la
+           persona vuelve atrás desde Mercado Pago, tiene que
+           encontrar su carrito donde lo dejó. Se vacía en la
+           confirmación, con el pedido ya registrado. */
+        location.href = enlace;
+        return;
+      }
+    } catch (err) {
+      boton.dataset.cargando = 'false';
+      boton.removeAttribute('aria-busy');
+      boton.disabled = false;
+      mostrarErrorDePago(err instanceof Error ? err.message : 'No pudimos abrir el pago.');
+      return;
+    }
+
+    /* ---- Camino simulado ----
+       Sin cobro configurado, el sitio se comporta como hasta ahora:
+       arma un pedido de mentira y va a la confirmación. Es lo que
+       mantiene la demostración del portafolio en pie mientras las
+       credenciales no estén puestas. */
     const items = leer();
     const r = resumen(leerCP(), items);
     const numero = 'AC-' + String(Date.now()).slice(-8);
