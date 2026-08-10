@@ -210,9 +210,39 @@ const MEDIDOR = `(() => {
     ? Math.round(precio.getBoundingClientRect().top + scrollY)
     : null;
 
+  /* Si el precio queda abajo, hace falta saber QUÉ lo empuja. Sin
+     esto se termina culpando a la foto por descarte, que es
+     exactamente como se pierde una tarde: la foto es lo más grande
+     que se ve, pero lo más grande que se ve no siempre es lo que
+     ocupa el lugar. Se mide cada bloque de arriba, uno por uno. */
+  const desglose = [];
+  if (enFicha) {
+    const mirar = [
+      ['scroll de la página', null],
+      ['header (encabezado)', 'header'],
+      ['migas', '.ficha__migas'],
+      ['galería completa', '.ficha__galeria'],
+      ['  · marco de la foto', '.galeria__marco'],
+      ['  · foto', '.galeria__foto'],
+      ['  · miniaturas', '.galeria__tiras'],
+      ['columna de compra', '.ficha__compra'],
+      ['  · badges', '.ficha__marcas'],
+      ['  · nombre', '.ficha__nombre'],
+      ['  · rating', '.ficha__rating'],
+      ['  · precio', '.ficha__precio'],
+    ];
+    for (const [rotulo, sel] of mirar) {
+      if (sel === null) { desglose.push({ rotulo, arriba: 0, alto: Math.round(scrollY) }); continue; }
+      const el = document.querySelector(sel);
+      if (!el) { desglose.push({ rotulo, arriba: null, alto: null }); continue; }
+      const r = el.getBoundingClientRect();
+      desglose.push({ rotulo, arriba: Math.round(r.top + scrollY), alto: Math.round(r.height) });
+    }
+  }
+
   return JSON.stringify({
     ancho, desborde, alto: innerHeight,
-    alturaPrecio,
+    alturaPrecio, desglose,
     culpables: culpables.slice(0, 6).map(({ sel, sobra, mide }) => ({ sel, sobra, mide })),
   });
 })()`;
@@ -253,8 +283,15 @@ for (const { w, h, nombre } of ANCHOS) {
        Se mide contra el alto real del viewport, no contra un número
        inventado. */
     if (m.alturaPrecio !== null) {
-      ok(m.alturaPrecio < m.alto,
-        `${nombre} · ${ruta} · el precio queda a ${m.alturaPrecio} px, debajo del pliegue (${m.alto} px). La foto está ocupando el lugar de la decisión.`);
+      const entra = m.alturaPrecio < m.alto;
+      ok(entra, `${nombre} · ${ruta} · el precio queda a ${m.alturaPrecio} px, debajo del pliegue (${m.alto} px)`);
+      if (!entra) {
+        console.log('        qué hay arriba del precio:');
+        for (const d of m.desglose) {
+          if (d.arriba === null) { console.log(`          ${d.rotulo.padEnd(24)} (no existe)`); continue; }
+          console.log(`          ${d.rotulo.padEnd(24)} empieza en ${String(d.arriba).padStart(5)} px · mide ${String(d.alto).padStart(5)} px`);
+        }
+      }
     }
   }
   console.log('');
