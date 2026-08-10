@@ -425,7 +425,15 @@ const pasos = [
   .paso { display: flex; flex-direction: column; gap: var(--e-5); }
   .paso__nota { font-size: 0.9375rem; color: var(--gris-800); line-height: 1.55; max-width: 60ch; }
   .paso__campos { display: flex; flex-direction: column; gap: var(--e-5); }
-  .paso__par { display: grid; gap: var(--e-4); }
+  .paso__par { display: grid;
+    /* Una columna de grilla mide `auto`, y `auto` se niega a achicarse
+     por debajo del contenido más ancho que tenga adentro: un nombre
+     largo, un total de siete cifras o un input con ancho propio
+     estiran la columna más que la pantalla y el bloque termina
+     cortado por el borde derecho. `minmax(0, …)` le da permiso de
+     achicarse. En el caso de varias columnas ya estaba puesto;
+     faltaba justo en el de una sola, que es el de móvil. */
+    grid-template-columns: minmax(0, 1fr); gap: var(--e-4); }
   @media (min-width: 640px) {
     .paso__par { grid-template-columns: 1fr 1fr; }
     .paso__par--calle { grid-template-columns: 2.2fr 1fr; }

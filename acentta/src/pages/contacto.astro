@@ -78,7 +78,15 @@ import Boton from '@componentes/Boton.astro';
 <style>
   .contacto { padding-block: var(--e-6) var(--e-16); }
   .contacto__migas { margin-bottom: var(--e-8); }
-  .contacto__cuerpo { display: grid; gap: var(--e-12); align-items: start; }
+  .contacto__cuerpo { display: grid;
+    /* Una columna de grilla mide `auto`, y `auto` se niega a achicarse
+     por debajo del contenido más ancho que tenga adentro: un nombre
+     largo, un total de siete cifras o un input con ancho propio
+     estiran la columna más que la pantalla y el bloque termina
+     cortado por el borde derecho. `minmax(0, …)` le da permiso de
+     achicarse. En el caso de varias columnas ya estaba puesto;
+     faltaba justo en el de una sola, que es el de móvil. */
+    grid-template-columns: minmax(0, 1fr); gap: var(--e-12); align-items: start; }
   @media (min-width: 900px) {
     .contacto__cuerpo { grid-template-columns: minmax(0, 1fr) minmax(0, 480px); gap: var(--e-16); }
   }

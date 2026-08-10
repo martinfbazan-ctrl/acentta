@@ -154,7 +154,13 @@ Tres defectos que llegaron a estar publicados, los tres invisibles para las audi
 
 De paso apareció otro hueco: los códigos 8200-8299 no los cubría nadie.
 
-**Lo que tienen en común.** Ninguno rompe nada de forma visible para una máquina. Son errores de valor, no de estructura, y por eso hicieron falta preguntas nuevas: ¿existe cada variable que se usa?, ¿se puede pagar sin desplegar nada?, ¿alguna zona se pisa con otra?
+**Grillas que no se pueden achicar.** Una columna de grilla mide `auto` si no se dice otra cosa, y `auto` se niega a achicarse por debajo del contenido más ancho que tenga adentro. Un nombre largo, un total de siete cifras o un `<input>` —que trae ancho propio— estiran la columna más que la pantalla, y el bloque queda cortado por el borde derecho. El patrón era siempre el mismo: `display: grid` sin columnas, y más abajo una consulta de medios que sí las pone para escritorio. Quien lo escribió pensó la versión ancha y dio por sentada la angosta. **Diez casos**, de los cuales dos se veían: el carrito, cortado 49 px en Android, y el resumen del pedido.
+
+**Flex sin permiso de encoger.** El mismo problema con otra propiedad. Un hijo de flex arranca con `min-width: auto`; un `<input>` tiene ancho natural de unos veinte caracteres, así que el botón de al lado se iba del borde. La calculadora de envío de la ficha se salía 41 px a 360 px de ancho. Cuatro casos.
+
+**Lo que tienen en común.** Ninguno rompe nada de forma visible para una máquina. Son errores de valor y de omisión, no de estructura, y por eso hicieron falta preguntas nuevas: ¿existe cada variable que se usa?, ¿se puede pagar sin desplegar nada?, ¿alguna zona se pisa con otra?, ¿alguna grilla declara columnas sólo para pantalla ancha?
+
+**Y uno de los defectos lo encontró la prueba nueva, no una persona.** Los desbordes del carrito y de la calculadora no los reportó nadie: aparecieron la primera vez que se corrió `auditar:movil`. En la misma corrida quedó claro que la métrica de altura del precio estaba mal escrita —buscaba `[data-precio]`, que es el atributo de las tarjetas del listado, así que en las páginas de grilla medía la primera tarjeta y reportaba 2.441 px—. El número era real; el elemento, el equivocado.
 
 ---
 

@@ -196,8 +196,16 @@ const MEDIDOR = `(() => {
     });
   }
 
-  /* ¿A qué altura queda el precio en la ficha? */
-  const precio = document.querySelector('.ficha__precio, [data-precio]');
+  /* ¿A qué altura queda el precio de la ficha?
+     [CORREGIDO] Antes esto buscaba '.ficha__precio, [data-precio]'.
+     El segundo selector es el que llevan las tarjetas de producto
+     para que el filtro las ordene sin ir a la red, así que en las
+     páginas de listado y en el carrito la medición agarraba la
+     primera tarjeta de la grilla y reportaba dos mil y pico de
+     píxeles. El número era real; el elemento, el equivocado.
+     Ahora se mide una sola cosa, en una sola página. */
+  const enFicha = !!document.querySelector('.ficha__compra');
+  const precio = enFicha ? document.querySelector('.ficha__precio') : null;
   const alturaPrecio = precio
     ? Math.round(precio.getBoundingClientRect().top + scrollY)
     : null;
@@ -246,7 +254,7 @@ for (const { w, h, nombre } of ANCHOS) {
        inventado. */
     if (m.alturaPrecio !== null) {
       ok(m.alturaPrecio < m.alto,
-        `${nombre} · el precio de la ficha queda a ${m.alturaPrecio} px, debajo del pliegue (${m.alto} px). La foto está ocupando el lugar de la decisión.`);
+        `${nombre} · ${ruta} · el precio queda a ${m.alturaPrecio} px, debajo del pliegue (${m.alto} px). La foto está ocupando el lugar de la decisión.`);
     }
   }
   console.log('');

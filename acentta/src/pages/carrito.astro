@@ -189,7 +189,15 @@ const sugeridos = masVendidos(4);
   .carro-vacio__acciones { display: flex; flex-wrap: wrap; gap: var(--e-3); margin-top: var(--e-2); }
 
   /* ---- Carrito ---- */
-  .carro { display: grid; gap: var(--e-8); align-items: start; }
+  .carro { display: grid;
+    /* Una columna de grilla mide `auto`, y `auto` se niega a achicarse
+     por debajo del contenido más ancho que tenga adentro: un nombre
+     largo, un total de siete cifras o un input con ancho propio
+     estiran la columna más que la pantalla y el bloque termina
+     cortado por el borde derecho. `minmax(0, …)` le da permiso de
+     achicarse. En el caso de varias columnas ya estaba puesto;
+     faltaba justo en el de una sola, que es el de móvil. */
+    grid-template-columns: minmax(0, 1fr); gap: var(--e-8); align-items: start; }
   /* El resumen ocupa cerca de la mitad del ancho útil. No es sólo un
      total: es la pantalla donde se decide seguir o abandonar, y todo
      lo que reduce riesgo —envío, cuotas, garantías— vive acá. Darle
@@ -244,7 +252,8 @@ const sugeridos = masVendidos(4);
   .resumen__titulo { font-size: var(--t-seccion); font-weight: 600; letter-spacing: -0.01em; }
 
   .resumen__cp { display: flex; gap: var(--e-3); align-items: flex-start; }
-  .resumen__cp .campo { flex: 1; }
+  .resumen__cp .campo { flex: 1; min-width: 0; }
+  .resumen__cp .boton { flex: none; }
   .resumen__cp .boton { margin-top: 26px; }
 
   /* Las líneas del resumen, las cuotas y las garantías viven ahora en

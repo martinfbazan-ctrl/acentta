@@ -91,7 +91,16 @@ const yaEsGratis = precioProducto >= UMBRAL_ENVIO_GRATIS;
   .calc__aviso { font-size: 0.875rem; color: var(--gris-800); margin-bottom: var(--e-4); line-height: 1.5; }
 
   .calc__forma { display: flex; gap: var(--e-3); align-items: flex-start; }
-  .calc__campo { flex: 1; }
+  /* `min-width: 0` no es cosmético. Un hijo de flex arranca con
+     `min-width: auto`, que se niega a achicarse por debajo del ancho
+     natural de su contenido; y un <input> trae un ancho natural
+     propio, de unos veinte caracteres. En una pantalla de 360 px eso
+     empuja al botón de al lado fuera del borde derecho —41 px medidos
+     con `auditar:movil`—. Con el mínimo en cero el campo cede y el
+     botón queda adentro. */
+  .calc__campo { flex: 1; min-width: 0; }
+  /* El botón conserva su ancho: el que cede es el campo. */
+  .calc__forma .boton { flex: none; }
   .calc__forma .boton { margin-top: 26px; }
 
   .calc__salida {

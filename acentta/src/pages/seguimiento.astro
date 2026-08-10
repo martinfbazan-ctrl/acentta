@@ -139,7 +139,8 @@ import { PASOS } from '@lib/pedido';
     border-radius: var(--r-modal);
     margin-bottom: var(--e-8);
   }
-  .seguimiento__buscador :global(.campo) { flex: 1; max-width: 320px; }
+  .seguimiento__buscador :global(.campo) { flex: 1; min-width: 0; max-width: 320px; }
+  .seguimiento__buscador :global(.boton) { flex: none; }
   .seguimiento__buscador :global(.boton) { margin-top: 26px; }
 
   .seguimiento__vacio { padding-bottom: var(--e-8); }

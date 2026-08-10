@@ -438,10 +438,60 @@ const cssVars = (() => {
   return [...usadas].filter(([v]) => !declaradas.has(v)).map(([v, donde]) => ({ v, donde }));
 })();
 
-console.log('\n=== VARIABLES DE CSS ===');
+/* ============================================================
+   GRILLAS QUE NO PUEDEN ACHICARSE
+   ------------------------------------------------------------
+   El otro error silencioso, y el que produjo el desborde del
+   carrito y el del resumen del pedido.
+
+   Una columna de grilla mide `auto` si no se dice otra cosa, y
+   `auto` se niega a achicarse por debajo del contenido más ancho
+   que tenga adentro. Un nombre de producto largo, un total de siete
+   cifras o un <input> —que trae ancho propio— estiran la columna
+   más que la pantalla, y el bloque queda cortado por el borde.
+
+   El patrón es siempre el mismo y por eso se puede buscar: un
+   bloque que declara `display: grid` sin columnas, y más abajo una
+   consulta de medios que sí le pone columnas para escritorio. Quien
+   lo escribió pensó en la versión ancha y dio por sentada la
+   angosta. Aparecieron diez casos.
+
+   Esto se revisa sobre el código fuente y no sobre lo compilado: la
+   pregunta es sobre cómo está escrita la regla, no sobre qué
+   produjo el navegador.
+   ============================================================ */
+const SRC = path.join(AQUI, '..', 'src');
+const grillas = (() => {
+  const hallazgos = [];
+  const recorrer = (dir) => {
+    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+      const p = path.join(dir, e.name);
+      if (e.isDirectory()) { recorrer(p); continue; }
+      if (!/\.(astro|css)$/.test(e.name)) continue;
+      const t = fs.readFileSync(p, 'utf8');
+      for (const m of t.matchAll(/\.([a-z0-9_-]+)\s*\{([^}]*display:\s*grid[^}]*)\}/gi)) {
+        if (/grid-template-columns/.test(m[2])) continue;
+        /* ¿Alguna regla posterior —siempre dentro de una consulta de
+           medios— le pone columnas al mismo selector? */
+        const despues = new RegExp(`\\.${m[1]}\\s*\\{[^}]*grid-template-columns`);
+        if (despues.test(t.slice(m.index + m[0].length))) {
+          hallazgos.push({ clase: m[1], archivo: path.relative(SRC, p) });
+        }
+      }
+    }
+  };
+  if (fs.existsSync(SRC)) recorrer(SRC);
+  return hallazgos;
+})();
+
+console.log('\n=== CSS · lo que el navegador descarta sin avisar ===');
 if (cssVars.length === 0) console.log('  todas las variables usadas están declaradas');
 else for (const { v, donde } of cssVars) {
   console.log(`  ✗ ${v} se usa sin estar declarada (${donde}) — invalida la propiedad entera, sin avisar`);
+}
+if (grillas.length === 0) console.log('  ninguna grilla queda sin columnas en el caso de una sola columna');
+else for (const g of grillas) {
+  console.log(`  ✗ .${g.clase} (${g.archivo}) declara columnas sólo para pantalla ancha; en angosta la columna mide auto y no se achica`);
 }
 
 console.log('\n=== TECLADO ===');
@@ -455,6 +505,6 @@ else {
   }
 }
 
-const errores = problemas.length + fallaC.length + estabilidad.length + teclado.length + cssVars.length;
+const errores = problemas.length + fallaC.length + estabilidad.length + teclado.length + cssVars.length + grillas.length;
 console.log(`\n${errores === 0 ? '✓ auditoría limpia' : `✗ ${errores} hallazgo(s)`}\n`);
 process.exit(errores === 0 ? 0 : 1);
