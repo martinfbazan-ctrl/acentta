@@ -247,8 +247,11 @@ const MEDIDOR = `(() => {
   });
 })()`;
 
+/* Los fallos guardan su detalle y se imprimen todos juntos al final.
+   El desglose sirve de poco tres pantallas más arriba del resumen:
+   lo que se lee —y lo que se copia para pedir ayuda— es el final. */
 const fallos = [];
-const ok = (c, m) => { if (!c) fallos.push(m); };
+const ok = (c, m, detalle = []) => { if (!c) fallos.push({ m, detalle }); };
 
 console.log('');
 for (const { w, h, nombre } of ANCHOS) {
@@ -283,15 +286,13 @@ for (const { w, h, nombre } of ANCHOS) {
        Se mide contra el alto real del viewport, no contra un número
        inventado. */
     if (m.alturaPrecio !== null) {
-      const entra = m.alturaPrecio < m.alto;
-      ok(entra, `${nombre} · ${ruta} · el precio queda a ${m.alturaPrecio} px, debajo del pliegue (${m.alto} px)`);
-      if (!entra) {
-        console.log('        qué hay arriba del precio:');
-        for (const d of m.desglose) {
-          if (d.arriba === null) { console.log(`          ${d.rotulo.padEnd(24)} (no existe)`); continue; }
-          console.log(`          ${d.rotulo.padEnd(24)} empieza en ${String(d.arriba).padStart(5)} px · mide ${String(d.alto).padStart(5)} px`);
-        }
-      }
+      const detalle = ['qué hay arriba del precio:', ...m.desglose.map((d) =>
+        d.arriba === null
+          ? `  ${d.rotulo.padEnd(24)} (no existe)`
+          : `  ${d.rotulo.padEnd(24)} empieza en ${String(d.arriba).padStart(5)} px · mide ${String(d.alto).padStart(5)} px`)];
+      ok(m.alturaPrecio < m.alto,
+        `${nombre} · ${ruta} · el precio queda a ${m.alturaPrecio} px, debajo del pliegue (${m.alto} px)`,
+        detalle);
     }
   }
   console.log('');
@@ -304,7 +305,10 @@ try { await chrome.kill(); } catch { /* perfil temporal trabado */ }
 
 if (fallos.length) {
   console.log(`${fallos.length} problema(s):`);
-  for (const f of fallos) console.log(` · ${f}`);
+  for (const f of fallos) {
+    console.log(` · ${f.m}`);
+    for (const linea of f.detalle) console.log(`     ${linea}`);
+  }
   process.exit(1);
 }
 console.log('✓ ninguna página se desborda y el precio entra en la primera pantalla\n');
