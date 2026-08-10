@@ -498,10 +498,7 @@ if (contenedor) {
   async function pedirCobro(): Promise<string | null> {
     const campo = (id: string) => (document.querySelector<HTMLInputElement>(`#${id}`)?.value ?? '').trim();
 
-    const respuesta = await fetch('/api/crear-pago', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
+    const cuerpo = JSON.stringify({
         items: leer().map((i) => ({ id: i.id, cantidad: i.cantidad, variante: i.variante })),
         metodoEnvio: metodoEnvioRadios.find((r) => r.checked)?.value ?? 'domicilio',
         metodoPago: metodoPagoRadios.find((r) => r.checked)?.value ?? 'tarjeta',
@@ -514,15 +511,55 @@ if (contenedor) {
           calle: campo('calle'), numero: campo('numero'), piso: campo('piso'),
           entre: campo('entre'), referencias: campo('referencias'),
         },
-      }),
     });
 
-    /* 503 es «este despliegue no tiene el cobro conectado». No es un
-       error que haya que mostrarle a nadie: es el estado normal
-       mientras el sitio sea una demostración. */
-    if (respuesta.status === 503) return null;
+    /* La llamada va envuelta. Si no hay nadie del otro lado, `fetch`
+       no devuelve un código de error: rechaza la promesa. Eso pasa en
+       los dos lugares donde más se prueba —la vista previa local, que
+       se abre como archivo, y cualquier despliegue anterior a estas
+       funciones— y era exactamente lo que se escapaba. */
+    let respuesta: Response;
+    try {
+      respuesta = await fetch('/api/crear-pago', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        /* Si el servidor tarda, es preferible caer al camino simulado
+           que dejar a alguien mirando un botón girando sin final. */
+        signal: AbortSignal.timeout(15000),
+        body: cuerpo,
+      });
+    } catch {
+      return null;
+    }
 
-    const datos = (await respuesta.json()) as { enlace?: string; error?: string };
+    /* [ERROR CORREGIDO] Devolver null —seguir por el camino simulado—
+       tiene que pasar en TODOS los casos en que no hay una función de
+       cobro contestando, y no sólo cuando contesta 503.
+
+       La primera versión sólo miraba el 503, y con eso rompí la
+       demostración en los dos lugares donde más se prueba: la vista
+       previa local, que se abre como archivo y no tiene servidor
+       detrás, y cualquier despliegue anterior a estas funciones. En
+       los dos, `fetch` falla o contesta con la página 404, y el error
+       terminaba en un aviso rojo en lugar de en la simulación de
+       siempre. Desde afuera se ve como «aprieto confirmar y no pasa
+       nada», que es exactamente lo que no debería pasar.
+
+       El criterio correcto: sólo se muestra un error cuando la
+       función existió y dijo que no —falta stock, código postal sin
+       cobertura, Mercado Pago rechazó—. Si no hubo nadie del otro
+       lado, el sitio se comporta como la demostración que es. */
+    if (respuesta.status === 503 || respuesta.status === 404 || respuesta.status === 405) return null;
+
+    let datos: { enlace?: string; error?: string };
+    try {
+      datos = (await respuesta.json()) as { enlace?: string; error?: string };
+    } catch {
+      /* Contestó algo que no es JSON: es la página 404 del sitio, no
+         nuestra función. */
+      return null;
+    }
+
     if (!respuesta.ok || !datos.enlace) {
       throw new Error(datos.error ?? 'No pudimos abrir el pago. Probá de nuevo en un momento.');
     }
@@ -558,21 +595,23 @@ if (contenedor) {
       boton.appendChild(girador);
     }
 
+    let enlace: string | null = null;
     try {
-      const enlace = await pedirCobro();
-      if (enlace) {
-        /* El carrito NO se vacía acá. Todavía no se pagó nada: si la
-           persona vuelve atrás desde Mercado Pago, tiene que
-           encontrar su carrito donde lo dejó. Se vacía en la
-           confirmación, con el pedido ya registrado. */
-        location.href = enlace;
-        return;
-      }
+      enlace = await pedirCobro();
     } catch (err) {
       boton.dataset.cargando = 'false';
       boton.removeAttribute('aria-busy');
       boton.disabled = false;
       mostrarErrorDePago(err instanceof Error ? err.message : 'No pudimos abrir el pago.');
+      return;
+    }
+
+    if (enlace) {
+      /* El carrito NO se vacía acá. Todavía no se pagó nada: si la
+         persona vuelve atrás desde Mercado Pago, tiene que encontrar
+         su carrito donde lo dejó. Se vacía en la confirmación, con el
+         pedido ya registrado. */
+      location.href = enlace;
       return;
     }
 

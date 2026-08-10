@@ -165,6 +165,45 @@ for (const esMovil of [true, false]) {
   ok(/sucursal/i.test(texto('[data-ck-metodo-envio]')),
     `${donde} · se eligió retiro en sucursal y la tarjeta dice «${texto('[data-ck-metodo-envio]')}»`);
 
+  /* ---- 6 · Apretar «Confirmar compra» tiene que hacer algo ----
+
+     Esta comprobación nace de un defecto que introduje yo. El
+     checkout intenta cobrar de verdad llamando a una función de
+     servidor, y esa función no existe ni en la vista previa local
+     —que se abre como archivo— ni en un despliegue anterior a que la
+     agregáramos. La primera versión trataba eso como un error y
+     mostraba un aviso rojo en lugar de seguir por el camino simulado.
+
+     Visto desde afuera: «aprieto confirmar y no pasa nada». El peor
+     defecto posible en el último botón del embudo, y ninguna de las
+     otras pruebas lo veía porque ninguna apretaba el botón.
+
+     Acá se simula lo mismo que pasa en esos dos escenarios: `fetch`
+     falla. Lo que tiene que quedar es un pedido guardado —la prueba
+     de que el camino simulado corrió— y el botón utilizable. */
+  {
+    const marcaAntes = d.querySelector('#acepto');
+    marcaAntes.checked = true;
+    marcaAntes.dispatchEvent(new dom.window.Event('change', { bubbles: true }));
+
+    dom.window.localStorage.removeItem('acentta:pedido:v1');
+    /* Sin función del otro lado, como en la vista previa local. */
+    dom.window.fetch = () => Promise.reject(new TypeError('Failed to fetch'));
+
+    enviar(3);
+    /* El camino simulado espera 1,4 s antes de ir a la confirmación;
+       el pedido se guarda antes de esa espera. */
+    await new Promise((r) => setTimeout(r, 120));
+
+    const guardado = dom.window.localStorage.getItem('acentta:pedido:v1');
+    ok(guardado, `${donde} · sin cobro conectado, «Confirmar compra» no dejó ningún pedido: el camino simulado no corrió`);
+
+    const boton = d.querySelector('[data-pagar]');
+    const avisoRojo = d.querySelector('.aviso-pago')?.textContent?.trim();
+    ok(!avisoRojo, `${donde} · apareció un error donde debía seguir la simulación: «${avisoRojo}»`);
+    ok(!(boton.disabled && !guardado), `${donde} · el botón quedó deshabilitado y no pasó nada`);
+  }
+
   dom.window.close();
 }
 
