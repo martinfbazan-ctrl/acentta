@@ -52,7 +52,16 @@ En la misma aplicación, **Webhooks → Configurar notificación**:
 
 En Vercel: **Storage → Create Database → Redis** (el proveedor es Upstash) y conectarla al proyecto `acentta`.
 
-Vercel inyecta solo las variables de conexión. No hay que copiarlas a ningún lado: el código acepta los dos nombres con que se inyectan según cómo se haya conectado.
+Vercel inyecta solo cinco variables al conectar la base al proyecto. **De esas, el código usa dos:**
+
+| Variable | Para qué |
+|---|---|
+| `KV_REST_API_URL` | la dirección del almacén |
+| `KV_REST_API_TOKEN` | la llave con permiso de escritura |
+
+Las otras tres se ignoran, y conviene saber por qué para no confundirse: `REDIS_URL` y `KV_URL` son cadenas de conexión pensadas para un cliente de Redis, y este código habla por la API REST; `KV_REST_API_READ_ONLY_TOKEN` es de sólo lectura, y los pedidos hay que escribirlos.
+
+> **En «Allowed Environments», conviene «All environments».** Con «Production environment only» las variables se marcan como sensibles y dejan de verse en el panel —lo que hace difícil verificar que estén—, y además cualquier conexión que no tenga destino de producción se desconecta sola. La credencial delicada de todo esto no es la del almacén: es la de Mercado Pago, que cargás vos en el paso siguiente.
 
 El plan gratuito son 256 MB y decenas de miles de operaciones por día. Un pedido pesa menos de dos kilobytes.
 
