@@ -73,23 +73,59 @@ Después, **Deployments → el último → Redeploy**. Las variables no entran e
 
 ---
 
-## Paso 5 · Probar
+## Paso 5 · Crear un comprador de prueba
 
-**El circuito de compra**, con las [tarjetas de prueba de Mercado Pago](https://www.mercadopago.com.ar/developers/es/docs/checkout-pro/additional-content/your-integrations/test/cards):
+Éste es el paso que no se ve venir. **No alcanza con las credenciales de prueba: hace falta también una cuenta de comprador de prueba.** Si intentás pagar con tu cuenta normal, o sin cuenta, el checkout falla con un error que no explica nada.
 
-| Qué querés ver | Nombre del titular |
-|---|---|
-| Pago aprobado | `APRO` |
-| Pago rechazado por fondos | `FUND` |
-| Pago pendiente | `CONT` |
+1. En **[Tus integraciones](https://www.mercadopago.com.ar/developers/panel/app) → tu aplicación → Cuentas de prueba**, crear una cuenta de tipo **comprador**.
+2. Anotar usuario y contraseña. Mercado Pago los muestra una sola vez.
+3. Si al entrar te pide un código de 6 dígitos por correo, está en esa misma pantalla de *Cuentas de prueba*.
 
-Cualquier número de tarjeta de prueba, vencimiento futuro, cualquier código de seguridad.
+---
 
-**El aviso de pago** hay que probarlo aparte, y esto conviene saberlo antes de pelearse con ello:
+## Paso 6 · Comprar de mentira
+
+**En una ventana de incógnito**, siempre. Mezclar tu sesión real con la de prueba da errores de credenciales duplicadas que parecen bugs del sitio y no lo son.
+
+1. Ventana de incógnito → entrar a Mercado Pago e iniciar sesión **con el comprador de prueba**.
+2. En la misma ventana, abrir `acentta.vercel.app`, armar un carrito y llegar al checkout.
+3. Apretar **Confirmar compra**. Ahí sí tenés que salir a Mercado Pago.
+
+**Las tarjetas de prueba.** El resultado del pago lo decide el **nombre del titular**, no la tarjeta: es el mismo plástico para todos los casos.
+
+| Tarjeta | Número | Cód. | Vence |
+|---|---|---|---|
+| Visa crédito | `4509 9535 6623 3704` | 123 | 11/30 |
+| Mastercard crédito | `5031 7557 3453 0604` | 123 | 11/30 |
+| Visa débito | `4002 7686 9439 5619` | 123 | 11/30 |
+
+| Qué querés ver | Nombre del titular | Documento |
+|---|---|---|
+| Pago aprobado | `APRO` | DNI 12345678 |
+| Rechazado por fondos | `FUND` | — |
+| Pago pendiente | `CONT` | — |
+| Rechazado, error general | `OTHE` | DNI 12345678 |
+| Código de seguridad inválido | `SECU` | — |
+
+Vale la pena probar los tres primeros y no sólo el que sale bien. **`CONT` es el más importante de los tres**: deja el pago pendiente, que es lo que pasa de verdad con Rapipago y Pago Fácil, y es el camino que casi nadie prueba y el que después rompe en producción.
+
+---
+
+## Paso 7 · Probar el aviso de pago
+
+Esto va aparte, y conviene saberlo antes de pelearse con ello:
 
 > **Los pagos de prueba no envían notificaciones.** Es una limitación de Mercado Pago, no del código. La única forma de probar el receptor es con el botón **Simular** en *Tus integraciones → Webhooks*, eligiendo el evento *Pagos* y un identificador de pago.
 
 Si la simulación devuelve **200**, la firma se está verificando bien. Si devuelve **401**, la clave secreta no coincide con la que cargaste.
+
+---
+
+## Si querés ver la pantalla antes de configurar nada
+
+Mercado Pago tiene una **[demostración de Checkout Pro](https://www.mercadopago.com.ar/developers/es/live-demo/checkout-pro)** que muestra la pantalla de pago tal cual la va a ver un comprador, sin cuenta y sin integrar nada. Sirve para saber a qué se sale desde el botón.
+
+Lo que **no** conviene es fabricar una pantalla propia que imite a Mercado Pago. Como pieza de portafolio resta en vez de sumar: una pasarela de mentira se nota, y la pregunta que va a hacer quien mire el proyecto —«¿esto cobra de verdad?»— se contesta sola y mal. Con el modo de prueba la respuesta es que sí, sólo que con tarjetas falsas.
 
 ---
 
