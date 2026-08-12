@@ -73,18 +73,50 @@ export interface Pedido {
   seguimiento?: string;
 }
 
-const URL_BASE = process.env.KV_REST_API_URL ?? process.env.UPSTASH_REDIS_REST_URL ?? '';
-const TOKEN = process.env.KV_REST_API_TOKEN ?? process.env.UPSTASH_REDIS_REST_TOKEN ?? '';
+/**
+ * Las credenciales se leen CUANDO SE USAN, no al cargar el módulo.
+ *
+ * Leerlas arriba de todo parece más prolijo y tiene un problema: el
+ * módulo se evalúa una sola vez, y si eso llega a pasar en un momento
+ * en que el entorno todavía no está poblado, las constantes quedan
+ * vacías para siempre y no hay forma de recuperarse sin reiniciar.
+ * Leerlas adentro cuesta nada y no depende del orden de carga.
+ *
+ * Se miran las dos fuentes porque no siempre están las dos: `process.env`
+ * es lo normal en una función de servidor, e `import.meta.env` es lo que
+ * expone el compilador. Y se aceptan los dos juegos de nombres, según
+ * cómo se haya conectado el almacén:
+ *
+ *     KV_REST_API_URL / KV_REST_API_TOKEN            ← integración de Vercel
+ *     UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN  ← conexión directa
+ *
+ * Ojo con las otras que aparecen al conectar: `REDIS_URL` y `KV_URL`
+ * son cadenas de conexión para un cliente de Redis, no direcciones
+ * REST, y no sirven acá. `KV_REST_API_READ_ONLY_TOKEN` tampoco: los
+ * pedidos se escriben.
+ */
+function variable(...nombres: string[]): string {
+  const meta = (import.meta as unknown as { env?: Record<string, string | undefined> }).env ?? {};
+  const proceso = typeof process !== 'undefined' ? (process.env ?? {}) : {};
+  for (const n of nombres) {
+    const v = proceso[n] ?? meta[n];
+    if (v) return v;
+  }
+  return '';
+}
+
+const urlBase = () => variable('KV_REST_API_URL', 'UPSTASH_REDIS_REST_URL');
+const tokenDeAcceso = () => variable('KV_REST_API_TOKEN', 'UPSTASH_REDIS_REST_TOKEN');
 
 export function hayAlmacen(): boolean {
-  return Boolean(URL_BASE && TOKEN);
+  return Boolean(urlBase() && tokenDeAcceso());
 }
 
 /** Una orden de Redis por su API REST. */
 async function mandar(comando: (string | number)[]): Promise<unknown> {
-  const r = await fetch(URL_BASE, {
+  const r = await fetch(urlBase(), {
     method: 'POST',
-    headers: { Authorization: `Bearer ${TOKEN}`, 'Content-Type': 'application/json' },
+    headers: { Authorization: `Bearer ${tokenDeAcceso()}`, 'Content-Type': 'application/json' },
     body: JSON.stringify(comando),
   });
   if (!r.ok) throw new Error(`El almacén contestó ${r.status}`);

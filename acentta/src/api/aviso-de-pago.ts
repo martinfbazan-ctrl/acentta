@@ -34,7 +34,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { consultarPago, firmaValida, hayCredenciales } from '@lib/mercadopago';
+import { consultarPago, firmaValida, hayCredenciales, variable } from '@lib/mercadopago';
 import {
   actualizarPedido, desmarcarProcesado, hayAlmacen, leerPedido, marcarProcesado,
   type EstadoPedido,
@@ -68,7 +68,7 @@ export const POST: APIRoute = async ({ request, url }) => {
     return listo('sin configurar');
   }
 
-  const secreto = process.env.MP_WEBHOOK_SECRET ?? '';
+  const secreto = variable('MP_WEBHOOK_SECRET');
   if (!secreto) {
     console.error('aviso-de-pago: falta MP_WEBHOOK_SECRET, no se puede verificar la firma');
     return listo('sin secreto');

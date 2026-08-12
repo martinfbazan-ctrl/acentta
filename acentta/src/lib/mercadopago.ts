@@ -22,19 +22,26 @@ import crypto from 'node:crypto';
 
 const API = 'https://api.mercadopago.com';
 
+/** Igual que en el almacén: se lee al usarse, y de las dos fuentes. */
+export function variable(nombre: string): string {
+  const meta = (import.meta as unknown as { env?: Record<string, string | undefined> }).env ?? {};
+  const proceso = typeof process !== 'undefined' ? (process.env ?? {}) : {};
+  return proceso[nombre] ?? meta[nombre] ?? '';
+}
+
 function token(): string {
-  const t = process.env.MP_ACCESS_TOKEN ?? '';
+  const t = variable('MP_ACCESS_TOKEN');
   if (!t) throw new Error('Falta MP_ACCESS_TOKEN en las variables de entorno.');
   return t;
 }
 
 /** ¿Estamos con credenciales de prueba? Las de prueba empiezan así. */
 export function esModoPrueba(): boolean {
-  return (process.env.MP_ACCESS_TOKEN ?? '').startsWith('TEST-');
+  return variable('MP_ACCESS_TOKEN').startsWith('TEST-');
 }
 
 export function hayCredenciales(): boolean {
-  return Boolean(process.env.MP_ACCESS_TOKEN);
+  return Boolean(variable('MP_ACCESS_TOKEN'));
 }
 
 export interface ItemPreferencia {
