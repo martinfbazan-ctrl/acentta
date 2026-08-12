@@ -73,8 +73,15 @@ En Vercel: **Settings → Environment Variables**. Las dos para *Production*, *P
 
 | Nombre | Valor |
 |---|---|
-| `MP_ACCESS_TOKEN` | el Access Token de prueba del paso 1 |
+| `MP_ACCESS_TOKEN` | el Access Token de **Credenciales de prueba** |
 | `MP_WEBHOOK_SECRET` | la clave secreta del paso 2 |
+| `MP_MODO` | `prueba` |
+
+> **Sobre `MP_MODO`, que es el freno de mano.** Mercado Pago unificó el formato de las credenciales: hoy **las de prueba y las de producción empiezan igual, con `APP_USR-`**, así que mirando el token es imposible saber en qué entorno estás. Lo único que lo dice es un campo, `live_mode`, que viene en la respuesta de la API — o sea, después de haber pedido el cobro.
+>
+> Por eso el entorno se declara acá a mano, y el código lo contrasta contra lo que contesta Mercado Pago. Si pide un cobro y la respuesta dice que es real mientras `MP_MODO` dice `prueba`, **no devuelve el enlace**: cancela el pedido y corta. Un cobro real disparado por accidente es plata de otra persona y una entrega comprometida.
+>
+> Si no ponés la variable, el valor de fábrica es `prueba`. A propósito: si alguien se olvida, lo que falla es un cobro de mentira y no uno de verdad.
 
 Después, **Deployments → el último → Redeploy**. Las variables no entran en un despliegue que ya existe.
 
@@ -154,7 +161,12 @@ Los seis caracteres al azar del final existen para que nadie pueda recorrer los 
 
 ## Para cobrar de verdad
 
-Cuando el circuito esté verificado en prueba, cambiar `MP_ACCESS_TOKEN` por el de producción —el que no empieza con `TEST-`— y volver a desplegar. Nada más del código cambia.
+Cuando el circuito esté verificado en prueba, cambiar **dos** variables y volver a desplegar:
+
+1. `MP_ACCESS_TOKEN` → el de **Credenciales de producción**.
+2. `MP_MODO` → `produccion`.
+
+**Las dos, y en ese orden mental.** Si cambiás sólo el token, el sitio bloquea el cobro a propósito y no vende nada; si cambiás sólo `MP_MODO`, sigue cobrando de mentira. El bloqueo molesta un minuto y evita el error que no se puede deshacer.
 
 Antes de eso, las tres cosas que te faltaban cuando armamos esto:
 

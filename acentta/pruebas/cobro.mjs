@@ -104,7 +104,28 @@ function globDeYaml() {
 }
 
 const { cotizar, ErrorDeCotizacion } = await cargar('src/lib/cotizacion.ts', 'cotizacion');
-const { firmaValida } = await cargar('src/lib/mercadopago.ts', 'mercadopago');
+const { firmaValida, cobroPermitido } = await cargar('src/lib/mercadopago.ts', 'mercadopago');
+
+/* ============================================================
+   0 · El seguro entre prueba y producción
+   ------------------------------------------------------------
+   Existe por un error mío. El modo se deducía del prefijo del
+   token: los de prueba empezaban con `TEST-`. Mercado Pago unificó
+   el formato —hoy los dos entornos usan `APP_USR-`— y ese chequeo
+   pasó a gritar «producción» para credenciales de prueba
+   perfectamente válidas.
+   Una alarma falsa en un semáforo de seguridad es peor que no
+   tenerlo: la próxima vez que avise en serio, ya nadie la mira.
+   Ahora el modo se declara a mano y se contrasta con `live_mode`,
+   que es lo que devuelve la propia API.
+   ============================================================ */
+{
+  ok(cobroPermitido(false, 'prueba'), 'un cobro de prueba con el sitio en prueba tendría que pasar');
+  ok(cobroPermitido(true, 'produccion'), 'un cobro real con el sitio en producción tendría que pasar');
+  ok(cobroPermitido(false, 'produccion'), 'credenciales de prueba con el sitio en producción no cobran nada: se deja pasar');
+  ok(!cobroPermitido(true, 'prueba'),
+    '¡GRAVE! un cobro REAL pasaría con el sitio declarado en prueba — es plata de alguien y una entrega comprometida');
+}
 
 /* ============================================================
    1 · El navegador no decide el precio

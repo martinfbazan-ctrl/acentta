@@ -28,13 +28,13 @@
 
 import type { APIRoute } from 'astro';
 import { hayAlmacen } from '@lib/pedidos';
-import { esModoPrueba, hayCredenciales, variable } from '@lib/mercadopago';
+import { consultarCuenta, hayCredenciales, modoDeclarado, variable } from '@lib/mercadopago';
 
 export const prerender = false;
 
 const PREFIJOS = ['KV_', 'UPSTASH_', 'REDIS_', 'MP_'];
 
-export const GET: APIRoute = () => {
+export const GET: APIRoute = async () => {
   const proceso = typeof process !== 'undefined' ? (process.env ?? {}) : {};
   const meta = (import.meta as unknown as { env?: Record<string, string | undefined> }).env ?? {};
 
@@ -46,6 +46,9 @@ export const GET: APIRoute = () => {
 
   const almacenListo = hayAlmacen();
   const pagoListo = hayCredenciales();
+  const cuenta = pagoListo
+    ? await consultarCuenta()
+    : { ok: false, esCuentaDePrueba: false };
 
   return new Response(JSON.stringify({
     almacen: {
@@ -59,7 +62,23 @@ export const GET: APIRoute = () => {
       listo: pagoListo,
       MP_ACCESS_TOKEN: pagoListo,
       MP_WEBHOOK_SECRET: Boolean(variable('MP_WEBHOOK_SECRET')),
-      modo: pagoListo ? (esModoPrueba() ? 'prueba' : 'PRODUCCIÓN — cobra de verdad') : null,
+      /* Lo que declara la configuración del sitio. */
+      modoDeclarado: modoDeclarado(),
+      /* Lo que dice Mercado Pago sobre el dueño del token. Las
+         credenciales de prueba pertenecen a una cuenta cuyo alias
+         empieza con TEST.
+         [CORREGIDO] Antes esto se deducía del prefijo del token, que
+         era `TEST-`. Mercado Pago unificó el formato y hoy los dos
+         entornos usan `APP_USR-`, así que ese chequeo daba siempre
+         «producción» y avisaba de un peligro que no existía. */
+      cuenta,
+      aviso: !cuenta.ok
+        ? 'No se pudo consultar la cuenta: revisar que el token sea válido.'
+        : cuenta.esCuentaDePrueba && modoDeclarado() === 'produccion'
+          ? 'Credenciales de prueba con el sitio declarado en producción. No cobra nada; corregir MP_MODO.'
+          : !cuenta.esCuentaDePrueba && modoDeclarado() !== 'produccion'
+            ? 'CUIDADO: las credenciales parecen de producción y el sitio dice estar en prueba. El cobro va a quedar bloqueado a propósito.'
+            : null,
     },
     /* Las dos fuentes por separado: si una variable aparece en una y
        no en la otra, el problema es de cómo se compiló y no de que

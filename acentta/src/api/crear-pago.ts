@@ -28,7 +28,7 @@
 
 import type { APIRoute } from 'astro';
 import { cotizar, ErrorDeCotizacion, type LineaPedida, type MetodoEnvio, type MetodoPago } from '@lib/cotizacion';
-import { crearPreferencia, hayCredenciales } from '@lib/mercadopago';
+import { cobroPermitido, crearPreferencia, hayCredenciales, modoDeclarado } from '@lib/mercadopago';
 import { guardarPedido, hayAlmacen, nuevoNumero, type Comprador, type Entrega, type Pedido } from '@lib/pedidos';
 
 export const prerender = false;
@@ -133,7 +133,7 @@ export const POST: APIRoute = async ({ request, url }) => {
        prueba de Vercel, en una vista previa y en el dominio propio,
        sin tener que acordarse de cambiar nada. */
     const urlSitio = `${url.protocol}//${url.host}`;
-    const { id, enlace } = await crearPreferencia({
+    const { id, enlace, liveMode } = await crearPreferencia({
       numeroPedido: pedido.numero,
       items: cotizacion.lineas.map((l) => ({
         id: l.id,
@@ -147,10 +147,28 @@ export const POST: APIRoute = async ({ request, url }) => {
       urlSitio,
     });
 
+    /* El seguro. Mercado Pago acaba de decir si este cobro es real, y
+       la configuración del sitio dice en qué entorno creemos estar.
+       Si no coinciden en la dirección peligrosa —cobro real mientras
+       creíamos estar probando— no se devuelve el enlace.
+
+       Va acá y no antes porque `live_mode` es la respuesta, no la
+       pregunta: es lo único que lo sabe de verdad. El pedido queda
+       cancelado y la preferencia vence sola en media hora. */
+    if (!cobroPermitido(liveMode)) {
+      await guardarPedido({ ...pedido, estado: 'cancelado', actualizado: new Date().toISOString() });
+      console.error(`crear-pago: BLOQUEADO. Mercado Pago devolvió live_mode=true y MP_MODO declara «${modoDeclarado()}».`);
+      return json({
+        error: 'El cobro está en modo de prueba pero las credenciales son de producción. '
+          + 'No se abrió el pago a propósito: sería un cobro real.',
+      }, 409);
+    }
+
     return json({
       numero: pedido.numero,
       preferencia: id,
       enlace,
+      modo: liveMode ? 'produccion' : 'prueba',
       /* Se devuelve el total cotizado por el servidor para que la
          página pueda mostrarlo antes de saltar. Es informativo: el
          que se cobra es el que ya viajó dentro de la preferencia. */

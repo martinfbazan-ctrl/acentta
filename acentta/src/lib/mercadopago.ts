@@ -35,13 +35,50 @@ function token(): string {
   return t;
 }
 
-/** ¿Estamos con credenciales de prueba? Las de prueba empiezan así. */
-export function esModoPrueba(): boolean {
-  return variable('MP_ACCESS_TOKEN').startsWith('TEST-');
-}
-
 export function hayCredenciales(): boolean {
   return Boolean(variable('MP_ACCESS_TOKEN'));
+}
+
+/**
+ * En qué entorno DECIMOS que estamos.
+ *
+ * [ERROR CORREGIDO] Antes esto se deducía del prefijo del token:
+ * los de prueba empezaban con `TEST-`. Mercado Pago unificó el
+ * formato y hoy los dos empiezan con `APP_USR-`, así que ese chequeo
+ * pasó a dar siempre «producción» — incluido para un token de prueba
+ * perfectamente válido. Una alarma falsa en un semáforo de seguridad
+ * es peor que no tenerlo: enseña a ignorarlo.
+ *
+ * Lo que distingue un entorno del otro es un campo que devuelve la
+ * propia API, `live_mode`. Pero un campo que llega en una respuesta
+ * no sirve para *decidir* antes de pedirla, así que el modo se
+ * declara a mano en una variable de entorno y después se verifica
+ * contra lo que contesta Mercado Pago.
+ *
+ * El valor de fábrica es «prueba», y es a propósito: si alguien
+ * olvida declararlo, lo que falla es un cobro de mentira, no uno de
+ * verdad.
+ */
+export function modoDeclarado(): 'prueba' | 'produccion' {
+  return variable('MP_MODO').toLowerCase().startsWith('produc') ? 'produccion' : 'prueba';
+}
+
+/**
+ * ¿Se puede seguir con este cobro?
+ *
+ * `liveMode` es lo que dice Mercado Pago; `declarado` es lo que dice
+ * la configuración del sitio. Si no coinciden, se corta.
+ *
+ * El caso que importa es uno solo: Mercado Pago dice que el cobro es
+ * real y nosotros creíamos estar probando. Ahí hay plata de alguien
+ * en juego y una entrega comprometida, así que no se sigue.
+ *
+ * El caso inverso —credenciales de prueba con el sitio declarado en
+ * producción— no cobra nada y no lastima a nadie; se deja pasar y se
+ * avisa por el diagnóstico.
+ */
+export function cobroPermitido(liveMode: boolean, declarado = modoDeclarado()): boolean {
+  return !(liveMode && declarado !== 'produccion');
 }
 
 export interface ItemPreferencia {
@@ -66,7 +103,7 @@ export async function crearPreferencia(opciones: {
   descuento: number;
   emailComprador: string;
   urlSitio: string;
-}): Promise<{ id: string; enlace: string }> {
+}): Promise<{ id: string; enlace: string; liveMode: boolean }> {
   const { numeroPedido, items, envio, descuento, emailComprador, urlSitio } = opciones;
 
   /* El descuento por transferencia se aplica como una línea negativa
@@ -114,18 +151,42 @@ export async function crearPreferencia(opciones: {
     body: JSON.stringify(cuerpo),
   });
 
-  const datos = (await r.json()) as { id?: string; init_point?: string; sandbox_init_point?: string; message?: string };
+  const datos = (await r.json()) as {
+    id?: string; init_point?: string; sandbox_init_point?: string;
+    live_mode?: boolean; message?: string;
+  };
   if (!r.ok || !datos.id) {
     throw new Error(`Mercado Pago rechazó la preferencia (${r.status}): ${datos.message ?? 'sin detalle'}`);
   }
 
-  /* Con credenciales de prueba hay que mandar a la persona al enlace
-     de prueba; el de producción pediría una tarjeta real. */
-  const enlace = esModoPrueba()
-    ? (datos.sandbox_init_point ?? datos.init_point!)
-    : datos.init_point!;
+  /* `init_point` es el enlace bueno en los dos entornos: con
+     credenciales de prueba lleva al entorno de prueba solo.
+     `sandbox_init_point` queda como reserva por si alguna cuenta
+     vieja todavía no devuelve el primero. */
+  const enlace = datos.init_point ?? datos.sandbox_init_point;
+  if (!enlace) throw new Error('Mercado Pago no devolvió un enlace de pago.');
 
-  return { id: datos.id, enlace };
+  /* Éste es el dato que dice si el cobro es real. Viene de la propia
+     API, no de un prefijo ni de una suposición nuestra. */
+  return { id: datos.id, enlace, liveMode: datos.live_mode === true };
+}
+
+/**
+ * Quién es el dueño del token, sin exponer nada.
+ *
+ * Sirve para el diagnóstico: las credenciales de prueba pertenecen a
+ * una cuenta de prueba, y esas cuentas tienen un alias que empieza
+ * con TEST. Es una lectura, no crea nada y no cobra nada.
+ */
+export async function consultarCuenta(): Promise<{ ok: boolean; esCuentaDePrueba: boolean }> {
+  try {
+    const r = await fetch(`${API}/users/me`, { headers: { Authorization: `Bearer ${token()}` } });
+    if (!r.ok) return { ok: false, esCuentaDePrueba: false };
+    const d = (await r.json()) as { nickname?: string };
+    return { ok: true, esCuentaDePrueba: String(d.nickname ?? '').toUpperCase().startsWith('TEST') };
+  } catch {
+    return { ok: false, esCuentaDePrueba: false };
+  }
 }
 
 export interface PagoConsultado {
