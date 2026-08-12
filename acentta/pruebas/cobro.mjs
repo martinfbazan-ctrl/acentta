@@ -104,7 +104,46 @@ function globDeYaml() {
 }
 
 const { cotizar, ErrorDeCotizacion } = await cargar('src/lib/cotizacion.ts', 'cotizacion');
-const { firmaValida, cobroPermitido, fechaParaMercadoPago } = await cargar('src/lib/mercadopago.ts', 'mercadopago');
+const { firmaValida, cobroPermitido, fechaParaMercadoPago, enlaceDePago } = await cargar('src/lib/mercadopago.ts', 'mercadopago');
+
+/* ============================================================
+   0.b · A qué pantalla de pago se manda a la persona
+   ------------------------------------------------------------
+   Cada entorno tiene la suya:
+       init_point          → www.mercadopago.com.ar     (producción)
+       sandbox_init_point  → sandbox.mercadopago.com.ar (laboratorio)
+
+   Cruzarlas hace fallar el pago con «Una de las partes con la que
+   intentás hacer el pago es de prueba», un mensaje que no señala a
+   ningún lado del código y aparece en la última pantalla del
+   circuito, después de que la persona cargó la tarjeta.
+
+   Es una decisión de una línea y ya se rompió una vez: estaba bien,
+   y se cayó como daño colateral al corregir cómo se detectaba el
+   modo. Por eso vive aparte y se prueba.
+   ============================================================ */
+{
+  const dos = { init_point: 'https://www.mercadopago.com.ar/x', sandbox_init_point: 'https://sandbox.mercadopago.com.ar/x' };
+
+  ok(enlaceDePago({ ...dos, live_mode: false }, 'prueba') === dos.sandbox_init_point,
+    'una preferencia de prueba tiene que ir a la pantalla de laboratorio');
+  ok(enlaceDePago({ ...dos, live_mode: true }, 'produccion') === dos.init_point,
+    'una preferencia real tiene que ir a la pantalla de producción');
+
+  /* Mercado Pago no siempre devuelve live_mode. Ahí manda lo
+     declarado, que para eso existe. */
+  ok(enlaceDePago({ ...dos, live_mode: null }, 'prueba') === dos.sandbox_init_point,
+    'sin live_mode y en modo prueba, tiene que ir al laboratorio');
+  ok(enlaceDePago({ ...dos, live_mode: null }, 'produccion') === dos.init_point,
+    'sin live_mode y en producción, tiene que ir a producción');
+
+  /* Y si la cuenta es vieja y no devuelve el enlace de laboratorio,
+     mejor el de producción que ninguno: el pago va a fallar con un
+     mensaje, pero no se rompe el circuito antes de llegar. */
+  ok(enlaceDePago({ init_point: dos.init_point, live_mode: false }, 'prueba') === dos.init_point,
+    'sin sandbox_init_point tendría que caer en init_point');
+  ok(enlaceDePago({}, 'prueba') === undefined, 'sin ningún enlace tiene que devolver nada');
+}
 
 /* ============================================================
    0.a · La fecha de vencimiento, en el formato que se lee

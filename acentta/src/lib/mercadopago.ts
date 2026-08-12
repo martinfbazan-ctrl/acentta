@@ -82,6 +82,25 @@ export function cobroPermitido(liveMode: boolean, declarado = modoDeclarado()): 
 }
 
 /**
+ * A qué pantalla de pago hay que mandar a la persona.
+ *
+ * Cada entorno tiene la suya, y cruzarlas hace fallar el pago con un
+ * mensaje que no señala a ningún lado del código:
+ * «Una de las partes con la que intentás hacer el pago es de prueba».
+ *
+ * Aparte para poder probarla: es una decisión de una línea que, mal
+ * tomada, rompe el circuito entero en la última pantalla.
+ */
+export function enlaceDePago(
+  datos: { init_point?: string; sandbox_init_point?: string; live_mode?: boolean | null },
+  declarado = modoDeclarado(),
+): string | undefined {
+  const laboratorio = datos.live_mode === false
+    || (datos.live_mode == null && declarado === 'prueba');
+  return laboratorio ? (datos.sandbox_init_point ?? datos.init_point) : datos.init_point;
+}
+
+/**
  * Una fecha como la espera Mercado Pago.
  *
  *     2026-08-11T19:30:00.000-03:00
@@ -192,11 +211,28 @@ export async function crearPreferencia(opciones: {
     throw new Error(`Mercado Pago rechazó la preferencia (${r.status}): ${datos.message ?? 'sin detalle'}`);
   }
 
-  /* `init_point` es el enlace bueno en los dos entornos: con
-     credenciales de prueba lleva al entorno de prueba solo.
-     `sandbox_init_point` queda como reserva por si alguna cuenta
-     vieja todavía no devuelve el primero. */
-  const enlace = datos.init_point ?? datos.sandbox_init_point;
+  /* [ERROR CORREGIDO] Cada entorno tiene su propia pantalla de pago,
+     y hay que mandar a la persona a la que corresponde.
+
+         init_point          → www.mercadopago.com.ar     (producción)
+         sandbox_init_point  → sandbox.mercadopago.com.ar (laboratorio)
+
+     Mandar una preferencia de prueba a la pantalla de producción
+     termina en «Algo salió mal… Una de las partes con la que intentás
+     hacer el pago es de prueba». El mensaje es exacto: la tienda es
+     de prueba y la pantalla es la real.
+
+     Yo mismo lo tenía bien y lo rompí: la versión original elegía
+     según el modo, pero lo decidía mirando si el token empezaba con
+     `TEST-`. Cuando corregí esa detección —el prefijo ya no
+     distingue nada— saqué también la elección de enlace, que sí
+     hacía falta. Un arreglo que se lleva puesta una decisión
+     correcta que estaba al lado.
+
+     Ahora se decide con `live_mode`, que lo dice la propia respuesta.
+     Cuando no viene —pasa con algunas preferencias— se cae en lo que
+     declara la configuración, que para eso está. */
+  const enlace = enlaceDePago(datos);
   if (!enlace) throw new Error('Mercado Pago no devolvió un enlace de pago.');
 
   /* Éste es el dato que dice si el cobro es real. Viene de la propia
