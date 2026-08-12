@@ -504,6 +504,21 @@ const pasos = [
   .acuerdo input:focus-visible + .opcion__marca { outline: 3px solid var(--foco-color); outline-offset: 2px; }
   .acuerdo a { color: var(--naranja-texto); }
 
+  /* [ERROR CORREGIDO] Esta clase se agregaba desde el guion y no
+     existía en ninguna hoja: cero reglas, cero efecto. Al no tildar
+     los términos, el envío se bloqueaba en silencio —sin mensaje, sin
+     color, con el foco en una casilla que está oculta por diseño— y
+     desde afuera se veía como que el botón de confirmar no hacía
+     nada. Que es justamente lo que estaba pasando.
+     Ahora la casilla se marca en rojo y el aviso aparece pegado al
+     botón, que es donde está mirando quien lo apretó. */
+  .acuerdo--error { color: var(--rojo); }
+  .acuerdo--error .opcion__marca {
+    border-color: var(--rojo);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--rojo) 18%, transparent);
+  }
+  .acuerdo--error a { color: var(--rojo); }
+
   /* ---- Resumen ---- */
   .resumen-pedido {
     padding: var(--e-6);

@@ -239,21 +239,44 @@ if (contenedor) {
         if (!validar(entrada) && !primerError) primerError = entrada;
       }
 
-      /* El acuerdo de términos, en el último paso. */
+      /* [ERROR CORREGIDO] Un envío bloqueado tiene que DECIR que está
+         bloqueado, y decirlo donde se apretó.
+
+         Antes, no tildar los términos hacía esto: agregaba una clase
+         —que no tenía ninguna regla de estilo, así que no se veía—,
+         mandaba el foco a la casilla, que está oculta por diseño, y
+         volvía. Sin mensaje, sin desplazamiento, sin nada. Y el botón
+         de confirmar vive en la tarjeta del pedido, lejos de la
+         casilla, así que ni siquiera había a dónde mirar.
+
+         El síntoma era exacto: «aprieto Confirmar compra y no pasa
+         nada». Tenía razón: no pasaba nada. */
       const acepto = forma.querySelector<HTMLInputElement>('#acepto');
       if (acepto && !acepto.checked) {
-        acepto.closest('.acuerdo')!.classList.add('acuerdo--error');
-        if (!primerError) { acepto.focus(); return; }
+        const caja = acepto.closest('.acuerdo')!;
+        caja.classList.add('acuerdo--error');
+        if (!primerError) {
+          avisoEnElBoton('Falta aceptar los términos y condiciones.');
+          caja.scrollIntoView({ block: 'center', behavior: 'smooth' });
+          acepto.focus({ preventScroll: true });
+          return;
+        }
       }
 
       /* Foco automático en el campo con problema: en un formulario
          largo, un error arriba de todo y el foco abajo es un error
          que nadie encuentra. */
       if (primerError) {
+        avisoEnElBoton('Hay datos que faltan o no son válidos. Los marcamos más arriba.');
         primerError.focus();
         primerError.scrollIntoView({ block: 'center', behavior: 'smooth' });
         return;
       }
+
+      /* Se pudo seguir: si había un aviso de un intento anterior, se
+         borra. Un cartel de error que sobrevive a su causa es peor
+         que no tenerlo. */
+      avisoEnElBoton('');
 
       if (pasoActual < 3) { irAPaso(pasoActual + 1); return; }
 
@@ -566,10 +589,18 @@ if (contenedor) {
     return datos.enlace;
   }
 
-  function mostrarErrorDePago(mensaje: string) {
+  /**
+   * El aviso va pegado al botón que se apretó.
+   *
+   * Quien acaba de tocar «Confirmar compra» está mirando el botón. Un
+   * mensaje a dos pantallas de distancia —o peor, ninguno— es un
+   * mensaje que no existe. Con el texto vacío se borra.
+   */
+  function avisoEnElBoton(mensaje: string) {
     const donde = document.querySelector<HTMLElement>('[data-ck-accion]');
     if (!donde) return;
     let aviso = donde.querySelector<HTMLElement>('.aviso-pago');
+    if (!mensaje) { aviso?.remove(); return; }
     if (!aviso) {
       aviso = document.createElement('p');
       aviso.className = 'aviso-pago';
@@ -578,6 +609,7 @@ if (contenedor) {
     }
     aviso.textContent = mensaje;
   }
+  const mostrarErrorDePago = avisoEnElBoton;
 
   async function confirmar(forma: HTMLFormElement) {
     /* El botón ya no está adentro del formulario: se mudó a la tarjeta

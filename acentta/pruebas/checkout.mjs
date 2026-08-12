@@ -181,6 +181,28 @@ for (const esMovil of [true, false]) {
      Acá se simula lo mismo que pasa en esos dos escenarios: `fetch`
      falla. Lo que tiene que quedar es un pedido guardado —la prueba
      de que el camino simulado corrió— y el botón utilizable. */
+  /* ---- 6.a · Un envío bloqueado tiene que decir por qué ----
+
+     Sin tildar los términos, el envío se corta. Eso está bien; lo que
+     estaba mal era que se cortara en silencio: una clase sin reglas
+     de estilo y el foco en una casilla oculta. Nada visible, y el
+     botón de confirmar está lejos de la casilla. El síntoma era
+     «aprieto Confirmar compra y no pasa nada», y era literal. */
+  {
+    d.querySelector('#acepto').checked = false;
+    dom.window.localStorage.removeItem('acentta:pedido:v1');
+    enviar(3);
+    await new Promise((r) => setTimeout(r, 40));
+
+    const aviso = d.querySelector('.aviso-pago')?.textContent?.trim() ?? '';
+    ok(/término/i.test(aviso),
+      `${donde} · sin aceptar los términos, el envío se corta sin decir por qué. Aviso: «${aviso || '(ninguno)'}»`);
+    ok(d.querySelector('.acuerdo')?.classList.contains('acuerdo--error'),
+      `${donde} · la casilla de términos no queda marcada`);
+    ok(!dom.window.localStorage.getItem('acentta:pedido:v1'),
+      `${donde} · se armó un pedido sin aceptar los términos`);
+  }
+
   {
     const marcaAntes = d.querySelector('#acepto');
     marcaAntes.checked = true;
