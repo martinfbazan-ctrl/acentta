@@ -81,6 +81,29 @@ export function cobroPermitido(liveMode: boolean, declarado = modoDeclarado()): 
   return !(liveMode && declarado !== 'produccion');
 }
 
+/**
+ * Una fecha como la espera Mercado Pago.
+ *
+ *     2026-08-11T19:30:00.000-03:00
+ *
+ * Con desplazamiento horario escrito, no con `Z`. Se usa el de
+ * Argentina, que es fijo todo el año —no hay horario de verano— así
+ * que no hay ningún caso borde de dos veces la misma hora.
+ *
+ * Se exporta para poder probarla: una fecha mal formada acá no falla
+ * al crear la preferencia, falla después y en silencio.
+ */
+export function fechaParaMercadoPago(ms: number, desfasajeHoras = -3): string {
+  const d = new Date(ms + desfasajeHoras * 60 * 60 * 1000);
+  const dd = (n: number, largo = 2) => String(n).padStart(largo, '0');
+  const signo = desfasajeHoras < 0 ? '-' : '+';
+  const horas = dd(Math.floor(Math.abs(desfasajeHoras)));
+  const minutos = dd(Math.round((Math.abs(desfasajeHoras) % 1) * 60));
+  return `${d.getUTCFullYear()}-${dd(d.getUTCMonth() + 1)}-${dd(d.getUTCDate())}`
+    + `T${dd(d.getUTCHours())}:${dd(d.getUTCMinutes())}:${dd(d.getUTCSeconds())}`
+    + `.${dd(d.getUTCMilliseconds(), 3)}${signo}${horas}:${minutos}`;
+}
+
 export interface ItemPreferencia {
   id: string;
   title: string;
@@ -132,10 +155,20 @@ export async function crearPreferencia(opciones: {
        queda legible. */
     shipments: envio > 0 ? { cost: envio, mode: 'not_specified' } : undefined,
     /* Sin esto, una preferencia vieja sigue siendo pagable para
-       siempre. Media hora es de sobra para completar un pago y corto
-       para que un enlace filtrado sirva de algo. */
+       siempre: un enlace de pago filtrado serviría para siempre.
+
+       [ERROR CORREGIDO] La fecha iba en formato `...T22:30:00.000Z`.
+       Mercado Pago documenta el formato con desplazamiento horario
+       explícito —`...T19:30:00.000-03:00`— y su lector no siempre
+       acepta la `Z`. Cuando no la puede leer, no devuelve un error al
+       crear la preferencia: la acepta, y después **deja el botón de
+       pagar apagado, sin decir por qué**. Desde afuera se ve como una
+       pantalla de Mercado Pago rota.
+
+       Se manda con desplazamiento, y con margen: dos horas. Media
+       hora alcanza para pagar, no para probar. */
     expires: true,
-    expiration_date_to: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
+    expiration_date_to: fechaParaMercadoPago(Date.now() + 2 * 60 * 60 * 1000),
   };
 
   const r = await fetch(`${API}/checkout/preferences`, {
@@ -187,6 +220,44 @@ export async function consultarCuenta(): Promise<{ ok: boolean; esCuentaDePrueba
   } catch {
     return { ok: false, esCuentaDePrueba: false };
   }
+}
+
+/**
+ * Una preferencia con lo mínimo indispensable, para aislar culpas.
+ *
+ * Cuando el botón de pagar de Mercado Pago queda apagado y no dice
+ * por qué, hay dos familias de causa: algo de la preferencia que
+ * armamos nosotros, o algo de la cuenta con la que se está pagando.
+ * Desde afuera se ven igual.
+ *
+ * Ésta manda un producto de cien pesos y nada más: sin vencimiento,
+ * sin retorno automático, sin aviso de pago, sin envío. Si con ésta
+ * se puede pagar, el problema es alguno de los campos que le
+ * agregamos a la de verdad, y se va probando de a uno. Si tampoco se
+ * puede, el problema no está en el código.
+ *
+ * Sólo funciona en modo de prueba: en producción crearía cobros
+ * reales de cien pesos, que es exactamente la clase de cosa que no
+ * puede quedar accesible por una dirección.
+ */
+export async function crearPreferenciaMinima(): Promise<Record<string, unknown>> {
+  const r = await fetch(`${API}/checkout/preferences`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token()}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      items: [{ title: 'Prueba de integración', quantity: 1, unit_price: 100, currency_id: 'ARS' }],
+    }),
+  });
+  const d = (await r.json()) as Record<string, unknown>;
+  return {
+    estadoHttp: r.status,
+    id: d.id ?? null,
+    live_mode: d.live_mode ?? null,
+    init_point: d.init_point ?? null,
+    sandbox_init_point: d.sandbox_init_point ?? null,
+    error: d.message ?? d.error ?? null,
+    causa: d.cause ?? null,
+  };
 }
 
 export interface PagoConsultado {

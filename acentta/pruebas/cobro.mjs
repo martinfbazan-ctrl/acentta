@@ -104,7 +104,34 @@ function globDeYaml() {
 }
 
 const { cotizar, ErrorDeCotizacion } = await cargar('src/lib/cotizacion.ts', 'cotizacion');
-const { firmaValida, cobroPermitido } = await cargar('src/lib/mercadopago.ts', 'mercadopago');
+const { firmaValida, cobroPermitido, fechaParaMercadoPago } = await cargar('src/lib/mercadopago.ts', 'mercadopago');
+
+/* ============================================================
+   0.a · La fecha de vencimiento, en el formato que se lee
+   ------------------------------------------------------------
+   Iba con `Z` al final. Mercado Pago documenta el desplazamiento
+   horario escrito, y cuando no puede leer la fecha no rechaza la
+   preferencia: la acepta y después deja el botón de pagar apagado,
+   sin ningún mensaje. Un formato mal puesto acá no falla donde se
+   escribe, falla dos pantallas después y parece un problema de
+   Mercado Pago.
+   ============================================================ */
+{
+  const patron = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}[+-]\d{2}:\d{2}$/;
+  const f = fechaParaMercadoPago(Date.UTC(2026, 7, 11, 22, 30, 0));
+  ok(patron.test(f), `la fecha no tiene el formato que espera Mercado Pago: ${f}`);
+  ok(!f.endsWith('Z'), 'la fecha termina en Z y tiene que llevar el desplazamiento escrito');
+  ok(f === '2026-08-11T19:30:00.000-03:00', `la conversión a hora argentina da ${f}`);
+
+  /* Y que el instante siga siendo el mismo: una fecha bien formada
+     pero corrida tres horas vence antes de tiempo. */
+  ok(new Date(f).getTime() === Date.UTC(2026, 7, 11, 22, 30, 0),
+    'la fecha quedó bien escrita pero apunta a otro instante');
+
+  /* Un vencimiento en el pasado deja el pago muerto al nacer. */
+  const futura = fechaParaMercadoPago(Date.now() + 60_000);
+  ok(new Date(futura).getTime() > Date.now(), 'el vencimiento calculado ya pasó');
+}
 
 /* ============================================================
    0 · El seguro entre prueba y producción

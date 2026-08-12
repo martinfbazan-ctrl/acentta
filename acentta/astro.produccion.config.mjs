@@ -50,6 +50,9 @@ const rutasDeCobro = {
       /* Diagnóstico. Dice qué variables ve la función, sin valores.
          Se puede borrar cuando el circuito esté verificado. */
       injectRoute({ pattern: '/api/estado', entrypoint: './src/api/estado.ts', prerender: false });
+      /* Andamio para aislar por qué Mercado Pago no habilita el pago.
+         Sólo responde en modo de prueba. Se borra al terminar. */
+      injectRoute({ pattern: '/api/probar-preferencia', entrypoint: './src/api/probar-preferencia.ts', prerender: false });
     },
   },
 };
