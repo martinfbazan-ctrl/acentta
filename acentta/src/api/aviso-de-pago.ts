@@ -35,10 +35,8 @@
 
 import type { APIRoute } from 'astro';
 import { consultarPago, firmaValida, hayCredenciales, variable } from '@lib/mercadopago';
-import {
-  actualizarPedido, desmarcarProcesado, hayAlmacen, leerPedido, marcarProcesado,
-  type EstadoPedido,
-} from '@lib/pedidos';
+import { desmarcarProcesado, hayAlmacen, leerPedido, marcarProcesado } from '@lib/pedidos';
+import { aplicarPago } from '@lib/conciliacion';
 
 export const prerender = false;
 
@@ -48,18 +46,6 @@ const listo = (nota: string) =>
 
 /** Nuestro problema y puede pasar solo: que reintenten. */
 const reintentar = (nota: string) => new Response(nota, { status: 500 });
-
-/** Cómo se traduce el estado de Mercado Pago al nuestro. */
-function traducirEstado(estado: string): EstadoPedido {
-  switch (estado) {
-    case 'approved': return 'aprobado';
-    case 'rejected': return 'rechazado';
-    case 'cancelled': return 'cancelado';
-    case 'refunded':
-    case 'charged_back': return 'devuelto';
-    default: return 'pendiente'; // pending, in_process y cualquier novedad
-  }
-}
 
 export const POST: APIRoute = async ({ request, url }) => {
   if (!hayCredenciales() || !hayAlmacen()) {
@@ -122,31 +108,17 @@ export const POST: APIRoute = async ({ request, url }) => {
     const pedido = await leerPedido(pago.referenciaExterna);
     if (!pedido) return listo(`no existe el pedido ${pago.referenciaExterna}`);
 
-    const estado = traducirEstado(pago.estado);
-
-    /* Comparación de montos. Si lo cobrado no coincide con lo
-       cotizado, el pedido NO se aprueba: se marca para revisar a
-       mano. Puede ser un cambio de precio entre la creación y el
-       pago, o puede ser un intento de manipulación; en los dos casos
-       la respuesta correcta es mirar antes de despachar.
-       Se tolera un peso de diferencia por redondeo de Mercado Pago. */
-    const esperado = pedido.cotizacion.total;
-    const diferencia = Math.abs(pago.monto - esperado);
-    if (estado === 'aprobado' && diferencia > 1) {
-      await actualizarPedido(pedido.numero, {
-        estado: 'pendiente',
-        pagoId,
-        detallePago: `REVISAR: se cobraron ${pago.monto} y el pedido decía ${esperado}`,
-      });
-      console.error(`aviso-de-pago: monto distinto en ${pedido.numero}: ${pago.monto} vs ${esperado}`);
+    /* La comprobación de monto y la escritura viven en un solo lugar,
+       compartidas con la consulta a mano de la pantalla de pedidos.
+       Dos copias de esta lógica terminarían divergiendo, y la que
+       divergiera sería la que menos se usa: justamente la que nadie
+       mira. */
+    const r = await aplicarPago(pedido, pago);
+    if (r.revisar) {
+      console.error(`aviso-de-pago: ${pedido.numero} queda para revisar — ${r.nota}`);
       return listo('monto distinto, queda para revisar');
     }
-
-    await actualizarPedido(pedido.numero, {
-      estado,
-      pagoId,
-      detallePago: `${pago.estado}${pago.detalle ? ` · ${pago.detalle}` : ''}`,
-    });
+    const estado = r.estado;
 
     /* Acá va el correo al comprador cuando el estado sea aprobado.
        Todavía no está: mandar correo pide un proveedor y una clave

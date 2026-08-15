@@ -56,6 +56,9 @@ import Campo from '@componentes/Campo.astro';
     <div hidden data-panel>
       <div class="panel__barra">
         <p class="panel__cuenta" data-cuenta aria-live="polite"></p>
+        <button class="panel__sincronizar" type="button" data-sincronizar>
+          Consultar estados en Mercado Pago
+        </button>
         <div class="panel__filtros" role="group" aria-label="Filtrar por estado">
           <button class="panel__filtro" type="button" data-filtro="todos" aria-pressed="true">Todos</button>
           <button class="panel__filtro" type="button" data-filtro="aprobado" aria-pressed="false">Aprobados</button>
@@ -109,6 +112,16 @@ import Campo from '@componentes/Campo.astro';
     gap: var(--e-3); margin-bottom: var(--e-5);
   }
   .panel__cuenta { font-size: var(--t-meta); color: var(--gris-texto); }
+  .panel__sincronizar {
+    min-height: 40px; padding-inline: var(--e-4);
+    background: var(--papel);
+    border: 1px solid var(--gris-500);
+    border-radius: var(--r-pastilla);
+    font-size: var(--t-meta); font-weight: 600; color: var(--tinta);
+    cursor: pointer;
+  }
+  .panel__sincronizar:hover { border-color: var(--tinta); }
+  .panel__sincronizar[disabled] { opacity: .6; cursor: default; }
   .panel__filtros { display: flex; flex-wrap: wrap; gap: var(--e-2); }
   .panel__filtro {
     min-height: 36px; padding-inline: var(--e-3);

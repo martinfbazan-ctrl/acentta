@@ -340,6 +340,49 @@ export async function consultarPago(id: string): Promise<PagoConsultado> {
 }
 
 /**
+ * Busca el pago de un pedido preguntando por su número.
+ *
+ * El aviso de pago es un mensaje que llega por la red, y los mensajes
+ * que llegan por la red se pierden: un despliegue justo en ese
+ * momento, un corte, una función que tardó más de 22 segundos. Y en
+ * modo de prueba directamente no se envían nunca — es una limitación
+ * de Mercado Pago, no del código.
+ *
+ * Esta función invierte la dirección: en vez de esperar a que nos
+ * avisen, preguntamos. Es la red de seguridad de todo el circuito de
+ * cobro, y no es un accesorio para probar: un pedido que quedó
+ * pendiente por un aviso perdido es un pago cobrado que nadie va a
+ * despachar.
+ *
+ * Devuelve el pago más relevante: si hay varios intentos para el
+ * mismo pedido, gana el aprobado.
+ */
+export async function buscarPagoPorPedido(numeroPedido: string): Promise<PagoConsultado | null> {
+  const r = await fetch(
+    `${API}/v1/payments/search?external_reference=${encodeURIComponent(numeroPedido)}&sort=date_created&criteria=desc`,
+    { headers: { Authorization: `Bearer ${token()}` } },
+  );
+  if (!r.ok) return null;
+
+  const d = (await r.json()) as { results?: Record<string, unknown>[] };
+  const resultados = d.results ?? [];
+  if (resultados.length === 0) return null;
+
+  /* Un pedido puede tener varios intentos: uno rechazado y después
+     uno aprobado. El que manda es el aprobado; si no hay ninguno, el
+     más reciente. */
+  const elegido = resultados.find((p) => p.status === 'approved') ?? resultados[0]!;
+
+  return {
+    id: String(elegido.id ?? ''),
+    estado: String(elegido.status ?? 'desconocido'),
+    detalle: String(elegido.status_detail ?? ''),
+    monto: Number(elegido.transaction_amount ?? 0),
+    referenciaExterna: String(elegido.external_reference ?? numeroPedido),
+  };
+}
+
+/**
  * Valida que el aviso lo haya mandado Mercado Pago.
  *
  * Sin esto, cualquiera que descubra la dirección de la función manda

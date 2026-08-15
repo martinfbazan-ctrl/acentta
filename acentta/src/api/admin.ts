@@ -17,6 +17,8 @@
 
 import type { APIRoute } from 'astro';
 import { actualizarPedido, hayAlmacen, listarPedidos } from '@lib/pedidos';
+import { buscarPagoPorPedido } from '@lib/mercadopago';
+import { aplicarPago } from '@lib/conciliacion';
 import {
   cerrarSesion, claveCorrecta, crearSesion, galletaBorrada, galletaDeSesion,
   hayClaveConfigurada, huellaDe, permiteIntentar, sesionValida, tokenDe,
@@ -119,6 +121,45 @@ export const POST: APIRoute = async ({ request, url }) => {
     if (!actualizado) return json({ error: 'No encontramos ese pedido.' }, 404);
 
     return json({ ok: true, numero, seguimiento: actualizado.seguimiento ?? null, estado: actualizado.estado });
+  }
+
+  /* ---- Preguntarle a Mercado Pago por los pedidos pendientes ----
+
+     La red de seguridad del circuito de cobro. El aviso de pago es un
+     mensaje que llega por la red, y los mensajes que llegan por la
+     red se pierden: un despliegue justo en ese momento, un corte, una
+     función que tardó más de 22 segundos. Y en modo de prueba Mercado
+     Pago directamente no los envía.
+
+     Un pedido que quedó pendiente por un aviso perdido es un pago
+     cobrado que nadie va a despachar. Esto invierte la dirección: en
+     vez de esperar a que nos avisen, preguntamos.
+
+     Sólo mira los pendientes. Los ya resueltos no se vuelven a tocar:
+     re-preguntar por un pedido aprobado hace ocho meses es gastar
+     llamadas para confirmar algo que ya sabemos. */
+  if (accion === 'sincronizar') {
+    const pedidos = (await listarPedidos(100)).filter((p) => p.estado === 'pendiente');
+
+    let revisados = 0;
+    let cambiados = 0;
+    let sinPago = 0;
+    const paraRevisar: string[] = [];
+
+    for (const p of pedidos) {
+      revisados++;
+      try {
+        const pago = await buscarPagoPorPedido(p.numero);
+        if (!pago) { sinPago++; continue; }
+        const r = await aplicarPago(p, pago);
+        if (r.cambio) cambiados++;
+        if (r.revisar) paraRevisar.push(`${p.numero}: ${r.nota}`);
+      } catch {
+        /* Un pedido que falla no puede frenar a los demás. */
+      }
+    }
+
+    return json({ ok: true, revisados, cambiados, sinPago, paraRevisar });
   }
 
   return json({ error: 'Acción desconocida.' }, 400);

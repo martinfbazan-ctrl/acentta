@@ -168,6 +168,18 @@ El estado del pago no se toca desde acá — lo pone el aviso de Mercado Pago y 
 
 La sesión dura ocho horas y se corta después de diez intentos fallidos en quince minutos.
 
+### El botón «Consultar estados en Mercado Pago»
+
+Toma los pedidos que quedaron en *pendiente* y le pregunta a Mercado Pago, uno por uno, si el pago entró.
+
+**En modo de prueba es el único camino**, porque Mercado Pago no manda avisos para pagos de prueba: un pago de prueba aprobado deja el pedido en pendiente para siempre hasta que se lo consulte.
+
+**En producción es la red de seguridad**, y por eso no es una función de laboratorio. El aviso de pago es un mensaje que viaja por internet, y los mensajes que viajan por internet se pierden: un despliegue justo en ese momento, un corte, una función que tardó más de 22 segundos. **Un pedido que quedó pendiente por un aviso perdido es un pago cobrado que nadie va a despachar.** Conviene apretarlo una vez por día.
+
+Sólo mira los pendientes: re-preguntar por algo aprobado hace ocho meses es gastar llamadas para confirmar lo que ya sabemos.
+
+Y hace la misma comprobación de monto que el aviso automático — es literalmente el mismo código, a propósito. Dos copias de esa lógica terminarían divergiendo, y la que divergiera sería la que menos se usa: justo la que nadie mira.
+
 ---
 
 ## Cómo se ve un pedido

@@ -154,6 +154,41 @@ document.addEventListener('click', async (e) => {
   }
 });
 
+/* ---- Preguntarle a Mercado Pago ----
+   Para los pedidos que quedaron pendientes porque el aviso nunca
+   llegó. En modo de prueba, Mercado Pago no manda avisos nunca, así
+   que acá es el único camino; en producción es la red de seguridad
+   para el aviso que se pierde. */
+$<HTMLButtonElement>('[data-sincronizar]')?.addEventListener('click', async (e) => {
+  const boton = e.currentTarget as HTMLButtonElement;
+  const cuenta = $('[data-cuenta]');
+  const textoOriginal = boton.textContent;
+
+  boton.disabled = true;
+  boton.textContent = 'Consultando…';
+
+  try {
+    const r = await fetch('/api/admin?accion=sincronizar', { method: 'POST' });
+    if (!r.ok) throw new Error(r.status === 401 ? 'La sesión venció. Recargá la página.' : 'No se pudo consultar.');
+
+    const d = (await r.json()) as { revisados: number; cambiados: number; sinPago: number; paraRevisar: string[] };
+    await cargar();
+
+    if (cuenta) {
+      const partes = [`${d.revisados} pendiente${d.revisados === 1 ? '' : 's'} consultado${d.revisados === 1 ? '' : 's'}`];
+      if (d.cambiados) partes.push(`${d.cambiados} actualizado${d.cambiados === 1 ? '' : 's'}`);
+      if (d.sinPago) partes.push(`${d.sinPago} sin pago todavía`);
+      if (d.paraRevisar.length) partes.push(`⚠ revisar: ${d.paraRevisar.join(', ')}`);
+      cuenta.textContent = partes.join(' · ');
+    }
+  } catch (err) {
+    if (cuenta) cuenta.textContent = err instanceof Error ? err.message : 'No se pudo consultar.';
+  } finally {
+    boton.disabled = false;
+    boton.textContent = textoOriginal;
+  }
+});
+
 /* ---- Filtros ---- */
 for (const b of document.querySelectorAll<HTMLButtonElement>('[data-filtro]')) {
   b.addEventListener('click', () => {
