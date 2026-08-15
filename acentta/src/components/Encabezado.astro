@@ -49,6 +49,22 @@ const categorias = [
           <circle cx="8.5" cy="8.5" r="6" /><path d="M13 13l4.5 4.5" stroke-linecap="round" />
         </svg>
       </a>
+      <!-- «Mis pedidos» y no «Ingresar».
+           El checkout es sin cuenta a propósito: obligar a
+           registrarse es de los mayores destructores de conversión
+           que existen, y este sitio no necesita cuentas para entregar
+           un pedido. Lo que la gente busca cuando vuelve no es su
+           perfil, es dónde está su paquete — y para eso alcanza el
+           número de pedido y el correo, sin inventar otra contraseña
+           y sin que nosotros guardemos ninguna. -->
+      <a class="cabecera__icono cabecera__pedidos" href="/mis-pedidos" aria-label="Mis pedidos">
+        <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M3.5 7.5 12 3l8.5 4.5v9L12 21l-8.5-4.5z" stroke-linejoin="round" />
+          <path d="M3.5 7.5 12 12m0 0 8.5-4.5M12 12v9" stroke-linejoin="round" />
+        </svg>
+        <span class="cabecera__icono-texto">Mis pedidos</span>
+      </a>
+
       <a class="cabecera__icono cabecera__bolsa" href="/carrito" data-carrito-enlace aria-label={`Carrito, ${items} ${items === 1 ? 'producto' : 'productos'}`}>
         <span class="bolsa-marco">
           <svg class="bolsa" width="34" height="34" viewBox="0 0 32 32" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9">
@@ -196,6 +212,26 @@ const categorias = [
     transition: background-color var(--v-rapido) var(--curva);
   }
   .cabecera__icono:hover { background: var(--gris-050); }
+
+  /* En pantalla ancha el ícono lleva su nombre al lado. Un cubo
+     dibujado con líneas no dice «mis pedidos» por sí solo, y un
+     ícono que hay que adivinar no es un atajo: es un acertijo.
+     En móvil se cae el texto y queda el ícono, que ahí sí compite
+     con el espacio del carrito. */
+  .cabecera__pedidos { width: auto; gap: var(--e-2); }
+  .cabecera__icono-texto { display: none; }
+  @media (min-width: 900px) {
+    .cabecera__pedidos {
+      grid-auto-flow: column;
+      padding-inline: var(--e-3);
+    }
+    .cabecera__icono-texto {
+      display: inline;
+      font-size: var(--t-meta);
+      font-weight: 600;
+      white-space: nowrap;
+    }
+  }
   .cabecera__icono--solo-movil { display: grid; }
   @media (min-width: 768px) { .cabecera__icono--solo-movil { display: none; } }
 

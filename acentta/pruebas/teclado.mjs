@@ -244,10 +244,18 @@ const respirar = (n = 6) => new Promise((r) => {
   d.querySelector('[data-paso-forma="2"]').dispatchEvent(new w.Event('submit', { bubbles: true, cancelable: true }));
   ok(!d.querySelector('#forma-pago').hidden, 'no se avanzó al paso de pago');
 
-  escribir('tarjeta', '4509953566233704');
-  escribir('titular', 'MARTIN BAZAN');
-  escribir('vencimiento', '07/29');
-  escribir('cvv', '123');
+  /* [ACTUALIZADO] Acá se escribían los cuatro campos de tarjeta.
+     Ya no existen: la tarjeta se carga en la pantalla de Mercado
+     Pago y este sitio no la ve nunca. El paso de pago quedó en
+     elegir el medio y aceptar los términos.
+
+     Se comprueba que de verdad no estén, y no sólo que el circuito
+     siga andando sin ellos: un campo de tarjeta que reapareciera por
+     un merge distraído sería pedir el dato más delicado que tiene
+     una persona para tirarlo a la basura. */
+  for (const id of ['tarjeta', 'titular', 'vencimiento', 'cvv', 'cuotas']) {
+    ok(!d.getElementById(id), `el checkout volvió a pedir "${id}": ese dato se carga en Mercado Pago`);
+  }
 
   const acepto = d.getElementById('acepto');
   ok(acepto && ordenDeFoco(d).includes(acepto), 'no se llega a la casilla de términos con Tab');

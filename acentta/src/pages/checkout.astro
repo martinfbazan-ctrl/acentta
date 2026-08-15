@@ -172,14 +172,25 @@ const pasos = [
         <form class="paso" id="forma-pago" data-paso-forma="3" novalidate hidden>
           <h2 class="t-seccion">Pago</h2>
 
-          <div class="simulacro">
-            <svg width="18" height="18" viewBox="0 0 20 20" aria-hidden="true" fill="currentColor">
-              <path d="M10 1a9 9 0 1 0 0 18A9 9 0 0 0 10 1Zm1 13.5H9v-6h2v6ZM10 7.2a1.2 1.2 0 1 1 0-2.4 1.2 1.2 0 0 1 0 2.4Z"/>
+          <!-- [CAMBIO] Acá había un formulario de tarjeta completo:
+               número, titular, vencimiento, código de seguridad y
+               selector de cuotas. Se fue entero, y no por prolijidad.
+
+               El cobro pasa por Checkout Pro: la tarjeta se carga en
+               el entorno de Mercado Pago y este sitio no la ve nunca.
+               Pedir un número de tarjeta que después no se usa es
+               pedir el dato más delicado que tiene una persona para
+               tirarlo a la basura — y quien entienda de esto va a
+               desconfiar de todo lo demás. Las cuotas se eligen allá,
+               que es donde el banco las conoce de verdad. -->
+          <div class="pago-externo">
+            <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7">
+              <rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" />
             </svg>
             <p>
-              <b>Esto es una simulación.</b> acentta es un proyecto conceptual de
-              portafolio: no procesa pagos y no guarda ningún dato. Puedes escribir
-              cualquier número de tarjeta válido — prueba con 4509 9535 6623 3704.
+              Los datos de tu tarjeta se cargan en <b>Mercado Pago</b>, no acá.
+              Este sitio nunca ve tu número de tarjeta. Al confirmar te llevamos
+              a su pantalla de pago y volvés con la compra hecha.
             </p>
           </div>
 
@@ -201,25 +212,6 @@ const pasos = [
               <span class="metodo__precio metodo__precio--verde tabular" data-descuento-transferencia></span>
             </label>
           </fieldset>
-
-          <div class="paso__campos" data-campos-tarjeta>
-            <Campo id="tarjeta" etiqueta="Número de tarjeta" requerido modoEntrada="numeric"
-                   maxlargo={23} autocompletar="cc-number" marcador="0000 0000 0000 0000" />
-            <Campo id="titular" etiqueta="Nombre como figura en la tarjeta" requerido autocompletar="cc-name" />
-            <div class="paso__par">
-              <Campo id="vencimiento" etiqueta="Vencimiento" requerido modoEntrada="numeric"
-                     maxlargo={5} autocompletar="cc-exp" marcador="MM/AA" />
-              <Campo id="cvv" etiqueta="Código de seguridad" requerido modoEntrada="numeric"
-                     maxlargo={4} autocompletar="cc-csc" marcador="123"
-                     ayuda="Los tres números del dorso." />
-            </div>
-            <div class="campo">
-              <label class="campo__etiqueta" for="cuotas">Cuotas</label>
-              <div class="campo__envoltorio">
-                <select class="campo__control" id="cuotas" name="cuotas" data-cuotas></select>
-              </div>
-            </div>
-          </div>
 
           <label class="acuerdo">
             <input type="checkbox" id="acepto" required />

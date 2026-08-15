@@ -1,0 +1,131 @@
+---
+/**
+ * Mis pedidos.
+ * ---------------------------------------------------------------
+ * Lo que alguien busca cuando vuelve a una tienda donde ya compró no
+ * es su perfil: es dónde está su paquete.
+ *
+ * Por eso acá no hay registro. Se pide el número de pedido y el
+ * correo con el que se compró, y con eso se muestra el estado. Da lo
+ * mismo que una cuenta para el 90 % de los casos, y evita las tres
+ * cosas que trae una cuenta: pedirle a alguien que invente otra
+ * contraseña, guardársela nosotros, y sostener un circuito de
+ * recuperación por correo.
+ *
+ * POR QUÉ TAMBIÉN PIDE EL CORREO
+ *
+ * El número solo alcanzaría para mostrar el estado —de hecho la
+ * página de confirmación lo hace—, pero acá se muestra la dirección
+ * de entrega, y eso ya es dato personal. Con dos datos que sólo tiene
+ * quien compró, un número adivinado no sirve de nada.
+ */
+import Base from '@layouts/Base.astro';
+import Encabezado from '@componentes/Encabezado.astro';
+import Pie from '@componentes/Pie.astro';
+import Migas from '@componentes/Migas.astro';
+import Campo from '@componentes/Campo.astro';
+import Boton from '@componentes/Boton.astro';
+---
+
+<Base
+  titulo="Mis pedidos · acentta"
+  descripcion="Consulta el estado de tu pedido con el número y el correo con el que compraste."
+>
+  <Encabezado slot="encabezado" />
+
+  <div class="contenedor mis-pedidos">
+    <Migas pasos={[{ nombre: 'Inicio', href: '/' }, { nombre: 'Mis pedidos' }]} class="migas--separada" />
+
+    <h1 class="t-titular">Mis pedidos</h1>
+    <p class="t-texto mis-pedidos__bajada">
+      Sin cuenta y sin contraseña. Con el número de pedido y el correo con el que
+      compraste alcanza. El número está en el correo de confirmación y en la
+      pantalla que viste al terminar la compra.
+    </p>
+
+    <form class="mis-pedidos__forma" data-forma>
+      <div class="mis-pedidos__campos">
+        <Campo id="numero" etiqueta="Número de pedido" requerido marcador="AC-260811-K7M2QX"
+               ayuda="Empieza con AC-" />
+        <Campo id="email" etiqueta="Correo con el que compraste" tipo="email" requerido
+               autocompletar="email" marcador="nombre@ejemplo.com" />
+      </div>
+      <Boton tipo="submit" tamano="grande">Ver mi pedido</Boton>
+      <p class="mis-pedidos__error" role="alert" hidden data-error></p>
+    </form>
+
+    <div hidden data-resultado></div>
+
+    <p class="mis-pedidos__ayuda">
+      ¿Perdiste el número? Escribí a <b>hola@acentta.com.ar</b> con el correo con
+      el que compraste y lo buscamos.
+    </p>
+  </div>
+
+  <Pie slot="pie" />
+</Base>
+
+<script>
+  import '../scripts/mis-pedidos';
+</script>
+
+<style>
+  .mis-pedidos { padding-block: var(--e-6) var(--e-16); max-width: 70ch; }
+  .mis-pedidos__bajada { margin-block: var(--e-4) var(--e-8); color: var(--gris-800); }
+
+  .mis-pedidos__forma { display: flex; flex-direction: column; gap: var(--e-5); align-items: flex-start; }
+  .mis-pedidos__campos {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--e-4);
+    width: 100%;
+  }
+  @media (min-width: 640px) { .mis-pedidos__campos { grid-template-columns: 1fr 1fr; } }
+  .mis-pedidos__error { font-size: 0.9375rem; color: var(--rojo); font-weight: 500; }
+
+  .mis-pedidos__ayuda {
+    margin-top: var(--e-12);
+    padding-top: var(--e-5);
+    border-top: 1px solid var(--gris-200);
+    font-size: var(--t-meta);
+    color: var(--gris-texto);
+  }
+  .mis-pedidos__ayuda b { color: var(--tinta); }
+
+  /* La tarjeta del resultado la crea el guion, así que va con
+     :global(): lo que nace del guion no lleva la marca de alcance que
+     Astro le pone al marcado. */
+  :global(.pedido-visto) {
+    margin-top: var(--e-8);
+    padding: var(--e-6);
+    background: var(--papel);
+    border: 1px solid var(--gris-200);
+    border-radius: var(--r-modal);
+    display: flex; flex-direction: column; gap: var(--e-4);
+  }
+  :global(.pedido-visto__cabeza) {
+    display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--e-2) var(--e-3);
+  }
+  :global(.pedido-visto__numero) { font-weight: 700; font-variant-numeric: tabular-nums; }
+  :global(.pedido-visto__estado) {
+    padding: 2px var(--e-2); border-radius: var(--r-badge);
+    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em;
+    background: var(--arena-honda); color: var(--gris-800);
+  }
+  :global(.pedido-visto__estado[data-e='aprobado']) { background: var(--verde-wash); color: var(--verde); }
+  :global(.pedido-visto__estado[data-e='pendiente']) { background: var(--oferta-wash); color: var(--naranja-texto-oliva); }
+  :global(.pedido-visto__estado[data-e='rechazado']),
+  :global(.pedido-visto__estado[data-e='cancelado']) { background: #FBE9E7; color: var(--rojo); }
+  :global(.pedido-visto__linea) { font-size: 0.9375rem; color: var(--gris-800); line-height: 1.55; }
+  :global(.pedido-visto__linea b) { color: var(--tinta); }
+  :global(.pedido-visto__seguimiento) {
+    padding: var(--e-4);
+    background: var(--verde-wash);
+    border-radius: var(--r-tarjeta);
+    font-size: 0.9375rem;
+  }
+  :global(.pedido-visto__items) {
+    padding-top: var(--e-4); border-top: 1px solid var(--gris-200);
+    font-size: 0.875rem; color: var(--gris-800); line-height: 1.6;
+  }
+</style>

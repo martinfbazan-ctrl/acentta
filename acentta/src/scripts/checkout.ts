@@ -51,38 +51,14 @@ if (contenedor) {
     ciudad: (v) => (v.trim().length >= 2 ? null : 'Falta la ciudad o localidad.'),
     calle: (v) => (v.trim().length >= 3 ? null : 'Falta el nombre de la calle.'),
     numero: (v) => (v.trim().length >= 1 ? null : 'Falta la altura. Si no tiene, escribe S/N.'),
-    tarjeta: (v) => {
-      const n = v.replace(/\D/g, '');
-      if (n.length < 13) return 'Faltan números. Una tarjeta tiene entre 13 y 19.';
-      return luhn(n) ? null : 'Ese número no es válido. Revisa si se coló un dígito de más.';
-    },
-    titular: (v) => (v.trim().length >= 4 ? null : 'El nombre tal como figura impreso en la tarjeta.'),
-    vencimiento: (v) => {
-      const m = v.match(/^(\d{2})\/?(\d{2})$/);
-      if (!m) return 'El vencimiento va como MM/AA, por ejemplo 07/29.';
-      const mes = Number(m[1]);
-      const anio = 2000 + Number(m[2]);
-      if (mes < 1 || mes > 12) return 'El mes va del 01 al 12.';
-      const hoy = new Date();
-      const vence = new Date(anio, mes, 0);
-      return vence >= hoy ? null : 'Esa tarjeta está vencida.';
-    },
-    cvv: (v) => (/^\d{3,4}$/.test(v) ? null : 'Son los tres números del dorso de la tarjeta.'),
   };
 
-  /** Algoritmo de Luhn: la misma verificación que hace el banco.
-   *  Atrapa el error de tipeo antes de que la operación se rechace. */
-  function luhn(numero: string): boolean {
-    let suma = 0;
-    let doble = false;
-    for (let i = numero.length - 1; i >= 0; i--) {
-      let d = Number(numero[i]);
-      if (doble) { d *= 2; if (d > 9) d -= 9; }
-      suma += d;
-      doble = !doble;
-    }
-    return suma % 10 === 0;
-  }
+  /* [SE FUERON] Acá vivían las reglas de tarjeta, titular,
+     vencimiento y código de seguridad, con el algoritmo de Luhn para
+     atrapar el dígito mal tipeado antes de que el banco lo rechace.
+     Era buen código y ya no tiene lugar: la tarjeta se carga en
+     Mercado Pago, así que este sitio no la ve. Validar un dato que no
+     se recibe es mantener una comprobación que no comprueba nada. */
 
   function campoDe(entrada: HTMLElement): HTMLElement | null {
     return entrada.closest('.campo');
@@ -149,18 +125,6 @@ if (contenedor) {
   /* ============================================================
      FORMATO ASISTIDO
      ============================================================ */
-  const tarjeta = document.querySelector<HTMLInputElement>('#tarjeta');
-  tarjeta?.addEventListener('input', () => {
-    const n = tarjeta.value.replace(/\D/g, '').slice(0, 19);
-    tarjeta.value = n.replace(/(\d{4})(?=\d)/g, '$1 ');
-  });
-
-  const vencimiento = document.querySelector<HTMLInputElement>('#vencimiento');
-  vencimiento?.addEventListener('input', () => {
-    const n = vencimiento.value.replace(/\D/g, '').slice(0, 4);
-    vencimiento.value = n.length > 2 ? `${n.slice(0, 2)}/${n.slice(2)}` : n;
-  });
-
   /* El código postal completa la provincia: un dato menos para
      escribir es un dato menos para equivocarse. */
   const cpCheckout = document.querySelector<HTMLInputElement>('#cp-checkout');
@@ -357,15 +321,10 @@ if (contenedor) {
       nodoCuotas.innerHTML = `o 12 cuotas sin interés de <b>${cuota(total, 12)}</b>`;
     }
 
-    /* Cuotas calculadas sobre el total real */
-    const selectorCuotas = document.querySelector<HTMLSelectElement>('[data-cuotas]');
-    if (selectorCuotas) {
-      const previo = selectorCuotas.value;
-      selectorCuotas.innerHTML = [1, 3, 6, 12]
-        .map((c) => `<option value="${c}">${c === 1 ? `1 pago de ${fPrecio(total)}` : `${c} cuotas sin interés de ${cuota(total, c)}`}</option>`)
-        .join('');
-      if (previo) selectorCuotas.value = previo;
-    }
+    /* [SE FUE] El selector de cuotas. Las cuotas se eligen en la
+       pantalla de Mercado Pago, que es donde se sabe qué ofrece el
+       banco de esa tarjeta en particular. Elegirlas acá era adivinar
+       y después volver a preguntarlas allá. */
 
     /* Fecha de entrega */
     const entrega = document.querySelector<HTMLElement>('[data-ck-entrega]')!;
@@ -451,13 +410,9 @@ if (contenedor) {
     let pago = '';
     if (pasoActual >= 3) {
       const porTarjeta = metodoPagoRadios.find((r) => r.checked)?.value === 'tarjeta';
-      if (!porTarjeta) {
-        pago = 'Transferencia bancaria · 10 % de descuento';
-      } else {
-        const sel = document.querySelector<HTMLSelectElement>('[data-cuotas]');
-        const elegida = sel?.selectedOptions[0]?.textContent?.trim();
-        pago = elegida ? `Tarjeta · ${elegida}` : 'Tarjeta de crédito o débito';
-      }
+      pago = porTarjeta
+        ? 'Tarjeta · hasta 12 cuotas sin interés'
+        : 'Transferencia bancaria · 10 % de descuento';
     }
     const hayPago = fila('data-ck-fila-pago', 'data-ck-metodo-pago', pago);
 
@@ -468,23 +423,8 @@ if (contenedor) {
   for (const id of ['calle', 'numero', 'piso', 'ciudad', 'provincia', 'cp-checkout']) {
     document.querySelector(`#${id}`)?.addEventListener('input', pintarElegido);
   }
-  document.querySelector('[data-cuotas]')?.addEventListener('change', pintarElegido);
-
   for (const r of [...metodoPagoRadios, ...metodoEnvioRadios]) {
     r.addEventListener('change', () => { pintarResumen(); pintarEnvio(); pintarElegido(); });
-  }
-
-  /* Los campos de tarjeta se ocultan si se paga por transferencia:
-     pedir una tarjeta a quien eligió transferencia es pedir un dato
-     que no se va a usar. */
-  for (const r of metodoPagoRadios) {
-    r.addEventListener('change', () => {
-      const campos = document.querySelector<HTMLElement>('[data-campos-tarjeta]');
-      if (!campos) return;
-      const esTarjeta = metodoPagoRadios.find((x) => x.checked)?.value === 'tarjeta';
-      campos.hidden = !esTarjeta;
-      for (const e of campos.querySelectorAll<HTMLInputElement>('input')) e.required = esTarjeta;
-    });
   }
 
   /* Resumen plegable en móvil */

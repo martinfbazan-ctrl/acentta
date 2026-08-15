@@ -50,9 +50,31 @@ export const GET: APIRoute = async ({ url }) => {
     });
   }
 
+  /* Con el correo correcto se muestra un poco más: la dirección de
+     entrega y el número de seguimiento completo. Son dos datos que
+     sólo tiene quien compró, así que un número adivinado no alcanza.
+     Sin correo, o con uno que no coincide, se devuelve la vista
+     reducida de siempre — que es la que usa la confirmación, donde
+     la persona acaba de pagar y no tiene por qué volver a escribir
+     su correo. */
+  const correo = (url.searchParams.get('email') ?? '').trim().toLowerCase();
+  const verificado = Boolean(correo) && correo === pedido.comprador.email.toLowerCase();
+
   return new Response(JSON.stringify({
     numero: pedido.numero,
     estado: pedido.estado,
+    verificado,
+    ...(verificado ? {
+      entrega: {
+        metodo: pedido.entrega.metodo,
+        calle: pedido.entrega.calle,
+        numero: pedido.entrega.numero,
+        piso: pedido.entrega.piso ?? null,
+        ciudad: pedido.entrega.ciudad,
+        provincia: pedido.entrega.provincia,
+        cp: pedido.entrega.cp,
+      },
+    } : {}),
     creado: pedido.creado,
     total: pedido.cotizacion.total,
     subtotal: pedido.cotizacion.subtotal,

@@ -106,14 +106,22 @@
   --fuente: "Inter Variable", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 
   /* móvil → escritorio, fluido entre 360 px y 1280 px */
-  --t-titular: clamp(1.75rem, 1.13rem + 2.76vw, 2.75rem);      /* 28 → 44 */
-  --t-seccion: clamp(1.5rem, 1.24rem + 1.18vw, 2.125rem);      /* 24 → 34 */
+  /* [REVISIÓN DE ESCALA] Los tamaños de arriba bajaron alrededor de un
+     10 %. Lo que cambió no es el gusto: es que la escala se diseñó
+     mirando el titular de la portada, donde 44 px se justifican, y de
+     ahí se propagó a sesenta y cinco páginas donde no.
+     El extremo chico se toca poco —12 y 13 px son el piso de lo
+     legible y bajarlos sería ganar prolijidad a costa de que alguien
+     no pueda leer—. Se achica el extremo grande, que es el que
+     hacía ver todo inflado en pantalla ancha. */
+  --t-titular: clamp(1.625rem, 1.18rem + 1.97vw, 2.375rem);    /* 26 → 38 */
+  --t-seccion: clamp(1.375rem, 1.2rem + 0.79vw, 1.75rem);      /* 22 → 28 */
   --t-producto: clamp(0.9375rem, 0.91rem + 0.12vw, 1rem);      /* 15 → 16 */
-  --t-precio: clamp(1.0625rem, 1.01rem + 0.24vw, 1.1875rem);   /* 17 → 19 */
+  --t-precio: clamp(1rem, 0.96rem + 0.2vw, 1.125rem);          /* 16 → 18 */
   --t-precio-ant: clamp(0.8125rem, 0.79rem + 0.12vw, 0.875rem);/* 13 → 14 */
   --t-cuotas: clamp(0.8125rem, 0.79rem + 0.12vw, 0.875rem);    /* 13 → 14 */
   --t-meta: clamp(0.75rem, 0.73rem + 0.12vw, 0.8125rem);       /* 12 → 13 */
-  --t-texto: clamp(1.0625rem, 1.04rem + 0.12vw, 1.125rem);     /* 17 → 18 */
+  --t-texto: clamp(1rem, 0.98rem + 0.12vw, 1.0625rem);         /* 16 → 17 */
 
   /* El titular de campaña baja de 700 a 500. Con la paleta cálida, un
      display en negrita empuja; en medio 500 el titular sostiene el tamaño
@@ -137,7 +145,16 @@
      grilla hasta que comparar productos obliga a mover la cabeza; a
      1480 la fila de cuatro sigue entrando en un barrido de ojos.
      La prosa no acompaña: sigue limitada por medida de lectura. */
-  --ancho-max: 1480px;
+  /* [REVISIÓN DE ANCHO] 1480 px era el problema más grande de los dos,
+     aunque el síntoma que se ve sea la tipografía.
+     En una pantalla de 1920, un contenedor de 1480 deja la grilla en
+     cinco tarjetas enormes y obliga al ojo a barrer casi un metro de
+     ancho para leer una fila. No es que las cosas fueran grandes: era
+     que había demasiado lugar y todo creció para llenarlo.
+     Con 1240 la grilla se acomoda sola en columnas de un tamaño
+     razonable, la medida de lectura deja de ser incómoda y el
+     conjunto se ve ordenado sin haber achicado nada por dentro. */
+  --ancho-max: 1240px;
   --ancho-texto: 68ch;
   --gutter: var(--e-4);
   --columnas: 4;

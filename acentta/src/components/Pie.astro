@@ -24,7 +24,42 @@ const ayuda = [
   { nombre: 'Contacto', href: '/contacto' },
 ];
 
-const medios = ['Visa', 'Mastercard', 'Amex', 'Cabal', 'Mercado Pago', 'Transferencia'];
+/* Los medios de pago se dibujan con el logo de cada marca si el
+   archivo está, y con el nombre en texto si no.
+   ---------------------------------------------------------------
+   No están puestos a mano en el marcado a propósito: son marcas
+   registradas y los archivos oficiales los tiene que bajar cada
+   marca de su propio sitio. Dibujarlos de memoria saldría mal —una
+   marca mal dibujada se nota— y además imitar una marca registrada
+   es otro problema distinto.
+
+   Entonces: se lee la carpeta al compilar. El día que aparezca
+   `public/medios/visa.svg`, el logo se muestra solo. Hasta entonces
+   queda el nombre en texto, que informa lo mismo aunque luzca menos.
+   Nadie tiene que tocar este archivo para agregar uno. */
+const ARCHIVOS = import.meta.glob('/public/medios/*.{svg,png}', { eager: true, query: '?url', import: 'default' });
+
+/* El logo del estudio va en línea y no como <img>: así hereda el
+   color del texto que lo rodea —el archivo trae `currentColor`— y no
+   suma una petición más para un dibujo de dos kilobytes. */
+const logoEstudio = (
+  await import('../../public/blanco-activo-studio.svg?raw')
+).default as string;
+
+const medios = [
+  { nombre: 'Visa', clave: 'visa' },
+  { nombre: 'Mastercard', clave: 'mastercard' },
+  { nombre: 'American Express', clave: 'amex' },
+  { nombre: 'Cabal', clave: 'cabal' },
+  { nombre: 'Mercado Pago', clave: 'mercadopago' },
+  { nombre: 'Transferencia', clave: 'transferencia' },
+].map((m) => {
+  const encontrado = Object.keys(ARCHIVOS).find((ruta) => {
+    const nombre = ruta.split('/').pop()!.replace(/\.(svg|png)$/, '').toLowerCase();
+    return nombre === m.clave;
+  });
+  return { ...m, logo: encontrado ? encontrado.replace('/public', '') : null };
+});
 ---
 
 <footer class="pie">
@@ -38,7 +73,7 @@ const medios = ['Visa', 'Mastercard', 'Amex', 'Cabal', 'Mercado Pago', 'Transfer
         <div class="pie__contacto">
           <p><b>hola@acentta.com.ar</b></p>
           <p>Respondemos dentro de las 24 h hábiles.</p>
-          <p>Lunes a viernes de 9 a 18 h · Buenos Aires, Argentina</p>
+          <p>Lunes a viernes de 9 a 18 h · Córdoba, Argentina</p>
         </div>
       </div>
 
@@ -78,12 +113,29 @@ const medios = ['Visa', 'Mastercard', 'Amex', 'Cabal', 'Mercado Pago', 'Transfer
     <div class="pie__medios">
       <p class="pie__titulo">Medios de pago</p>
       <ul class="pie__fichas">
-        {medios.map((m) => <li class="pie__ficha">{m}</li>)}
+        {medios.map((m) => (
+          <li class={m.logo ? 'pie__ficha pie__ficha--logo' : 'pie__ficha'}>
+            {m.logo
+              ? <img src={m.logo} alt={m.nombre} width="38" height="24" loading="lazy" decoding="async" />
+              : m.nombre}
+          </li>
+        ))}
       </ul>
       <p class="pie__nota">Hasta 12 cuotas sin interés con bancos seleccionados.</p>
     </div>
 
     <div class="pie__legal">
+      <!-- El crédito del estudio va acá, junto al de la marca. En un
+           pie de tienda, quien la hizo va abajo y en chico: el
+           protagonista es el negocio. Pero va, porque una tienda que
+           funciona es la mejor carta de presentación que hay. -->
+      <p class="pie__estudio">
+        <span>Diseño y desarrollo</span>
+        <a href="/caso" aria-label="BLANCO ACTIVO studio">
+          <Fragment set:html={logoEstudio} />
+        </a>
+      </p>
+
       <p class="pie__copia">
         © 2026 acentta · Proyecto conceptual de portafolio. No es una tienda real
         y no procesa pagos.
@@ -181,6 +233,26 @@ const medios = ['Visa', 'Mastercard', 'Amex', 'Cabal', 'Mercado Pago', 'Transfer
     justify-content: space-between;
     align-items: center;
   }
+  .pie__ficha--logo {
+    padding: 6px var(--e-2);
+    display: inline-flex; align-items: center;
+  }
+  .pie__ficha--logo img { height: 22px; width: auto; display: block; }
+
+  .pie__estudio {
+    display: flex; align-items: center; gap: var(--e-3);
+    color: var(--gris-texto); font-size: var(--t-meta);
+  }
+  .pie__estudio a {
+    display: inline-flex; align-items: center;
+    color: var(--gris-800);
+    transition: color var(--v-rapido) var(--curva);
+  }
+  .pie__estudio a:hover { color: var(--tinta); }
+  /* El alto manda y el ancho se calcula solo: el archivo del logo es
+     apaisado y fijarle los dos lados lo deformaría. */
+  .pie__estudio :global(svg) { height: 17px; width: auto; display: block; }
+
   .pie__copia { color: var(--gris-texto); font-size: var(--t-meta); max-width: 52ch; }
   .pie__enlaces-legales { display: flex; flex-wrap: wrap; gap: var(--e-4); list-style: none; }
   .pie__enlaces-legales a { color: var(--gris-800); font-size: var(--t-meta); text-decoration: underline; text-underline-offset: 3px; }
