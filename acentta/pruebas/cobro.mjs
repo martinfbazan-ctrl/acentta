@@ -125,23 +125,16 @@ const { firmaValida, cobroPermitido, fechaParaMercadoPago, enlaceDePago } = awai
 {
   const dos = { init_point: 'https://www.mercadopago.com.ar/x', sandbox_init_point: 'https://sandbox.mercadopago.com.ar/x' };
 
-  ok(enlaceDePago({ ...dos, live_mode: false }, 'prueba') === dos.sandbox_init_point,
-    'una preferencia de prueba tiene que ir a la pantalla de laboratorio');
-  ok(enlaceDePago({ ...dos, live_mode: true }, 'produccion') === dos.init_point,
-    'una preferencia real tiene que ir a la pantalla de producción');
+  /* Siempre el mismo, en los dos modos. Con credenciales de prueba
+     esa pantalla se pone en modo de prueba sola. */
+  for (const [live, modo] of [[false, 'prueba'], [true, 'produccion'], [null, 'prueba'], [null, 'produccion']]) {
+    ok(enlaceDePago({ ...dos, live_mode: live }, modo) === dos.init_point,
+      `con live_mode=${live} y modo ${modo} tendría que ir a init_point`);
+  }
 
-  /* Mercado Pago no siempre devuelve live_mode. Ahí manda lo
-     declarado, que para eso existe. */
-  ok(enlaceDePago({ ...dos, live_mode: null }, 'prueba') === dos.sandbox_init_point,
-    'sin live_mode y en modo prueba, tiene que ir al laboratorio');
-  ok(enlaceDePago({ ...dos, live_mode: null }, 'produccion') === dos.init_point,
-    'sin live_mode y en producción, tiene que ir a producción');
-
-  /* Y si la cuenta es vieja y no devuelve el enlace de laboratorio,
-     mejor el de producción que ninguno: el pago va a fallar con un
-     mensaje, pero no se rompe el circuito antes de llegar. */
-  ok(enlaceDePago({ init_point: dos.init_point, live_mode: false }, 'prueba') === dos.init_point,
-    'sin sandbox_init_point tendría que caer en init_point');
+  /* La reserva, para la cuenta que no devuelva el principal. */
+  ok(enlaceDePago({ sandbox_init_point: dos.sandbox_init_point }, 'prueba') === dos.sandbox_init_point,
+    'sin init_point tendría que caer en el de reserva');
   ok(enlaceDePago({}, 'prueba') === undefined, 'sin ningún enlace tiene que devolver nada');
 }
 

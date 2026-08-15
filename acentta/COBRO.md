@@ -89,13 +89,19 @@ Después, **Deployments → el último → Redeploy**. Las variables no entran e
 
 ---
 
-## Paso 5 · Crear un comprador de prueba
+## Paso 5 · Encontrar el comprador de prueba
 
-Éste es el paso que no se ve venir. **No alcanza con las credenciales de prueba: hace falta también una cuenta de comprador de prueba.** Si intentás pagar con tu cuenta normal, o sin cuenta, el checkout falla con un error que no explica nada.
+Éste es el paso que hace perder una tarde, y por un motivo tonto: **la cuenta de comprador ya existe — se crea sola junto con la aplicación**. No hay que crearla, hay que ir a buscarla, y está detrás de un selector que es fácil no ver.
 
-1. En **[Tus integraciones](https://www.mercadopago.com.ar/developers/panel/app) → tu aplicación → Cuentas de prueba**, crear una cuenta de tipo **comprador**.
-2. Anotar usuario y contraseña. Mercado Pago los muestra una sola vez.
-3. Si al entrar te pide un código de 6 dígitos por correo, está en esa misma pantalla de *Cuentas de prueba*.
+1. **[Tus integraciones](https://www.mercadopago.com.ar/developers/panel/app) → tu aplicación → Cuentas de prueba** (en el menú de la izquierda).
+2. **En el selector, elegir «Comprador».** Ahí aparecen el país, el User ID, el **usuario** y la **contraseña**.
+3. Si al entrar te pide un código de 6 dígitos, está en esa misma pantalla.
+
+> **Cuidado con confundirla con la otra.** En *Credenciales de prueba* también figura un «Usuario de prueba»: **ése es el vendedor**, la identidad de prueba de tu tienda. Si entrás con ése, sos comprador y vendedor a la vez, y Mercado Pago no deja pagarte a vos mismo. No lo dice con un cartel: **deja el botón de pagar apagado, sin explicación**.
+>
+> Y **pagar como invitado tampoco sirve**: un invitado es una parte real frente a una tienda de prueba, y ahí el error es «Una de las partes con la que intentás hacer el pago es de prueba».
+>
+> Las dos cosas se ven como que el sitio está roto, y ninguna lo está.
 
 ---
 

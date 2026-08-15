@@ -84,20 +84,32 @@ export function cobroPermitido(liveMode: boolean, declarado = modoDeclarado()): 
 /**
  * A qué pantalla de pago hay que mandar a la persona.
  *
- * Cada entorno tiene la suya, y cruzarlas hace fallar el pago con un
- * mensaje que no señala a ningún lado del código:
- * «Una de las partes con la que intentás hacer el pago es de prueba».
+ * **`init_point` siempre.** Con credenciales de prueba, esa misma
+ * pantalla se pone en modo de prueba sola —lo muestra con un cartel
+ * «Test» arriba a la derecha— y es el único camino que documenta
+ * Mercado Pago hoy. `sandbox_init_point` es el entorno viejo y queda
+ * sólo como reserva, para el caso improbable de que una cuenta no
+ * devuelva el primero.
  *
- * Aparte para poder probarla: es una decisión de una línea que, mal
- * tomada, rompe el circuito entero en la última pantalla.
+ * [DECISIÓN REVISADA] Estuve mandando a la pantalla vieja en modo de
+ * prueba, convencido de que el error «Una de las partes con la que
+ * intentás hacer el pago es de prueba» venía de mezclar entornos. No
+ * era eso: el mismo error aparecía en las dos pantallas, así que lo
+ * que fallaba era el otro lado —se estaba pagando como invitado, y un
+ * invitado es una parte real frente a una tienda de prueba—. La
+ * pantalla nunca fue el problema; el cartel «Test» ya lo estaba
+ * diciendo.
+ *
+ * Queda como función aparte, con prueba propia, porque es una
+ * decisión de una línea que rompe el circuito en la última pantalla,
+ * después de que la persona cargó la tarjeta.
  */
 export function enlaceDePago(
   datos: { init_point?: string; sandbox_init_point?: string; live_mode?: boolean | null },
-  declarado = modoDeclarado(),
+  _declarado = modoDeclarado(),
 ): string | undefined {
-  const laboratorio = datos.live_mode === false
-    || (datos.live_mode == null && declarado === 'prueba');
-  return laboratorio ? (datos.sandbox_init_point ?? datos.init_point) : datos.init_point;
+  void _declarado;
+  return datos.init_point ?? datos.sandbox_init_point;
 }
 
 /**
