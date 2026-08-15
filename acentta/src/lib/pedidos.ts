@@ -171,7 +171,26 @@ export async function guardarPedido(pedido: Pedido): Promise<void> {
  * y no vale la pena: son cincuenta claves.
  */
 export async function listarPedidos(limite = 50): Promise<Pedido[]> {
-  const numeros = await mandar(['ZRANGE', INDICE, '+inf', '-inf', 'BYSCORE', 'REV', 'LIMIT', 0, limite]);
+  let numeros = await mandar(['ZRANGE', INDICE, '+inf', '-inf', 'BYSCORE', 'REV', 'LIMIT', 0, limite]);
+
+  /* Índice vacío pero pedidos guardados: se reconstruye y se
+     reintenta, una sola vez.
+
+     Pasa por una razón concreta y previsible: el índice se agregó
+     después que el almacén, así que todo lo guardado antes quedó sin
+     indexar. Existía, se podía consultar por número, y no aparecía en
+     ninguna lista. Pedirle a alguien que vuelva a comprar para
+     recuperar sus propios pedidos no es una respuesta.
+
+     También cubre el caso general de que el índice y los datos se
+     desincronicen por lo que sea. Sale barato: sólo se hace cuando la
+     lista viene vacía. */
+  if (!Array.isArray(numeros) || numeros.length === 0) {
+    const reconstruidos = await reconstruirIndice();
+    if (reconstruidos === 0) return [];
+    numeros = await mandar(['ZRANGE', INDICE, '+inf', '-inf', 'BYSCORE', 'REV', 'LIMIT', 0, limite]);
+  }
+
   if (!Array.isArray(numeros) || numeros.length === 0) return [];
 
   const crudos = await mandar(['MGET', ...numeros.map((n) => clave(String(n)))]);
@@ -203,6 +222,48 @@ export async function actualizarPedido(
   const nuevo: Pedido = { ...actual, ...cambios, actualizado: new Date().toISOString() };
   await guardarPedido(nuevo);
   return nuevo;
+}
+
+/**
+ * Rearma el índice recorriendo las claves de pedido.
+ *
+ * Recorre con `SCAN` y no con `KEYS`: el segundo bloquea el almacén
+ * mientras recorre todo, y aunque acá sean cien claves, es la clase
+ * de atajo que funciona hasta el día que deja de funcionar.
+ *
+ * Devuelve cuántos pedidos encontró.
+ */
+export async function reconstruirIndice(): Promise<number> {
+  let cursor = '0';
+  let encontrados = 0;
+  /* Tope de vueltas: si algo devuelve un cursor que nunca cierra, es
+     preferible una lista incompleta a una función que gira sola
+     hasta que Vercel la corta. */
+  for (let vuelta = 0; vuelta < 50; vuelta++) {
+    const paso = await mandar(['SCAN', cursor, 'MATCH', 'pedido:*', 'COUNT', 200]);
+    if (!Array.isArray(paso) || paso.length < 2) break;
+
+    cursor = String(paso[0]);
+    const claves = Array.isArray(paso[1]) ? paso[1].map(String) : [];
+
+    if (claves.length > 0) {
+      const crudos = await mandar(['MGET', ...claves]);
+      if (Array.isArray(crudos)) {
+        for (const c of crudos) {
+          if (typeof c !== 'string') continue;
+          try {
+            const p = JSON.parse(c) as Pedido;
+            if (!p?.numero) continue;
+            await mandar(['ZADD', INDICE, Date.parse(p.creado) || Date.now(), p.numero]);
+            encontrados++;
+          } catch { /* una clave ilegible no puede frenar el resto */ }
+        }
+      }
+    }
+
+    if (cursor === '0') break;
+  }
+  return encontrados;
 }
 
 /**

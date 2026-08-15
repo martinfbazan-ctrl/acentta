@@ -346,6 +346,7 @@ const { firmaValida, cobroPermitido, fechaParaMercadoPago, enlaceDePago } = awai
   /* Doble del almacén: un Redis de mentira, en memoria, que respeta
      lo único que importa acá — que `SET NX` sea atómico. */
   const datos = new Map();
+  const orden_ = new Map(); // el conjunto ordenado: miembro -> puntaje
   process.env.KV_REST_API_URL = 'https://almacen-de-mentira';
   process.env.KV_REST_API_TOKEN = 'token-de-mentira';
   globalThis.fetch = async (_url, opciones) => {
@@ -359,11 +360,22 @@ const { firmaValida, cobroPermitido, fechaParaMercadoPago, enlaceDePago } = awai
       result = datos.get(clave) ?? null;
     } else if (orden === 'DEL') {
       result = datos.delete(clave) ? 1 : 0;
+    } else if (orden === 'MGET') {
+      result = [clave, valor, ...resto].filter((k) => k !== undefined).map((k) => datos.get(k) ?? null);
+    } else if (orden === 'ZADD') {
+      orden_.set(String(resto[0]), Number(valor));
+      result = 1;
+    } else if (orden === 'ZRANGE') {
+      result = [...orden_.entries()].sort((a, b) => b[1] - a[1]).map(([m]) => m);
+    } else if (orden === 'SCAN') {
+      const patron = resto[0]; // MATCH <patron>
+      const re = new RegExp('^' + String(patron).replace('*', '.*') + '$');
+      result = ['0', [...datos.keys()].filter((k) => re.test(k))];
     }
     return { ok: true, json: async () => ({ result }) };
   };
 
-  const { marcarProcesado, desmarcarProcesado, guardarPedido, leerPedido, nuevoNumero } =
+  const { marcarProcesado, desmarcarProcesado, guardarPedido, leerPedido, nuevoNumero, listarPedidos } =
     await cargar('src/lib/pedidos.ts', 'pedidos');
 
   const pagoId = '987654321';
@@ -392,6 +404,38 @@ const { firmaValida, cobroPermitido, fechaParaMercadoPago, enlaceDePago } = awai
   const leido = await leerPedido(numero);
   ok(leido?.numero === numero && leido.cotizacion.total === 1000, 'el pedido no volvió igual del almacén');
   ok(await leerPedido('AC-999999-ZZZZZZ') === null, 'un pedido inexistente no devolvió null');
+
+  /* ---- El índice se repara solo ----
+
+     El índice se agregó DESPUÉS que el almacén, así que todo lo
+     guardado antes quedó fuera de la lista: existía, se podía
+     consultar por número, y la pantalla de pedidos mostraba vacío.
+     Pedirle a alguien que vuelva a comprar para recuperar sus
+     propios pedidos no es una respuesta.
+
+     Acá se simula exactamente eso: tres pedidos escritos a mano, sin
+     pasar por el índice, como los que ya estaban guardados. */
+  datos.clear(); orden_.clear();
+  for (let i = 0; i < 3; i++) {
+    const n = nuevoNumero();
+    datos.set(`pedido:${n}`, JSON.stringify({
+      numero: n, creado: new Date(Date.now() - i * 60000).toISOString(),
+      estado: 'aprobado', cotizacion: { total: 1000 + i },
+    }));
+  }
+  ok(orden_.size === 0, 'la prueba está mal armada: el índice no debería tener nada todavía');
+
+  const lista = await listarPedidos(50);
+  ok(lista.length === 3,
+    `¡GRAVE! los pedidos guardados antes del índice no aparecen en la lista: se listaron ${lista.length} de 3`);
+  ok(orden_.size === 3, 'el índice no quedó reconstruido después de listar');
+
+  /* Y del más nuevo al más viejo, que es como se trabaja.
+     Con `?.` y no directo: si la lista viene vacía —que es el defecto
+     que esta sección persigue— una prueba que revienta con
+     «cannot read properties of undefined» esconde el diagnóstico
+     detrás de un rastro de pila. Tiene que decir qué pasó. */
+  ok(lista[0]?.cotizacion?.total === 1000, 'la lista no vino ordenada del más nuevo al más viejo');
 }
 
 /* ============================================================ */
