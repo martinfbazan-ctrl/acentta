@@ -26,21 +26,33 @@ import Boton from '@componentes/Boton.astro';
   <Encabezado slot="encabezado" />
 
   <div class="contenedor confirmacion">
+    <p class="confirmacion__estado" hidden data-estado-pago></p>
+
     <div class="confirmacion__sello">
       <svg width="30" height="30" viewBox="0 0 16 16" aria-hidden="true" fill="currentColor">
         <path d="M6.2 11.4 3.3 8.5l-1.1 1.1 4 4 7.6-7.6-1.1-1.1z" />
       </svg>
     </div>
 
-    <h1 class="t-titular">Listo, tu pedido está confirmado</h1>
+    <h1 class="t-titular" data-titulo-pedido>Listo, tu pedido está confirmado</h1>
 
-    <p class="confirmacion__numero">
-      Número de pedido: <b class="tabular" data-numero-pedido>—</b>
-    </p>
+    <!-- El número no es un dato de trámite: es lo único que le queda
+         a la persona para reclamar, consultar o cancelar. Se muestra
+         grande, con un botón para copiarlo de un toque. Dictarlo por
+         teléfono desde una barra de direcciones es una mala tarde. -->
+    <div class="confirmacion__numero">
+      <span class="confirmacion__numero-rotulo">Número de pedido</span>
+      <b class="confirmacion__numero-valor tabular" data-numero-pedido>—</b>
+      <button class="confirmacion__copiar" type="button" hidden data-copiar-numero>
+        <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="5.5" y="5.5" width="8" height="9" rx="1.5" /><path d="M10.5 5.5v-2a1.5 1.5 0 0 0-1.5-1.5H4a1.5 1.5 0 0 0-1.5 1.5v6A1.5 1.5 0 0 0 4 11h1.5" />
+        </svg>
+        <span data-copiar-texto>Copiar</span>
+      </button>
+    </div>
 
-    <p class="t-texto">
-      Te mandamos el detalle a <b data-email-pedido>tu correo</b>. Ahí va a estar el
-      número de seguimiento apenas el paquete salga del depósito.
+    <p class="t-texto" data-mensaje-pedido>
+      Guarda ese número: con él puedes consultar el estado del envío en cualquier momento.
     </p>
 
     <div class="confirmacion__caja">
@@ -72,7 +84,13 @@ import Boton from '@componentes/Boton.astro';
       devolverlo si ya llegó y no te convence.
     </p>
 
-    <p class="confirmacion__aviso">
+    <!-- Este aviso desaparece cuando el pedido es de verdad.
+         Dejarlo fijo sería mentir en la dirección peligrosa: alguien
+         que acaba de pagar leyendo que no se procesó ningún pago
+         tiene motivos para asustarse, y razón para desconfiar de
+         todo lo demás que diga la página. Lo apaga el guion apenas
+         confirma que hay un pedido registrado en el servidor. -->
+    <p class="confirmacion__aviso" data-aviso-demostracion>
       acentta es un proyecto conceptual de portafolio. No se procesó ningún pago
       real ni se guardó ningún dato personal.
     </p>
@@ -102,8 +120,48 @@ import Boton from '@componentes/Boton.astro';
     border-radius: 50%;
     margin-bottom: var(--e-2);
   }
-  .confirmacion__numero { font-size: 0.9375rem; color: var(--gris-800); }
-  .confirmacion__numero b { color: var(--tinta); }
+  .confirmacion__numero {
+    display: flex; flex-wrap: wrap; align-items: center; gap: var(--e-2) var(--e-3);
+    margin-block: var(--e-4);
+    padding: var(--e-4);
+    background: var(--gris-050);
+    border: 1px solid var(--gris-200);
+    border-radius: var(--r-tarjeta);
+  }
+  .confirmacion__numero-rotulo {
+    font-size: var(--t-meta); color: var(--gris-texto);
+    text-transform: uppercase; letter-spacing: .07em; font-weight: 700;
+    flex-basis: 100%;
+  }
+  .confirmacion__numero-valor {
+    font-size: clamp(1.25rem, 1.05rem + 0.8vw, 1.5rem);
+    font-weight: 700; letter-spacing: .02em; color: var(--tinta);
+    /* Un número que se dicta por teléfono no puede partirse al medio. */
+    white-space: nowrap;
+  }
+  .confirmacion__copiar {
+    display: inline-flex; align-items: center; gap: var(--e-2);
+    min-height: 36px; padding-inline: var(--e-3);
+    background: var(--papel);
+    border: 1px solid var(--gris-200);
+    border-radius: var(--r-pastilla);
+    font-size: var(--t-meta); color: var(--gris-800);
+    cursor: pointer;
+  }
+  .confirmacion__copiar:hover { border-color: var(--gris-500); color: var(--tinta); }
+
+  /* Estado del pago. El aprobado no lleva color: ya lo dice el sello
+     verde de arriba, y repetirlo le quita fuerza al que sí importa. */
+  .confirmacion__estado {
+    display: inline-block;
+    margin-bottom: var(--e-3);
+    padding: var(--e-2) var(--e-3);
+    border-radius: var(--r-pastilla);
+    font-size: var(--t-meta); font-weight: 600;
+  }
+  .confirmacion__estado[data-estado='pendiente'] { background: var(--oferta-wash); color: var(--naranja-texto-oliva); }
+  .confirmacion__estado[data-estado='rechazado'],
+  .confirmacion__estado[data-estado='cancelado'] { background: var(--rojo-wash, #FBE9E7); color: var(--rojo); }
 
   .confirmacion__caja {
     width: 100%;
