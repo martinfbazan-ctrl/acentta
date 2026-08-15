@@ -90,7 +90,7 @@ export default defineConfig({
        nadie se entere. */
     sitemap({
       filter: (pagina) => {
-        const sinIndexar = ['/carrito/', '/checkout/', '/confirmacion/', '/botones/', '/sistema/', '/etapas/'];
+        const sinIndexar = ['/carrito/', '/checkout/', '/confirmacion/', '/botones/', '/sistema/', '/etapas/', '/pedidos/'];
         const ruta = new URL(pagina).pathname;
         return !sinIndexar.includes(ruta);
       },

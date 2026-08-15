@@ -47,6 +47,7 @@ const rutasDeCobro = {
       injectRoute({ pattern: '/api/crear-pago', entrypoint: './src/api/crear-pago.ts', prerender: false });
       injectRoute({ pattern: '/api/aviso-de-pago', entrypoint: './src/api/aviso-de-pago.ts', prerender: false });
       injectRoute({ pattern: '/api/pedido', entrypoint: './src/api/pedido.ts', prerender: false });
+      injectRoute({ pattern: '/api/admin', entrypoint: './src/api/admin.ts', prerender: false });
       /* Diagnóstico. Dice qué variables ve la función, sin valores.
          Se puede borrar cuando el circuito esté verificado. */
       injectRoute({ pattern: '/api/estado', entrypoint: './src/api/estado.ts', prerender: false });

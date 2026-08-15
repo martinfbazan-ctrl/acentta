@@ -1,0 +1,196 @@
+---
+/**
+ * Pantalla de pedidos.
+ * ---------------------------------------------------------------
+ * La pantalla de trabajo: ver qué entró, a dónde va, y cargar el
+ * número de seguimiento cuando el proveedor despacha.
+ *
+ * Ese último campo es el que más importa y el que menos se parece a
+ * una función interesante. **Es lo único que gana un contracargo.**
+ * Cuando alguien desconoce un pago, la única defensa es probar que
+ * la mercadería llegó, y eso se prueba con un número de seguimiento
+ * cargado en su momento. Sin él, la disputa se pierde sola.
+ *
+ * POR QUÉ ES UNA PÁGINA ESTÁTICA
+ *
+ * Este archivo no tiene ni un dato adentro: es marcado vacío. Todo
+ * llega por una llamada autenticada al servidor. Así la página se
+ * compila con el resto del sitio, entra en las auditorías como
+ * cualquier otra, y no hay ninguna forma de que un descuido de
+ * compilación deje datos de compradores dentro de un archivo HTML
+ * público.
+ *
+ * Lleva `noindex`, y el mapa del sitio la excluye.
+ */
+import Base from '@layouts/Base.astro';
+import Logo from '@componentes/Logo.astro';
+import Boton from '@componentes/Boton.astro';
+import Campo from '@componentes/Campo.astro';
+---
+
+<Base titulo="Pedidos · acentta" descripcion="Panel interno." sinIndexar={true}>
+  <header class="cabecera-panel" slot="encabezado">
+    <div class="contenedor cabecera-panel__caja">
+      <a href="/" aria-label="acentta, ir al inicio"><Logo alto={34} /></a>
+      <p class="cabecera-panel__titulo">Pedidos</p>
+      <button class="cabecera-panel__salir" type="button" hidden data-salir>Salir</button>
+    </div>
+  </header>
+
+  <div class="contenedor panel">
+    <h1 class="vo">Pedidos</h1>
+
+    <!-- ---- Entrar ---- -->
+    <form class="entrar" data-forma-entrar>
+      <h2 class="t-seccion">Entrar</h2>
+      <p class="entrar__nota">
+        Esta pantalla muestra los datos personales de quienes compraron.
+        Hace falta la clave.
+      </p>
+      <Campo id="clave" etiqueta="Clave" tipo="password" requerido autocompletar="current-password" />
+      <Boton tipo="submit" tamano="grande">Entrar</Boton>
+      <p class="entrar__error" role="alert" hidden data-error-entrar></p>
+    </form>
+
+    <!-- ---- Pedidos ---- -->
+    <div hidden data-panel>
+      <div class="panel__barra">
+        <p class="panel__cuenta" data-cuenta aria-live="polite"></p>
+        <div class="panel__filtros" role="group" aria-label="Filtrar por estado">
+          <button class="panel__filtro" type="button" data-filtro="todos" aria-pressed="true">Todos</button>
+          <button class="panel__filtro" type="button" data-filtro="aprobado" aria-pressed="false">Aprobados</button>
+          <button class="panel__filtro" type="button" data-filtro="pendiente" aria-pressed="false">Pendientes</button>
+          <button class="panel__filtro" type="button" data-filtro="sin-seguimiento" aria-pressed="false">Sin seguimiento</button>
+        </div>
+      </div>
+
+      <div class="panel__lista" data-lista></div>
+      <p class="panel__vacio" hidden data-vacio>No hay pedidos que coincidan.</p>
+    </div>
+  </div>
+</Base>
+
+<script>
+  import '../scripts/pedidos';
+</script>
+
+<style>
+  .cabecera-panel { border-bottom: 1px solid var(--gris-200); background: var(--papel); }
+  .cabecera-panel__caja {
+    display: flex; align-items: center; gap: var(--e-4);
+    min-height: 68px;
+  }
+  .cabecera-panel__titulo {
+    font-weight: 700; color: var(--tinta); flex: 1;
+    padding-left: var(--e-4); border-left: 1px solid var(--gris-200);
+  }
+  .cabecera-panel__salir {
+    background: none; border: 0; cursor: pointer;
+    font-size: var(--t-meta); color: var(--gris-800);
+    text-decoration: underline; text-underline-offset: 3px;
+    min-height: 44px; padding-inline: var(--e-2);
+  }
+
+  .panel { padding-block: var(--e-8) var(--e-16); }
+
+  .entrar {
+    max-width: 380px;
+    display: flex; flex-direction: column; gap: var(--e-4);
+    padding: var(--e-6);
+    background: var(--papel);
+    border: 1px solid var(--gris-200);
+    border-radius: var(--r-modal);
+  }
+  .entrar__nota { font-size: var(--t-meta); color: var(--gris-texto); line-height: 1.5; }
+  .entrar__error { font-size: var(--t-meta); color: var(--rojo); font-weight: 500; }
+
+  .panel__barra {
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: var(--e-3); margin-bottom: var(--e-5);
+  }
+  .panel__cuenta { font-size: var(--t-meta); color: var(--gris-texto); }
+  .panel__filtros { display: flex; flex-wrap: wrap; gap: var(--e-2); }
+  .panel__filtro {
+    min-height: 36px; padding-inline: var(--e-3);
+    background: var(--papel);
+    border: 1px solid var(--gris-200);
+    border-radius: var(--r-pastilla);
+    font-size: var(--t-meta); color: var(--gris-800); cursor: pointer;
+  }
+  .panel__filtro[aria-pressed='true'] {
+    background: var(--tinta); border-color: var(--tinta); color: var(--blanco);
+  }
+
+  .panel__lista { display: flex; flex-direction: column; gap: var(--e-4); }
+  .panel__vacio { font-size: 0.9375rem; color: var(--gris-texto); padding-block: var(--e-8); }
+
+  /* Las tarjetas las crea el guion, así que van con :global(): lo que
+     nace del guion no lleva la marca de alcance que Astro le pone al
+     marcado, y ninguna regla scopeada lo alcanzaría. */
+  .panel__lista :global(.pedido) {
+    padding: var(--e-5);
+    background: var(--papel);
+    border: 1px solid var(--gris-200);
+    border-radius: var(--r-modal);
+    display: grid; gap: var(--e-4);
+  }
+  @media (min-width: 900px) {
+    .panel__lista :global(.pedido) { grid-template-columns: minmax(0, 1fr) 300px; }
+  }
+
+  .panel__lista :global(.pedido__cabeza) {
+    display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--e-2) var(--e-3);
+    margin-bottom: var(--e-3);
+  }
+  .panel__lista :global(.pedido__numero) {
+    font-weight: 700; font-size: 1.0625rem; color: var(--tinta);
+    font-variant-numeric: tabular-nums; white-space: nowrap;
+  }
+  .panel__lista :global(.pedido__fecha) { font-size: var(--t-meta); color: var(--gris-texto); }
+  .panel__lista :global(.pedido__total) {
+    margin-left: auto; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap;
+  }
+
+  .panel__lista :global(.chapa) {
+    display: inline-block; padding: 2px var(--e-2);
+    border-radius: var(--r-badge);
+    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em;
+    background: var(--arena-honda); color: var(--gris-800);
+  }
+  .panel__lista :global(.chapa--aprobado) { background: var(--verde-wash); color: var(--verde); }
+  .panel__lista :global(.chapa--pendiente) { background: var(--oferta-wash); color: var(--naranja-texto-oliva); }
+  .panel__lista :global(.chapa--rechazado),
+  .panel__lista :global(.chapa--cancelado) { background: #FBE9E7; color: var(--rojo); }
+
+  .panel__lista :global(.pedido__dato) {
+    display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: var(--e-3);
+    font-size: 0.875rem; line-height: 1.5; padding-block: 3px;
+  }
+  .panel__lista :global(.pedido__dato dt) { color: var(--gris-texto); }
+  .panel__lista :global(.pedido__dato dd) { margin: 0; color: var(--tinta); overflow-wrap: anywhere; }
+
+  .panel__lista :global(.pedido__items) {
+    margin-top: var(--e-3); padding-top: var(--e-3);
+    border-top: 1px solid var(--gris-200);
+    font-size: 0.875rem; color: var(--gris-800);
+  }
+
+  .panel__lista :global(.pedido__envio) {
+    padding: var(--e-4);
+    background: var(--gris-050);
+    border-radius: var(--r-tarjeta);
+    display: flex; flex-direction: column; gap: var(--e-2);
+    align-self: start;
+  }
+  .panel__lista :global(.pedido__envio-titulo) {
+    font-size: var(--t-meta); font-weight: 700; text-transform: uppercase;
+    letter-spacing: .06em; color: var(--gris-texto);
+  }
+  .panel__lista :global(.pedido__envio input) {
+    width: 100%; min-height: 44px; padding-inline: var(--e-3);
+    border: 1px solid var(--gris-500); border-radius: var(--r-tarjeta);
+    background: var(--papel); font-size: 0.9375rem;
+  }
+  .panel__lista :global(.pedido__envio-aviso) { font-size: var(--t-meta); color: var(--verde); font-weight: 500; }
+  .panel__lista :global(.pedido__envio-nota) { font-size: var(--t-meta); color: var(--gris-texto); line-height: 1.45; }
+</style>

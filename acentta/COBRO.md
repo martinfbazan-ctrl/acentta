@@ -76,6 +76,9 @@ En Vercel: **Settings → Environment Variables**. Las dos para *Production*, *P
 | `MP_ACCESS_TOKEN` | el Access Token de **Credenciales de prueba** |
 | `MP_WEBHOOK_SECRET` | la clave secreta del paso 2 |
 | `MP_MODO` | `prueba` |
+| `ADMIN_CLAVE` | una clave larga que inventes, mínimo 12 caracteres |
+
+> `ADMIN_CLAVE` es la que abre la pantalla de pedidos en `/pedidos`. Esa pantalla muestra nombre, DNI, teléfono y dirección de cada persona que te compró — es la información más delicada del sitio. **Poné una clave larga y que no uses en ningún otro lado.** Doce caracteres es el mínimo que el código acepta; veinte es mejor, y como la escribís una sola vez, que sea incómoda no molesta.
 
 > **Sobre `MP_MODO`, que es el freno de mano.** Mercado Pago unificó el formato de las credenciales: hoy **las de prueba y las de producción empiezan igual, con `APP_USR-`**, así que mirando el token es imposible saber en qué entorno estás. Lo único que lo dice es un campo, `live_mode`, que viene en la respuesta de la API — o sea, después de haber pedido el cobro.
 >
@@ -151,6 +154,22 @@ Lo que **no** conviene es fabricar una pantalla propia que imite a Mercado Pago.
 
 ---
 
+## La pantalla de pedidos
+
+```
+https://acentta.vercel.app/pedidos
+```
+
+Pide la clave y muestra lo que entró: quién compró, a dónde va, cómo pagó, y un campo por pedido para **cargar el número de seguimiento**.
+
+Ese campo parece el menos interesante de la pantalla y es el más importante. **Es lo único que gana un contracargo.** Cuando alguien desconoce un pago, la única defensa es probar que la mercadería llegó, y eso se prueba con un número de seguimiento cargado en su momento. Por eso el filtro **«Sin seguimiento»** existe: son los pedidos cobrados que todavía no podés defender.
+
+El estado del pago no se toca desde acá — lo pone el aviso de Mercado Pago y nadie más. Un clic distraído no puede marcar como cobrado algo que no se cobró. Lo único que se puede cambiar a mano es cancelar o marcar como devuelto, que sí son decisiones tuyas.
+
+La sesión dura ocho horas y se corta después de diez intentos fallidos en quince minutos.
+
+---
+
 ## Cómo se ve un pedido
 
 Cada pedido queda guardado noventa días con un número tipo `AC-260810-K7M2QX`. Se consulta así:
@@ -190,7 +209,7 @@ Honesto, para que no te agarre de sorpresa:
 
 - **No se manda correo de confirmación.** El pedido queda registrado y se consulta por número. Sumar correo pide otro proveedor y otra clave, y el circuito de cobro tiene que estar verificado antes de agregarle piezas.
 - **La página de confirmación sigue leyendo el pedido simulado.** El endpoint real ya existe (`/api/pedido`); falta conectarla.
-- **No hay pantalla de administración de pedidos.** Con los primeros se puede mirar la base directamente. Cuando sean diez por día, no.
+- **La pantalla de pedidos no manda el seguimiento al comprador.** Lo cargás vos y queda guardado; falta que se le avise, y eso depende del correo.
 - **El stock no se descuenta.** En dropshipping el stock es lo que dice el proveedor, así que descontar sobre un número que no controlamos es inventar precisión.
 
 ---

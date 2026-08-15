@@ -144,11 +144,48 @@ export function nuevoNumero(): string {
 
 const clave = (numero: string) => `pedido:${numero}`;
 
+/** La lista ordenada de pedidos, para poder verlos sin adivinar. */
+const INDICE = 'pedidos:por-fecha';
+
 export async function guardarPedido(pedido: Pedido): Promise<void> {
   /* Noventa días de vida. Suficiente para el plazo de reclamos y para
      defender un contracargo; pasado eso, un pedido viejo en un
      almacén de clave y valor es dato personal guardado sin motivo. */
   await mandar(['SET', clave(pedido.numero), JSON.stringify(pedido), 'EX', 60 * 60 * 24 * 90]);
+
+  /* Y el número entra al índice, ordenado por fecha de creación.
+     Sin esto, la única forma de encontrar un pedido sería conocer su
+     número de memoria: no habría pantalla de pedidos posible.
+
+     El puntaje es la fecha de CREACIÓN y no la de modificación, a
+     propósito: cargar un número de seguimiento no tiene por qué
+     mandar el pedido al principio de la lista. */
+  await mandar(['ZADD', INDICE, Date.parse(pedido.creado) || Date.now(), pedido.numero]);
+}
+
+/**
+ * Los últimos pedidos, del más nuevo al más viejo.
+ *
+ * Dos viajes al almacén: uno por la lista de números y otro por los
+ * pedidos. Se podría hacer en uno con un guion del lado del almacén,
+ * y no vale la pena: son cincuenta claves.
+ */
+export async function listarPedidos(limite = 50): Promise<Pedido[]> {
+  const numeros = await mandar(['ZRANGE', INDICE, '+inf', '-inf', 'BYSCORE', 'REV', 'LIMIT', 0, limite]);
+  if (!Array.isArray(numeros) || numeros.length === 0) return [];
+
+  const crudos = await mandar(['MGET', ...numeros.map((n) => clave(String(n)))]);
+  if (!Array.isArray(crudos)) return [];
+
+  return crudos
+    .map((c) => {
+      if (typeof c !== 'string') return null;
+      try { return JSON.parse(c) as Pedido; } catch { return null; }
+    })
+    /* Un pedido puede haber caducado y seguir en el índice. Se
+       descarta en silencio: el índice se limpia solo la próxima vez
+       que se escriba, y un hueco no justifica romper la pantalla. */
+    .filter((p): p is Pedido => p !== null);
 }
 
 export async function leerPedido(numero: string): Promise<Pedido | null> {
