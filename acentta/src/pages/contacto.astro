@@ -77,7 +77,15 @@ import Boton from '@componentes/Boton.astro';
 
 <style>
   .contacto { padding-block: var(--e-6) var(--e-16); }
-  .contacto__migas { margin-bottom: var(--e-8); }
+  /* [CORREGIDO] Iba sin `:global()` y no hacía nada.
+     Esta clase se le pasa a un componente hijo —`<Migas class="…" />`,
+     `<Precio class="…" />`— y el elemento que la termina llevando es
+     del hijo, con la marca de alcance del hijo. La regla escrita acá
+     se compila con la marca de ESTA página, así que apuntaba a un
+     elemento que no existe.
+     Envuelta en `:global()` y colgada de un contenedor que sí lleva
+     la marca de la página, alcanza sin volverse una regla suelta. */
+  .contacto :global(.contacto__migas) { margin-bottom: var(--e-8); }
   .contacto__cuerpo { display: grid;
     /* Una columna de grilla mide `auto`, y `auto` se niega a achicarse
      por debajo del contenido más ancho que tenga adentro: un nombre

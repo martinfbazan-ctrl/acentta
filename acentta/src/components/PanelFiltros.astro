@@ -168,24 +168,12 @@ const tramos = [
     font-size: 0.9375rem;
   }
   .opcion input { position: absolute; opacity: 0; width: 0; height: 0; }
-  .opcion__marca {
-    flex: none;
-    width: 20px; height: 20px;
-    border: 1.5px solid var(--gris-500);
-    border-radius: var(--r-badge);
-    background: var(--papel);
-    display: grid;
-    place-items: center;
-    transition: background-color var(--v-rapido) var(--curva), border-color var(--v-rapido) var(--curva);
-  }
-  .opcion__marca::after {
-    content: '';
-    width: 11px; height: 6px;
-    border-left: 2px solid var(--papel);
-    border-bottom: 2px solid var(--papel);
-    transform: rotate(-45deg) translate(1px, -1px);
-    opacity: 0;
-  }
+  /* [SE MUDÓ] La forma de la casilla vive ahora en componentes.css.
+     Estaba acá, y como Astro limita el CSS a su archivo, cualquier
+     otro lugar que usara la misma clase se quedaba sin nada. El
+     checkout la usaba: la casilla de términos medía cero por cero y
+     había que adivinar dónde tocar. Una clase compartida no puede
+     definirse adentro de un componente. */
   .opcion:hover .opcion__marca { border-color: var(--tinta); }
   .opcion input:checked + .opcion__marca { background: var(--verde); border-color: var(--verde); }
   .opcion input:checked + .opcion__marca::after { opacity: 1; }

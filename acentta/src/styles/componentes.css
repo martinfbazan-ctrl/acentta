@@ -855,6 +855,61 @@
    cambiar cómo se lee el dinero en todo el sitio.
    ============================================================ */
 
+/* Rótulo corto que anuncia una sección: «Segundo rubro», «Lo más
+   elegido». En versalitas y en el naranja de la marca, para que se
+   lea como una etiqueta y no como un título más. */
+.etiqueta {
+  font-size: var(--t-meta);
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--naranja-texto);
+}
+
+/* ============================================================
+   CASILLA DE VERIFICACIÓN
+   ------------------------------------------------------------
+   El cuadrado que se ve cuando el <input type="checkbox"> real está
+   escondido. Va acá, en la hoja compartida, y no adentro de un
+   componente: la usan el panel de filtros y el checkout, y Astro
+   limita el CSS de cada archivo a ese archivo.
+
+   Vivía adentro de PanelFiltros.astro, así que en el checkout el
+   <span> quedaba sin una sola regla —cero por cero píxeles— y la
+   casilla de términos era invisible. Había que adivinar dónde tocar,
+   y como sin tildarla el envío se corta, desde afuera parecía que el
+   botón de confirmar no hacía nada.
+
+   El input real sigue existiendo y sigue recibiendo el foco: esto es
+   pintura sobre un control de verdad, no un reemplazo. Por eso el
+   teclado, los lectores de pantalla y el autocompletado siguen
+   funcionando.
+   ============================================================ */
+.opcion__marca {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border: 1.5px solid var(--gris-500);
+  border-radius: var(--r-badge);
+  background: var(--papel);
+  display: grid;
+  place-items: center;
+  transition: background-color var(--v-rapido) var(--curva),
+              border-color var(--v-rapido) var(--curva);
+}
+
+/* El tilde: dos bordes de una caja vacía, girados. Sin imagen y sin
+   tipografía de íconos, así que hereda el color y nunca llega tarde. */
+.opcion__marca::after {
+  content: '';
+  width: 11px;
+  height: 6px;
+  border-left: 2px solid var(--papel);
+  border-bottom: 2px solid var(--papel);
+  transform: rotate(-45deg) translate(1px, -1px);
+  opacity: 0;
+}
+
 .resumen__lineas {
   display: flex;
   flex-direction: column;

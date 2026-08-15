@@ -263,7 +263,15 @@ const esquema = {
 
 <style>
   .ficha { padding-block: var(--e-6) var(--e-16); }
-  .ficha__migas { margin-bottom: var(--e-6); }
+  /* [CORREGIDO] Iba sin `:global()` y no hacía nada.
+     Esta clase se le pasa a un componente hijo —`<Migas class="…" />`,
+     `<Precio class="…" />`— y el elemento que la termina llevando es
+     del hijo, con la marca de alcance del hijo. La regla escrita acá
+     se compila con la marca de ESTA página, así que apuntaba a un
+     elemento que no existe.
+     Envuelta en `:global()` y colgada de un contenedor que sí lleva
+     la marca de la página, alcanza sin volverse una regla suelta. */
+  .ficha :global(.ficha__migas) { margin-bottom: var(--e-6); }
 
   .ficha__cuerpo { display: grid;
     /* Una columna de grilla mide `auto`, y `auto` se niega a achicarse
@@ -301,7 +309,7 @@ const esquema = {
   }
   .ficha__rating { text-decoration: none; width: fit-content; }
   .ficha__rating:hover { text-decoration: underline; text-underline-offset: 3px; }
-  .ficha__precio { margin-block: var(--e-2); }
+  .ficha :global(.ficha__precio) { margin-block: var(--e-2); }
 
   .ficha__stock { font-size: 0.9375rem; font-weight: 600; }
   .ficha__stock .es-hay { color: var(--verde); }

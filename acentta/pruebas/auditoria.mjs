@@ -521,7 +521,107 @@ const alturaAuto = (() => {
   return false;
 })();
 
+/* ============================================================
+   CLASES QUE NO ALCANZAN A SU REGLA
+   ------------------------------------------------------------
+   El defecto que más veces se repitió en este proyecto, y el más
+   difícil de ver leyendo el código.
+
+   Astro le pone a cada componente una marca propia y limita su CSS
+   a los elementos que la llevan. `.opcion__marca { ... }` escrito
+   adentro de PanelFiltros.astro se compila como
+   `.opcion__marca[data-astro-cid-A]`, y no alcanza a un
+   `<span class="opcion__marca">` escrito en checkout.astro, que
+   lleva la marca B.
+
+   Desde el código fuente todo parece correcto: la clase existe, la
+   regla existe, hasta se puede buscar y encontrar. Lo que no se ve
+   es que viven en archivos distintos.
+
+   Ya pasó tres veces: las filas de sugerencias del buscador, el
+   resumen del carrito, y la casilla de términos del checkout —que
+   quedó de cero por cero píxeles, invisible, y como sin tildarla el
+   envío se corta, desde afuera parecía que el botón de confirmar no
+   funcionaba.
+
+   Se revisa la salida compilada, que es donde las marcas existen:
+   para cada clase usada en una página se pregunta si hay al menos
+   una regla que pueda alcanzarla — global, o con la marca que ese
+   elemento realmente lleva.
+   ============================================================ */
+const clasesHuerfanas = (() => {
+  const dirAstro = path.join(DIST, '_astro');
+  if (!fs.existsSync(dirAstro)) return [];
+
+  const css = fs.readdirSync(dirAstro).filter((f) => f.endsWith('.css'))
+    .map((f) => fs.readFileSync(path.join(dirAstro, f), 'utf8')).join('\n');
+
+  /* Dos conjuntos: las clases con regla global, y las clases con
+     regla atada a una marca concreta. */
+  const globales = new Set();
+  const conMarca = new Map(); // clase -> Set(marcas)
+
+  for (const [, selector] of css.matchAll(/([^{}]+)\{[^{}]*\}/g)) {
+    if (selector.includes('@')) continue;
+    for (const parte of selector.split(',')) {
+      for (const m of parte.matchAll(/\.(-?[_a-zA-Z][\w-]*)((?:\[data-astro-cid-[a-z0-9]+\])?)/g)) {
+        const clase = m[1];
+        const marca = m[2] ? m[2].slice(1, -1) : null;
+        if (marca) {
+          if (!conMarca.has(clase)) conMarca.set(clase, new Set());
+          conMarca.get(clase).add(marca);
+        } else {
+          globales.add(clase);
+        }
+      }
+    }
+  }
+
+  /* Clases que sólo existen para que el guion las encuentre, o que
+     el guion agrega en tiempo de ejecución. No tienen por qué tener
+     estilo y marcarlas sería ruido. */
+  const SIN_ESTILO = /^(vo|tabular|es-|no-|js-)/;
+
+  const hallazgos = new Map();
+  for (const { ruta, archivo } of paginas()) {
+    const html = fs.readFileSync(archivo, 'utf8');
+    /* Sin grupo de captura, `matchAll` devuelve la coincidencia
+       entera en la posición 0 y nada en la 1. */
+    for (const [etiqueta] of html.matchAll(/<[a-z][^>]*>/gi)) {
+      const clases = etiqueta.match(/\sclass="([^"]*)"/)?.[1];
+      if (!clases) continue;
+
+      /* TODAS las marcas del elemento, no la primera.
+         Cuando un componente recibe una clase del padre —por ejemplo
+         `<Migas class="ficha__migas" />`— Astro le agrega también la
+         marca del padre, y el elemento termina con dos. Mirando sólo
+         una, este mismo control daba once falsos positivos: todos
+         casos donde la clase sí alcanzaba su regla por la otra. */
+      const marcas = [...etiqueta.matchAll(/data-astro-cid-([a-z0-9]+)/g)].map((m) => m[0]);
+
+      for (const clase of clases.trim().split(/\s+/)) {
+        if (!clase || SIN_ESTILO.test(clase)) continue;
+        if (globales.has(clase)) continue;
+        const conRegla = conMarca.get(clase);
+        /* Sin ninguna regla en ningún lado: es otra cosa —una clase
+           que sólo usa el guion— y no este defecto. */
+        if (!conRegla) continue;
+        /* Hay reglas, pero ninguna con las marcas de este elemento. */
+        if (marcas.some((m) => conRegla.has(m))) continue;
+        if (!hallazgos.has(clase)) hallazgos.set(clase, ruta);
+      }
+    }
+  }
+  return [...hallazgos].map(([clase, ruta]) => ({ clase, ruta }));
+})();
+
 console.log('\n=== CSS · lo que el navegador descarta sin avisar ===');
+for (const h of clasesHuerfanas) {
+  console.log(`  ✗ .${h.clase} se usa en ${h.ruta} y su regla está en otro componente: el alcance de Astro no la deja llegar`);
+}
+if (clasesHuerfanas.length === 0) {
+  console.log('  toda clase usada alcanza a su regla');
+}
 if (!alturaAuto) {
   console.log('  ✗ la regla global de <img> perdió `height: auto` — sin eso `aspect-ratio` no se aplica y las imágenes toman el alto del atributo');
 }
@@ -546,6 +646,6 @@ else {
 }
 
 const errores = problemas.length + fallaC.length + estabilidad.length + teclado.length
-  + cssVars.length + grillas.length + (alturaAuto ? 0 : 1);
+  + cssVars.length + grillas.length + clasesHuerfanas.length + (alturaAuto ? 0 : 1);
 console.log(`\n${errores === 0 ? '✓ auditoría limpia' : `✗ ${errores} hallazgo(s)`}\n`);
 process.exit(errores === 0 ? 0 : 1);

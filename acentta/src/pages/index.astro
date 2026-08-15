@@ -289,13 +289,10 @@ const promedio =
 </script>
 
 <style>
-  .etiqueta {
-    font-size: var(--t-meta);
-    font-weight: 600;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-    color: var(--naranja-texto);
-  }
+  /* [SE MUDÓ] `.etiqueta` vive ahora en componentes.css. Estaba acá
+     y la usa también /caso, donde no llegaba: Astro limita el CSS de
+     cada archivo a ese archivo. Una clase que usan dos páginas es una
+     clase compartida y no puede definirse adentro de una. */
 
   .encabezado-seccion {
     display: flex;

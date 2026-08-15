@@ -126,7 +126,15 @@ import { PASOS } from '@lib/pedido';
 
 <style>
   .seguimiento { padding-block: var(--e-6) var(--e-16); max-width: 900px; }
-  .seguimiento__migas { margin-bottom: var(--e-6); }
+  /* [CORREGIDO] Iba sin `:global()` y no hacía nada.
+     Esta clase se le pasa a un componente hijo —`<Migas class="…" />`,
+     `<Precio class="…" />`— y el elemento que la termina llevando es
+     del hijo, con la marca de alcance del hijo. La regla escrita acá
+     se compila con la marca de ESTA página, así que apuntaba a un
+     elemento que no existe.
+     Envuelta en `:global()` y colgada de un contenedor que sí lleva
+     la marca de la página, alcanza sin volverse una regla suelta. */
+  .seguimiento :global(.seguimiento__migas) { margin-bottom: var(--e-6); }
   .seguimiento__bajada { margin: var(--e-4) 0 var(--e-8); }
 
   .seguimiento__buscador {

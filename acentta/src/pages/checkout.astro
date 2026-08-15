@@ -514,13 +514,47 @@ const pasos = [
 
   /* ---- Resumen ---- */
   .resumen-pedido {
-    padding: var(--e-6);
+    padding: var(--e-5);
     background: var(--papel);
     border: 1px solid var(--gris-200);
     border-radius: var(--r-modal);
-    display: flex; flex-direction: column; gap: var(--e-4);
+    display: flex; flex-direction: column; gap: var(--e-3);
   }
-  @media (min-width: 900px) { .resumen-pedido { position: sticky; top: var(--e-6); } }
+
+  /* [CORREGIDO] La tarjeta podía crecer más alto que la pantalla, y
+     entonces `sticky` deja de servir: quedaba fija, sí, pero con el
+     final —el botón de confirmar y la fecha de llegada— colgando
+     fuera de la vista. Había que bajar para encontrar el botón que
+     termina la compra.
+
+     La solución no es achicar el contenido sino decidir qué cede.
+     La tarjeta se limita al alto de la ventana, y de todo lo que
+     tiene adentro, lo único que puede desplazarse es la lista de
+     productos: es lo que la persona ya sabe que compró. El total,
+     las cuotas, el botón y la fecha quedan siempre a la vista, que
+     es para lo que existe la tarjeta.
+
+     Con tres productos no se nota nada. Con doce, la lista scrollea
+     sola adentro de su caja y el botón sigue donde estaba. */
+  @media (min-width: 900px) {
+    .resumen-pedido {
+      position: sticky;
+      top: var(--e-5);
+      max-height: calc(100vh - var(--e-10));
+      overflow: hidden;
+    }
+    /* `min-height: 0` es lo que permite que un hijo de flex se
+       achique por debajo de su contenido. Sin esa línea, la lista se
+       niega a encogerse y el desbordamiento vuelve. */
+    .resumen-pedido__contenido { min-height: 0; }
+    .resumen-pedido__items {
+      overflow-y: auto;
+      min-height: 0;
+      /* Un poco de aire a la derecha para que la barra de
+         desplazamiento no se coma el borde de las fotos. */
+      padding-right: var(--e-2);
+    }
+  }
 
   .resumen-pedido__titulo { font-size: 1.125rem; font-weight: 700; letter-spacing: -0.01em; }
 
@@ -540,7 +574,7 @@ const pasos = [
   .resumen-pedido__toggle b { color: var(--tinta); font-size: var(--t-precio); }
   @media (min-width: 900px) { .resumen-pedido__toggle { display: none; } }
 
-  .resumen-pedido__contenido { display: flex; flex-direction: column; gap: var(--e-4); }
+  .resumen-pedido__contenido { display: flex; flex-direction: column; gap: var(--e-3); }
 
   .resumen-pedido__accion { display: flex; flex-direction: column; gap: var(--e-2); }
 
@@ -570,7 +604,7 @@ const pasos = [
   .paso h2:focus,
   .paso h2:focus-visible { outline: none; }
 
-  .resumen-pedido__items { display: flex; flex-direction: column; gap: var(--e-3); }
+  .resumen-pedido__items { display: flex; flex-direction: column; gap: var(--e-2); }
   .resumen-pedido__entrega {
     font-size: var(--t-meta); color: var(--gris-800);
     padding: var(--e-3);

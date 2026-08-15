@@ -93,7 +93,7 @@ const productos = [
     </section>
 
     {variantes.map((v) => (
-      <section class="doc__seccion variante">
+      <section class="doc__seccion doc__variante">
         <div class="variante__cabeza">
           <h2 class="t-seccion">{v.nombre}</h2>
           <p class="t-meta variante__resumen">{v.resumen}</p>
@@ -139,7 +139,7 @@ const productos = [
           <h3 class="doc__sub">{variantes.find((v) => v.id === id)!.nombre}</h3>
           <div class="grilla-productos grilla-prueba">
             {productos.map((p) => (
-              <article class="tarjeta ficha">
+              <article class="tarjeta doc__ficha">
                 <div class="ficha__foto">
                   {p.anterior && <Badge variante="descuento" porcentaje={Math.round((1 - p.precio / p.anterior) * 100)} />}
                 </div>
