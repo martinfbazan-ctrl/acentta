@@ -239,8 +239,17 @@ const medios = [
   }
   .pie__ficha--logo img { height: 22px; width: auto; display: block; }
 
+  /* [CORREGIDO] El logo estaba en 17 px de alto y no se leía.
+     El archivo original traía la caja de dibujo mucho más grande que
+     el dibujo —había casi el doble de aire que de letras— así que al
+     fijar el alto total en 17 px, las mayúsculas quedaban en menos de
+     3 px. No era un problema de tamaño elegido: era que dos tercios
+     de ese tamaño eran espacio vacío.
+     Se recortó la caja al contenido real y recién ahí el alto
+     significa algo. Con 28 px las mayúsculas quedan en unos 11, que
+     es la medida del texto chico del pie. */
   .pie__estudio {
-    display: flex; align-items: center; gap: var(--e-3);
+    display: flex; flex-wrap: wrap; align-items: center; gap: var(--e-2) var(--e-3);
     color: var(--gris-texto); font-size: var(--t-meta);
   }
   .pie__estudio a {
@@ -249,9 +258,17 @@ const medios = [
     transition: color var(--v-rapido) var(--curva);
   }
   .pie__estudio a:hover { color: var(--tinta); }
-  /* El alto manda y el ancho se calcula solo: el archivo del logo es
-     apaisado y fijarle los dos lados lo deformaría. */
-  .pie__estudio :global(svg) { height: 17px; width: auto; display: block; }
+  /* El alto manda y el ancho se calcula solo: el archivo es muy
+     apaisado —casi ocho a uno— y fijarle los dos lados lo
+     deformaría. */
+  .pie__estudio :global(svg) { height: 28px; width: auto; display: block; }
+  @media (max-width: 479px) {
+    /* En pantalla angosta el logo mide 220 px de ancho y no entra al
+       lado del rótulo: pasa a su propia línea en vez de achicarse
+       hasta volver a no leerse. */
+    .pie__estudio { flex-direction: column; align-items: flex-start; }
+    .pie__estudio :global(svg) { height: 24px; }
+  }
 
   .pie__copia { color: var(--gris-texto); font-size: var(--t-meta); max-width: 52ch; }
   .pie__enlaces-legales { display: flex; flex-wrap: wrap; gap: var(--e-4); list-style: none; }

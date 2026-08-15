@@ -1,0 +1,122 @@
+---
+/**
+ * Botón de WhatsApp.
+ * ---------------------------------------------------------------
+ * En lugar de un chat en vivo, y es una decisión, no una comodidad.
+ *
+ * Un chat en pantalla promete respuesta inmediata. Si del otro lado
+ * no hay nadie sentado esperando, esa promesa se rompe delante del
+ * cliente y queda peor que no haberla hecho. WhatsApp es asincrónico
+ * por naturaleza: nadie se ofende porque tardes veinte minutos, y ya
+ * está instalado en el teléfono de todos.
+ *
+ * EL MENSAJE VA PRECARGADO CON CONTEXTO
+ *
+ * Desde una ficha de producto, el mensaje ya dice cuál. Sin eso, la
+ * conversación empieza con «hola» y sigue con «¿por cuál producto?»,
+ * que es una vuelta perdida para las dos partes y la que más gente
+ * abandona.
+ */
+interface Props {
+  /** Sobre qué se consulta. Si falta, va un saludo genérico. */
+  producto?: string;
+}
+const { producto } = Astro.props;
+
+/* El número, en un solo lugar. Con código de país y sin signos: es
+   como lo espera la dirección de WhatsApp. */
+const NUMERO = '5493516205995';
+
+const mensaje = producto
+  ? `Hola, consulto por ${producto} que vi en la web.`
+  : 'Hola, tengo una consulta sobre un producto.';
+
+const enlace = `https://wa.me/${NUMERO}?text=${encodeURIComponent(mensaje)}`;
+---
+
+<!-- Envuelto en un <aside> con nombre, y no suelto en el cuerpo.
+     Quien recorre una página saltando entre puntos de referencia —que
+     es como navega mucha gente con lector de pantalla— no encuentra
+     lo que está fuera de todos ellos. Un botón flotante suelto es
+     contenido huérfano: existe, se puede tabular hasta él, pero no
+     aparece en el índice de regiones. Es exactamente el mismo caso
+     que tuvo la franja de promesas del encabezado.
+     Un <aside> con nombre accesible ya es una región complementaria
+     por sí solo, así que alcanza con nombrarlo. -->
+<aside class="wasap-caja" aria-label="Consultas por WhatsApp">
+<a
+  class="wasap"
+  href={enlace}
+  target="_blank"
+  rel="noopener"
+  data-wasap
+  aria-label={producto ? `Consultar por ${producto} por WhatsApp` : 'Consultar por WhatsApp'}
+>
+  <svg class="wasap__icono" width="26" height="26" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
+    <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.86 9.86 0 0 0 4.79 1.22h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2Zm0 18.15h-.01a8.2 8.2 0 0 1-4.19-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.2 8.2 0 0 1-1.26-4.38c0-4.54 3.7-8.23 8.25-8.23 2.2 0 4.27.86 5.83 2.42a8.18 8.18 0 0 1 2.41 5.82c0 4.54-3.7 8.23-8.24 8.23Zm4.52-6.16c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.13-.16.24-.64.8-.78.97-.15.16-.29.18-.53.06-.25-.12-1.05-.39-1.99-1.23-.74-.66-1.23-1.47-1.38-1.72-.14-.25-.01-.38.11-.5.11-.11.25-.29.37-.44.13-.15.17-.25.25-.42.08-.16.04-.31-.02-.43-.06-.12-.56-1.34-.76-1.84-.2-.48-.4-.42-.56-.43h-.48c-.16 0-.43.06-.65.31-.22.25-.85.83-.85 2.03s.87 2.35.99 2.51c.12.16 1.71 2.61 4.15 3.66.58.25 1.03.4 1.39.51.58.19 1.11.16 1.53.1.47-.07 1.47-.6 1.67-1.18.21-.58.21-1.07.15-1.18-.06-.1-.22-.16-.47-.28Z"/>
+  </svg>
+  <span class="wasap__texto">Consultar</span>
+</a>
+</aside>
+
+<style>
+  .wasap-caja {
+    position: fixed;
+    right: var(--e-4);
+    /* Se apoya en el borde de seguridad del teléfono: en los que
+       tienen barra de gestos, una posición fija al ras queda debajo
+       de ella y se toca sin querer al volver al inicio. */
+    bottom: max(var(--e-4), env(safe-area-inset-bottom));
+    z-index: 45;
+  }
+
+  .wasap {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--e-2);
+    min-height: 52px;
+    padding-inline: var(--e-4);
+
+    background: #25D366;
+    color: #0B3D22;
+    border-radius: var(--r-pastilla);
+    box-shadow: var(--sombra-2);
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.9375rem;
+
+    transition: transform var(--v-rapido) var(--curva),
+                box-shadow var(--v-rapido) var(--curva);
+  }
+  .wasap:hover { transform: translateY(-2px); box-shadow: var(--sombra-3, var(--sombra-2)); }
+  .wasap:focus-visible { outline: 3px solid var(--foco-color); outline-offset: 3px; }
+  .wasap__icono { flex: none; }
+
+  /* El verde de WhatsApp es parte de su marca y no del sistema de
+     colores de este sitio, así que se escribe acá y no como token:
+     un color de marca ajena entre los tokens propios es una trampa
+     para el que venga después a cambiar la paleta.
+     El texto encima es verde muy oscuro y no blanco: sobre ese verde
+     claro, el blanco da 1,8:1 y no se lee. Así da 8,6:1. */
+
+  /* En pantalla angosta queda sólo el círculo. El texto al lado se
+     come el ancho justo donde menos sobra, y el ícono de WhatsApp es
+     de los pocos que no hace falta explicar. */
+  @media (max-width: 639px) {
+    .wasap { min-height: 56px; width: 56px; padding-inline: 0; justify-content: center; }
+    .wasap__texto { display: none; }
+  }
+
+  /* En la ficha de producto hay una barra fija abajo con el precio y
+     el botón de agregar. El de WhatsApp sube para no taparla: un
+     botón de consulta encima del botón de comprar es exactamente al
+     revés de lo que conviene. */
+  :global(body:has(.barra-movil[data-visible='true'])) .wasap-caja {
+    bottom: calc(max(var(--e-4), env(safe-area-inset-bottom)) + 76px);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .wasap { transition: none; }
+    .wasap:hover { transform: none; }
+  }
+</style>

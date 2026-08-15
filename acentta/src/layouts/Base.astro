@@ -4,6 +4,7 @@ import '@estilos/tokens.css';
 import '@estilos/base.css';
 import '@estilos/componentes.css';
 import MiniCarrito from '@componentes/MiniCarrito.astro';
+import BotonWhatsApp from '@componentes/BotonWhatsApp.astro';
 
 interface Props {
   titulo: string;
@@ -13,9 +14,16 @@ interface Props {
   /** Datos estructurados de la página. Van en el head, que es donde
    *  corresponde: colgados después de </html> el HTML deja de validar. */
   esquema?: unknown;
+  /** Apaga el botón de consulta. Se usa en el circuito de cobro. */
+  sinBotonConsulta?: boolean;
+  /** Nombre del producto, para que la consulta llegue con contexto. */
+  productoConsulta?: string;
 }
 
-const { titulo, descripcion, sinIndexar = false, esquema } = Astro.props;
+const {
+  titulo, descripcion, sinIndexar = false, esquema,
+  sinBotonConsulta = false, productoConsulta,
+} = Astro.props;
 const canonica = new URL(Astro.url.pathname, Astro.site);
 const portada = new URL('/og.png', Astro.site);
 ---
@@ -98,6 +106,16 @@ const portada = new URL('/og.png', Astro.site);
     <slot name="pie" />
 
     <MiniCarrito />
+
+    {/*
+      El botón de consulta va en todas las páginas menos las del
+      cobro. En el carrito y en el checkout, un botón flotante que
+      invita a irse a otra aplicación en el momento exacto en que
+      alguien está por pagar es una salida de emergencia puesta al
+      lado de la caja. Quien tiene una duda ahí, la tuvo antes.
+      La consulta por producto viaja desde la ficha: `productoConsulta`.
+    */}
+    {!sinBotonConsulta && <BotonWhatsApp producto={productoConsulta} />}
 
     <script>
       import '../scripts/base';
