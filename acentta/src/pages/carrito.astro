@@ -244,21 +244,30 @@ const sugeridos = masVendidos(4);
   .carro__seguir:hover { text-decoration: underline; text-underline-offset: 3px; }
 
   /* ---- Resumen ---- */
+  /* [AJUSTADO] La tarjeta se apretó. Tenía 32 px de relleno y 24 de
+     separación entre bloques en escritorio, más un título del tamaño
+     de un encabezado de sección: seis datos ocupando la altura de una
+     pantalla entera.
+     El contenido no cambió — se acomodó. Un resumen de compra es una
+     lista de cifras para verificar de un vistazo, no una sección de
+     la página. */
   .resumen {
     position: relative;
-    padding: var(--e-6);
+    padding: var(--e-5);
     background: var(--papel);
     border: 1px solid var(--gris-200);
     border-radius: var(--r-modal);
     display: flex;
     flex-direction: column;
-    gap: var(--e-5);
+    gap: var(--e-4);
   }
   @media (min-width: 900px) {
-    .resumen { position: sticky; top: var(--e-6); padding: var(--e-8); gap: var(--e-6); }
+    .resumen { position: sticky; top: var(--e-5); padding: var(--e-6); gap: var(--e-4); }
   }
 
-  .resumen__titulo { font-size: var(--t-seccion); font-weight: 600; letter-spacing: -0.01em; }
+  /* El título deja de competir con «Tu carrito», que es el de la
+     página. Antes los dos usaban la misma medida. */
+  .resumen__titulo { font-size: 1.125rem; font-weight: 700; letter-spacing: -0.01em; }
 
   .resumen__cp { display: flex; gap: var(--e-3); align-items: flex-start; }
   .resumen__cp .campo { flex: 1; min-width: 0; }
