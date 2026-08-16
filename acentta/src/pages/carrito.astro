@@ -135,22 +135,31 @@ const sugeridos = masVendidos(4);
           Se compra sin crear cuenta. Sólo pedimos los datos necesarios para
           facturar y entregar.
         </p>
-
-        <ul class="resumen__garantias">
-          <li>
-            <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true" fill="currentColor"><path d="M6.2 11.4 3.3 8.5l-1.1 1.1 4 4 7.6-7.6-1.1-1.1z"/></svg>
-            30 días para devolver, sin cargo
-          </li>
-          <li>
-            <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true" fill="currentColor"><path d="M6.2 11.4 3.3 8.5l-1.1 1.1 4 4 7.6-7.6-1.1-1.1z"/></svg>
-            Hasta 12 cuotas sin interés
-          </li>
-          <li>
-            <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true" fill="currentColor"><path d="M6.2 11.4 3.3 8.5l-1.1 1.1 4 4 7.6-7.6-1.1-1.1z"/></svg>
-            El total de arriba es el total: no cambia en el checkout
-          </li>
-        </ul>
       </aside>
+
+      <!-- Las garantías salieron de la tarjeta y quedaron debajo.
+           No es un cambio de estética: la tarjeta es fija —acompaña
+           el scroll— y con las tres garantías adentro medía más que
+           la pantalla, así que su final quedaba cortado y el botón de
+           comprar competía por lugar con texto de tranquilidad.
+           Lo que tiene que estar siempre a la vista es el total y el
+           botón. Las garantías se leen una vez y son las mismas para
+           todo el sitio: sirven igual acá abajo, sin robarle altura a
+           lo que decide. -->
+      <ul class="resumen__garantias carro__garantias">
+        <li>
+          <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true" fill="currentColor"><path d="M6.2 11.4 3.3 8.5l-1.1 1.1 4 4 7.6-7.6-1.1-1.1z"/></svg>
+          30 días para devolver, sin cargo
+        </li>
+        <li>
+          <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true" fill="currentColor"><path d="M6.2 11.4 3.3 8.5l-1.1 1.1 4 4 7.6-7.6-1.1-1.1z"/></svg>
+          Hasta 12 cuotas sin interés
+        </li>
+        <li>
+          <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true" fill="currentColor"><path d="M6.2 11.4 3.3 8.5l-1.1 1.1 4 4 7.6-7.6-1.1-1.1z"/></svg>
+          El total de arriba es el total: no cambia en el checkout
+        </li>
+      </ul>
     </div>
 
     <!-- Cross-sell · después de la decisión, nunca antes -->
@@ -262,7 +271,32 @@ const sugeridos = masVendidos(4);
     gap: var(--e-4);
   }
   @media (min-width: 900px) {
-    .resumen { position: sticky; top: var(--e-5); padding: var(--e-6); gap: var(--e-4); }
+    .resumen {
+      position: sticky;
+      top: var(--e-5);
+      padding: var(--e-6);
+      gap: var(--e-4);
+      /* Red de seguridad. Si algún día la tarjeta vuelve a crecer
+         —una línea de descuento, un aviso nuevo— y pasa el alto de
+         la ventana, `sticky` deja de servir: queda fija con el final
+         colgando afuera. Con el tope, en el peor caso la tarjeta se
+         desplaza sola adentro de su caja en vez de esconder el
+         botón de comprar. */
+      max-height: calc(100vh - var(--e-10));
+      overflow-y: auto;
+    }
+  }
+
+  /* Las garantías, fuera de la tarjeta y en la misma columna.
+     Sin `grid-column`, al ser el tercer elemento de la grilla caerían
+     debajo de la lista de productos, del otro lado. */
+  .carro__garantias {
+    border-top: 0;
+    padding-top: 0;
+    margin-top: calc(var(--e-4) * -1);
+  }
+  @media (min-width: 900px) {
+    .carro__garantias { grid-column: 2; margin-top: 0; }
   }
 
   /* El título deja de competir con «Tu carrito», que es el de la
