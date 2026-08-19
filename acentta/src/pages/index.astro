@@ -46,11 +46,40 @@ const promedio =
   conOpiniones.reduce((s, p) => s + (p.rating ?? 0) * p.cantidadOpiniones, 0) /
   conOpiniones.reduce((s, p) => s + p.cantidadOpiniones, 0);
 
+/* Datos estructurados del home. Las páginas de producto ya tienen los suyos;
+   faltaba el de la tienda, que es el que habilita el buscador interno en los
+   resultados de Google y le da a la marca una entidad propia.
+   La calificación sale del mismo catálogo que la prueba social de la página:
+   no hay ningún número escrito a mano. */
+const esquemaTienda = {
+  '@context': 'https://schema.org',
+  '@type': 'OnlineStore',
+  name: 'acentta',
+  description:
+    'Lámparas, alfombras, textil y muebles chicos con envío a todo el país.',
+  url: Astro.site?.toString(),
+  currenciesAccepted: 'ARS',
+  areaServed: { '@type': 'Country', name: 'Argentina' },
+  aggregateRating: {
+    '@type': 'AggregateRating',
+    ratingValue: promedio.toFixed(1),
+    reviewCount: totalOpiniones,
+  },
+  potentialAction: {
+    '@type': 'SearchAction',
+    target: {
+      '@type': 'EntryPoint',
+      urlTemplate: new URL('/buscar?q={search_term_string}', Astro.site).toString(),
+    },
+    'query-input': 'required name=search_term_string',
+  },
+};
 ---
 
 <Base
   titulo="acentta · Decoración e iluminación para tu casa"
   descripcion="Lámparas, alfombras, textil y muebles chicos con envío a todo el país. Envío gratis superando $ 50.000 y 30 días para devolver sin cargo."
+  esquema={esquemaTienda}
 >
   <Encabezado slot="encabezado" items={0} />
 
