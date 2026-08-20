@@ -28,6 +28,7 @@ import Boton from '@componentes/Boton.astro';
 import { foto, srcset } from '@lib/imagenes';
 import { precio, rangoDeEntrega } from '@lib/formato';
 import { porSlug, enOferta, ahorroEnPorcentaje } from '@lib/catalogo';
+import { IMAGEN_HERO } from '@lib/hero';
 
 const arco = porSlug('lampara-de-pie-arco')!;
 const alfombra = porSlug('alfombra-bereber-trenzada-160x230')!;
@@ -47,7 +48,8 @@ const laminas = [
     bajada: `Lámparas que arman un rincón en lugar de alumbrar un cuarto entero. Si te llevas la de arco, llega ${rangoDeEntrega(arco.plazoEnvio.min, arco.plazoEnvio.max)}.`,
     principal: { texto: 'Ver iluminación', href: '/categoria/iluminacion' },
     secundario: { texto: 'Ver la lámpara de arco', href: `/producto/${arco.slug}` },
-    imagen: arco.imagenes[1]!,
+    /* Definida en @lib/hero para que el layout pueda precargarla. */
+    imagen: IMAGEN_HERO,
   },
   {
     etiqueta: 'Alfombras y textil',

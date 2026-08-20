@@ -19,6 +19,7 @@ import Boton from '@componentes/Boton.astro';
 import Rating from '@componentes/Rating.astro';
 import Campo from '@componentes/Campo.astro';
 import { foto, srcset } from '@lib/imagenes';
+import { IMAGEN_HERO } from '@lib/hero';
 import { precio, decimal, numero } from '@lib/formato';
 import { UMBRAL_ENVIO_GRATIS } from '@tipos/catalogo';
 import {
@@ -80,6 +81,7 @@ const esquemaTienda = {
   titulo="acentta · Decoración e iluminación para tu casa"
   descripcion="Lámparas, alfombras, textil y muebles chicos con envío a todo el país. Envío gratis superando $ 50.000 y 30 días para devolver sin cargo."
   esquema={esquemaTienda}
+  precargarImagen={IMAGEN_HERO.src}
 >
   <Encabezado slot="encabezado" items={0} />
 

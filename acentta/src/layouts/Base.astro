@@ -3,6 +3,7 @@ import '@estilos/fuentes.css';
 import '@estilos/tokens.css';
 import '@estilos/base.css';
 import '@estilos/componentes.css';
+import { foto, srcset } from '@lib/imagenes';
 import MiniCarrito from '@componentes/MiniCarrito.astro';
 import BotonWhatsApp from '@componentes/BotonWhatsApp.astro';
 
@@ -18,11 +19,16 @@ interface Props {
   sinBotonConsulta?: boolean;
   /** Nombre del producto, para que la consulta llegue con contexto. */
   productoConsulta?: string;
+  /**
+   * Imagen que hay que precargar porque es el LCP de la página.
+   * Solo la home la usa: en el resto el elemento más grande es texto.
+   */
+  precargarImagen?: string;
 }
 
 const {
   titulo, descripcion, sinIndexar = false, esquema,
-  sinBotonConsulta = false, productoConsulta,
+  sinBotonConsulta = false, productoConsulta, precargarImagen,
 } = Astro.props;
 const canonica = new URL(Astro.url.pathname, Astro.site);
 const portada = new URL('/og.png', Astro.site);
@@ -36,6 +42,21 @@ const portada = new URL('/og.png', Astro.site);
     <title>{titulo}</title>
     <meta name="description" content={descripcion} />
     <link rel="canonical" href={canonica} />
+
+    {/* El navegador descubre la foto del hero recién cuando parsea el <img>,
+        y para entonces ya resolvió el CSS. Con esto la pide durante el
+        parseo del HTML, en paralelo. `imagesrcset` e `imagesizes` repiten
+        los del <img> para que elija el mismo archivo y no baje dos. */}
+    {precargarImagen && (
+      <link
+        rel="preload"
+        as="image"
+        href={foto(precargarImagen, 1800)}
+        imagesrcset={srcset(precargarImagen)}
+        imagesizes="100vw"
+        fetchpriority="high"
+      />
+    )}
     {sinIndexar && <meta name="robots" content="noindex" />}
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 
