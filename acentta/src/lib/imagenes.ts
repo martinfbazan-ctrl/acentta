@@ -67,3 +67,42 @@ export const TAMANOS_GRILLA =
 
 export const TAMANOS_HERO =
   '(min-width: 1024px) 780px, 100vw';
+
+/* ─────────────────────────────────────────────────────────────
+   Recorte en el servidor
+   ─────────────────────────────────────────────────────────────
+   `foto()` pide un ancho y nada más, así que el banco devuelve el alto
+   original. Para una ficha de producto eso está bien: la foto se ve
+   entera. Para el hero no: es una franja apaisada con `object-fit:
+   cover`, y una foto vertical de 2:3 llega con el triple de alto del
+   que se ve. Esos píxeles se descargan, se decodifican y se tiran.
+
+   Medido sobre el hero de la home: 1920 × 2880 descargados para pintar
+   1905 × 565. El 81% no se ve nunca.
+
+   Pidiendo `h` junto con `w`, el recorte lo hace el banco antes de
+   mandar el archivo.                                                  */
+
+/** Proporción del hero en teléfono. El hueco mide 412 × 510: 0,81. */
+export const HERO_MOVIL = 4 / 5;
+
+/** Proporción del hero en escritorio. El hueco es más apaisado todavía,
+ *  así que pedir 12:5 deja margen para que `cover` recorte arriba y
+ *  abajo sin quedarse corto de ancho. */
+export const HERO_ESCRITORIO = 12 / 5;
+
+/** El ancho a partir del cual el hero deja de ser vertical. */
+export const CORTE_HERO = 900;
+
+/** Como `foto()`, pero recortada a una proporción. */
+export function fotoProporcion(fuente: string, ancho: number, proporcion: number): string {
+  if (esPropia(fuente)) return fuente;
+  const alto = Math.round(ancho / proporcion);
+  return `${BANCO}${fuente}?auto=format&fit=crop&w=${ancho}&h=${alto}&q=72`;
+}
+
+/** `srcset` con todos los anchos, recortados a una proporción. */
+export function srcsetProporcion(fuente: string, proporcion: number): string | undefined {
+  if (esPropia(fuente)) return undefined;
+  return ANCHOS.map((a) => `${fotoProporcion(fuente, a, proporcion)} ${a}w`).join(', ');
+}

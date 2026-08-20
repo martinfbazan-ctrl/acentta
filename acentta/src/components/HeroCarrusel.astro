@@ -25,7 +25,10 @@
  *   Es el LCP de la home: si el hero tarda, tarda el sitio.
  */
 import Boton from '@componentes/Boton.astro';
-import { foto, srcset } from '@lib/imagenes';
+import {
+  foto, srcset, fotoProporcion, srcsetProporcion,
+  HERO_MOVIL, HERO_ESCRITORIO, CORTE_HERO,
+} from '@lib/imagenes';
 import { precio, rangoDeEntrega } from '@lib/formato';
 import { porSlug, enOferta, ahorroEnPorcentaje } from '@lib/catalogo';
 import { IMAGEN_HERO } from '@lib/hero';
@@ -96,18 +99,28 @@ const laminas = [
         aria-label={`${i + 1} de ${laminas.length}: ${l.etiqueta}`}
         aria-hidden={i !== 0 ? 'true' : undefined}
       >
-        <img
-          class="hero__foto"
-          src={foto(l.imagen.src, 1800)}
-          srcset={srcset(l.imagen.src)}
-          sizes="100vw"
-          alt={l.imagen.alt}
-          width="1800"
-          height="1000"
-          loading={i === 0 ? 'eager' : 'lazy'}
-          fetchpriority={i === 0 ? 'high' : 'auto'}
-          decoding="async"
-        />
+        {/* Dos recortes: el banco los hace antes de mandar el archivo.
+            Sin esto llegaba la foto vertical entera y `object-fit: cover`
+            tiraba el 81% de los píxeles ya descargados. */}
+        <picture>
+          <source
+            media={`(min-width: ${CORTE_HERO}px)`}
+            srcset={srcsetProporcion(l.imagen.src, HERO_ESCRITORIO)}
+            sizes="100vw"
+          />
+          <img
+            class="hero__foto"
+            src={fotoProporcion(l.imagen.src, 1200, HERO_MOVIL)}
+            srcset={srcsetProporcion(l.imagen.src, HERO_MOVIL)}
+            sizes="100vw"
+            alt={l.imagen.alt}
+            width="1200"
+            height="1500"
+            loading={i === 0 ? 'eager' : 'lazy'}
+            fetchpriority={i === 0 ? 'high' : 'auto'}
+            decoding="async"
+          />
+        </picture>
 
         <div class="contenedor hero__caja">
           <div class="hero__texto sobre-oscuro">
@@ -186,6 +199,10 @@ const laminas = [
     display: flex;
     align-items: flex-end;
     isolation: isolate;
+  }
+
+  .hero__lamina picture {
+    display: contents;
   }
 
   .hero__foto {

@@ -3,7 +3,10 @@ import '@estilos/fuentes.css';
 import '@estilos/tokens.css';
 import '@estilos/base.css';
 import '@estilos/componentes.css';
-import { foto, srcset } from '@lib/imagenes';
+import {
+  fotoProporcion, srcsetProporcion,
+  HERO_MOVIL, HERO_ESCRITORIO, CORTE_HERO,
+} from '@lib/imagenes';
 import MiniCarrito from '@componentes/MiniCarrito.astro';
 import BotonWhatsApp from '@componentes/BotonWhatsApp.astro';
 
@@ -43,19 +46,31 @@ const portada = new URL('/og.png', Astro.site);
     <meta name="description" content={descripcion} />
     <link rel="canonical" href={canonica} />
 
-    {/* El navegador descubre la foto del hero recién cuando parsea el <img>,
-        y para entonces ya resolvió el CSS. Con esto la pide durante el
-        parseo del HTML, en paralelo. `imagesrcset` e `imagesizes` repiten
-        los del <img> para que elija el mismo archivo y no baje dos. */}
+    {/* Un `preload` por recorte, con el mismo `media` que los `<source>`
+        del hero: el navegador baja solo el que corresponde a su pantalla.
+        Los `imagesrcset` e `imagesizes` repiten los del `<picture>` para
+        que elija exactamente el mismo archivo y no descargue dos. */}
     {precargarImagen && (
-      <link
-        rel="preload"
-        as="image"
-        href={foto(precargarImagen, 1800)}
-        imagesrcset={srcset(precargarImagen)}
-        imagesizes="100vw"
-        fetchpriority="high"
-      />
+      <>
+        <link
+          rel="preload"
+          as="image"
+          media={`(max-width: ${CORTE_HERO - 1}px)`}
+          href={fotoProporcion(precargarImagen, 1200, HERO_MOVIL)}
+          imagesrcset={srcsetProporcion(precargarImagen, HERO_MOVIL)}
+          imagesizes="100vw"
+          fetchpriority="high"
+        />
+        <link
+          rel="preload"
+          as="image"
+          media={`(min-width: ${CORTE_HERO}px)`}
+          href={fotoProporcion(precargarImagen, 1600, HERO_ESCRITORIO)}
+          imagesrcset={srcsetProporcion(precargarImagen, HERO_ESCRITORIO)}
+          imagesizes="100vw"
+          fetchpriority="high"
+        />
+      </>
     )}
     {sinIndexar && <meta name="robots" content="noindex" />}
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
