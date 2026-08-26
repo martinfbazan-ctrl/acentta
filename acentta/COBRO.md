@@ -1,8 +1,10 @@
-# Conectar el cobro con Mercado Pago
+# Conectar el cobro con Mobbex
 
-El código está escrito y probado. Falta conectar las llaves, y eso lo hacés vos: **yo no toco credenciales**. Un token de Mercado Pago en un archivo del repositorio es un token público, y un token que pasa por un chat es un token quemado.
+El código está escrito y probado. Falta conectar las llaves, y eso lo hacés vos: **yo no toco credenciales**. Una clave en un archivo del repositorio es una clave pública, y una clave que pasa por un chat es una clave quemada.
 
 Arrancamos en **modo de prueba**: tarjetas falsas, ningún peso real. Pasar a producción después son dos variables.
+
+> **Por qué Mobbex y no Mercado Pago.** El arancel: casi el doble. El código de Mercado Pago **no se borró** — sigue entero en `src/lib/mercadopago.ts`, con sus pruebas, y se vuelve a encender poniendo `PASARELA=mercadopago`. Esa posibilidad es medio motivo por el que existe `src/lib/pasarela.ts`.
 
 ---
 
@@ -10,147 +12,151 @@ Arrancamos en **modo de prueba**: tarjetas falsas, ningún peso real. Pasar a pr
 
 | | Dónde |
 |---|---|
+| El contrato que cumple cualquier pasarela | `src/lib/pasarela.ts` |
+| El adaptador de Mobbex | `src/lib/mobbex.ts` |
+| El adaptador de Mercado Pago, apagado | `src/lib/mercadopago.ts` |
 | El total se recalcula en el servidor desde el catálogo | `src/lib/cotizacion.ts` |
 | El pedido se registra **antes** de cobrar | `src/lib/pedidos.ts` |
-| Crear el pago | `src/api/crear-pago.ts` |
-| Recibir el aviso, con firma e idempotencia | `src/api/aviso-de-pago.ts` |
+| Crear el cobro | `src/api/crear-pago.ts` |
+| Recibir el aviso, verificarlo y no creerle | `src/api/aviso-de-pago.ts` |
 | Consultar un pedido sin exponer datos personales | `src/api/pedido.ts` |
-| Pruebas, incluido un intento de fraude | `npm run auditar:cobro` |
+| Pruebas, incluido un intento de fraude y un aviso mentiroso | `npm run auditar:cobro` |
 
 **Mientras las variables no estén puestas, el sitio se comporta como hoy**: el checkout simula la compra y va a la confirmación. No se rompe nada por publicar esto antes de configurarlo.
 
 ---
 
-## Paso 1 · Cuenta y credenciales de prueba
+## Lo que cambia respecto de Mercado Pago (y es lo que más importa)
 
-1. Crear cuenta en Mercado Pago si no tenés, y entrar a **[Tus integraciones](https://www.mercadopago.com.ar/developers/panel/app)**.
-2. **Crear aplicación**. Producto: *Checkout Pro*.
-3. En **Credenciales de prueba**, copiar el **Access Token**. Empieza con `TEST-`.
+**Mobbex no firma sus avisos de pago.** Mercado Pago manda una cabecera `x-signature` con un HMAC que se puede recalcular y comparar. Mobbex manda `content-type: application/json` y nada más.
 
-> Ese prefijo lo usa el código para saber en qué modo está: con `TEST-` manda a la gente al entorno de prueba de Mercado Pago, donde las tarjetas son falsas. No hay que configurar el modo por separado.
+Eso obliga a apoyarse en dos cosas en lugar de una:
+
+1. **Un token secreto en la propia dirección del aviso.** Es más débil que una firma —viaja en la URL, y las URLs terminan en registros de servidor— así que se trata como una molestia para el que tantea, no como la defensa.
+
+2. **La defensa de verdad: no creerle al aviso.** Del cuerpo del aviso sale una sola cosa: el número de pedido por el que hay que preguntar. El estado y el monto se consultan después, directo a la API de Mobbex, con tus credenciales, y el monto se compara contra el cotizado antes de aprobar nada.
+
+Con la regla 2 puesta, lo peor que consigue un aviso falsificado es que consultemos un pago que ya existe y volvamos a escribir el mismo estado que ya tenía. No hay forma de que un mensaje inventado apruebe un pedido, porque ningún dato del mensaje llega a escribirse.
+
+Esto está probado al revés: la prueba manda un aviso con el token correcto que grita «aprobado, 999.999 pesos» mientras la API dice «rechazado, 45.900». Si alguna vez alguien «optimiza» esto leyendo el estado del cuerpo para ahorrarse una llamada, la prueba se pone roja.
+
+**A cambio, el modo de prueba es más seguro que el de Mercado Pago.** Con Mercado Pago el entorno lo decidían las credenciales: si por error subías las de producción, el cobro era real y lo único que se podía hacer era darse cuenta después y cancelar el pedido — el cobro ya existía. Mobbex tiene un campo `test` en el propio pedido de cobro: mientras `MOBBEX_MODO` no diga producción, ese campo va en `true` y el cobro **no puede** ser real, ni con credenciales de producción cargadas. Deja de ser una alarma y pasa a ser un impedimento.
 
 ---
 
-## Paso 2 · La dirección donde avisan los pagos
+## Paso 1 · Probar hoy, sin cuenta
 
-En la misma aplicación, **Webhooks → Configurar notificación**:
+Ésta es la parte buena y conviene aprovecharla: **Mobbex publica credenciales de prueba en su documentación**, abiertas, sin registrarse. Son las de su comercio de demostración.
 
-1. Pestaña **Modo productivo**, URL:
+| Variable | Valor |
+|---|---|
+| `MOBBEX_API_KEY` | `zj8lftbx6ba8d611e9io13fdzawj0qmko1hn1yij` |
+| `MOBBEX_ACCESS_TOKEN` | `d31f0721-2f85-44e7-bcc6-15e19d1a53cc` |
 
-   ```
-   https://TU-SITIO.vercel.app/api/aviso-de-pago
-   ```
+Sirven para ver el circuito entero funcionando antes de hablar con nadie. Comparado con Mercado Pago —donde el enredo de usuarios de prueba comprador/vendedor nos costó varias vueltas— es otra cosa.
 
-2. Marcar el evento **Pagos**.
-3. **Guardar configuración**. Ahí aparece una **clave secreta** — copiala.
+Son **públicas y compartidas**: cualquiera que lea la documentación las tiene. No las dejes puestas cuando vayas a vender.
 
-> Esa clave es la que hace que nadie más pueda mandar «pago aprobado» a tu sitio. Es, de todo lo que hay acá, lo que más caro sale perder.
+## Paso 1 bis · Tus credenciales propias
+
+Cuando quieras las tuyas:
+
+1. Entrar a la **[consola de Mobbex](https://mobbex.com/console)** y crear la entidad con tu CUIT.
+2. Ir al **[portal de desarrollo](https://mobbex.com/devportal)** y crear una aplicación. Ahí sale la **API Key**.
+3. Desde la aplicación, **solicitar acceso a la entidad** por CUIT.
+4. Volver a la consola y **autorizar** ese acceso. Ahí sale el **Access Token**, que es el que representa a tu comercio.
+
+Son dos objetos distintos y es fácil confundirlos: la API Key es de tu aplicación (el software), el Access Token es de tu comercio (quien cobra). El código necesita los dos.
+
+---
+
+## Paso 2 · El token del aviso, que lo inventás vos
+
+A diferencia de Mercado Pago, acá el secreto no lo genera la pasarela: lo elegís vos y viaja en la dirección que Mobbex va a llamar.
+
+Generá uno largo y al azar. En PowerShell:
+
+```powershell
+[Convert]::ToBase64String((1..32 | ForEach-Object { Get-Random -Max 256 }))
+```
+
+**Mínimo 32 caracteres.** El código rechaza cualquiera de menos de 24 y lo dice en el registro: un token corto se puede probar a fuerza bruta contra una dirección pública y da la misma sensación de seguridad que uno largo.
+
+No hay que configurar nada del lado de Mobbex: la dirección del aviso, con el token adentro, viaja en cada pedido de cobro que hace el sitio.
+
+> Si alguna vez lo pegás en un chat, un correo o una captura, cambiá la variable por otro. Es un botón y un redeploy.
 
 ---
 
 ## Paso 3 · La base de datos
 
-En Vercel: **Storage → Create Database → Redis** (el proveedor es Upstash) y conectarla al proyecto `acentta`.
+Sin cambios respecto de antes. En Vercel: **Storage → Create Database → Redis** (el proveedor es Upstash) y conectarla al proyecto `acentta`.
 
-Vercel inyecta solo cinco variables al conectar la base al proyecto. **De esas, el código usa dos:**
+Vercel inyecta cinco variables al conectar la base. **De esas, el código usa dos:**
 
 | Variable | Para qué |
 |---|---|
 | `KV_REST_API_URL` | la dirección del almacén |
 | `KV_REST_API_TOKEN` | la llave con permiso de escritura |
 
-Las otras tres se ignoran, y conviene saber por qué para no confundirse: `REDIS_URL` y `KV_URL` son cadenas de conexión pensadas para un cliente de Redis, y este código habla por la API REST; `KV_REST_API_READ_ONLY_TOKEN` es de sólo lectura, y los pedidos hay que escribirlos.
+Las otras tres se ignoran, y conviene saber por qué para no confundirse: `REDIS_URL` y `KV_URL` son cadenas de conexión para un cliente de Redis, y este código habla por la API REST; `KV_REST_API_READ_ONLY_TOKEN` es de sólo lectura, y los pedidos hay que escribirlos.
 
-> **En «Allowed Environments», conviene «All environments».** Con «Production environment only» las variables se marcan como sensibles y dejan de verse en el panel —lo que hace difícil verificar que estén—, y además cualquier conexión que no tenga destino de producción se desconecta sola. La credencial delicada de todo esto no es la del almacén: es la de Mercado Pago, que cargás vos en el paso siguiente.
+> **En «Allowed Environments», conviene «All environments».** Con «Production environment only» las variables se marcan como sensibles y dejan de verse en el panel —lo que hace difícil verificar que estén—, y cualquier conexión sin destino de producción se desconecta sola.
 
 El plan gratuito son 256 MB y decenas de miles de operaciones por día. Un pedido pesa menos de dos kilobytes.
 
 ---
 
-## Paso 4 · Las dos variables que sí cargás a mano
+## Paso 4 · Las variables
 
-En Vercel: **Settings → Environment Variables**. Las dos para *Production*, *Preview* y *Development*:
+En Vercel: **Settings → Environment Variables**, todas para *Production*, *Preview* y *Development*:
 
 | Nombre | Valor |
 |---|---|
-| `MP_ACCESS_TOKEN` | el Access Token de **Credenciales de prueba** |
-| `MP_WEBHOOK_SECRET` | la clave secreta del paso 2 |
-| `MP_MODO` | `prueba` |
+| `MOBBEX_API_KEY` | la del paso 1 |
+| `MOBBEX_ACCESS_TOKEN` | el del paso 1 |
+| `MOBBEX_WEBHOOK_TOKEN` | el que generaste en el paso 2 |
+| `MOBBEX_MODO` | `prueba` |
 | `ADMIN_CLAVE` | una clave larga que inventes, mínimo 12 caracteres |
+
+`PASARELA` no hace falta: sin ella el sitio usa Mobbex. Se pone sólo para volver a Mercado Pago.
 
 > `ADMIN_CLAVE` es la que abre la pantalla de pedidos en `/pedidos`. Esa pantalla muestra nombre, DNI, teléfono y dirección de cada persona que te compró — es la información más delicada del sitio. **Poné una clave larga y que no uses en ningún otro lado.** Doce caracteres es el mínimo que el código acepta; veinte es mejor, y como la escribís una sola vez, que sea incómoda no molesta.
 
-> **Sobre `MP_MODO`, que es el freno de mano.** Mercado Pago unificó el formato de las credenciales: hoy **las de prueba y las de producción empiezan igual, con `APP_USR-`**, así que mirando el token es imposible saber en qué entorno estás. Lo único que lo dice es un campo, `live_mode`, que viene en la respuesta de la API — o sea, después de haber pedido el cobro.
->
-> Por eso el entorno se declara acá a mano, y el código lo contrasta contra lo que contesta Mercado Pago. Si pide un cobro y la respuesta dice que es real mientras `MP_MODO` dice `prueba`, **no devuelve el enlace**: cancela el pedido y corta. Un cobro real disparado por accidente es plata de otra persona y una entrega comprometida.
->
-> Si no ponés la variable, el valor de fábrica es `prueba`. A propósito: si alguien se olvida, lo que falla es un cobro de mentira y no uno de verdad.
+> **Sobre `MOBBEX_MODO`, que es el freno de mano.** Mientras no diga `produccion`, cada cobro se abre con `test: true` y no puede cobrar plata real. Si no ponés la variable, el valor de fábrica es `prueba`, a propósito: si alguien se olvida, lo que falla es un cobro de mentira y no uno de verdad.
 
 Después, **Deployments → el último → Redeploy**. Las variables no entran en un despliegue que ya existe.
 
-> Si alguna vez pegás una de estas dos en un chat, un correo o un archivo, generá una nueva desde el panel de Mercado Pago. Es un botón.
+Para verificar que quedaron bien: `https://TU-SITIO.vercel.app/api/estado`. Devuelve nombres y booleanos, nunca valores.
 
 ---
 
-## Paso 5 · Encontrar el comprador de prueba
+## Paso 5 · Comprar de mentira
 
-Éste es el paso que hace perder una tarde, y por un motivo tonto: **la cuenta de comprador ya existe — se crea sola junto con la aplicación**. No hay que crearla, hay que ir a buscarla, y está detrás de un selector que es fácil no ver.
+No hace falta ninguna cuenta de comprador de prueba. Se entra al checkout y se paga con una tarjeta falsa.
 
-1. **[Tus integraciones](https://www.mercadopago.com.ar/developers/panel/app) → tu aplicación → Cuentas de prueba** (en el menú de la izquierda).
-2. **En el selector, elegir «Comprador».** Ahí aparecen el país, el User ID, el **usuario** y la **contraseña**.
-3. Si al entrar te pide un código de 6 dígitos, está en esa misma pantalla.
+**El resultado lo decide el código de seguridad**, no la tarjeta. Es el mismo plástico para todos los casos, y es bastante más cómodo que el truco del nombre del titular de Mercado Pago.
 
-> **Cuidado con confundirla con la otra.** En *Credenciales de prueba* también figura un «Usuario de prueba»: **ése es el vendedor**, la identidad de prueba de tu tienda. Si entrás con ése, sos comprador y vendedor a la vez, y Mercado Pago no deja pagarte a vos mismo. No lo dice con un cartel: **deja el botón de pagar apagado, sin explicación**.
->
-> Y **pagar como invitado tampoco sirve**: un invitado es una parte real frente a una tienda de prueba, y ahí el error es «Una de las partes con la que intentás hacer el pago es de prueba».
->
-> Las dos cosas se ven como que el sitio está roto, y ninguna lo está.
+| Tarjeta | Número |
+|---|---|
+| Visa crédito | `4507 9831 9008 2450` |
+| Visa débito | `4507 9900 0000 0010` |
+| Mastercard crédito | `5323 6299 9312 1008` |
+| Mastercard débito | `5204 8651 1890 0397` |
+| Naranja crédito | `5895 6200 0000 0010` |
+| American Express | `3764 112345 31007` |
 
----
+Datos genéricos para todas: vencimiento **12/34**, titular **demo**, documento **12123123**.
 
-## Paso 6 · Comprar de mentira
-
-**En una ventana de incógnito**, siempre. Mezclar tu sesión real con la de prueba da errores de credenciales duplicadas que parecen bugs del sitio y no lo son.
-
-1. Ventana de incógnito → entrar a Mercado Pago e iniciar sesión **con el comprador de prueba**.
-2. En la misma ventana, abrir `acentta.vercel.app`, armar un carrito y llegar al checkout.
-3. Apretar **Confirmar compra**. Ahí sí tenés que salir a Mercado Pago.
-
-**Las tarjetas de prueba.** El resultado del pago lo decide el **nombre del titular**, no la tarjeta: es el mismo plástico para todos los casos.
-
-| Tarjeta | Número | Cód. | Vence |
-|---|---|---|---|
-| Visa crédito | `4509 9535 6623 3704` | 123 | 11/30 |
-| Mastercard crédito | `5031 7557 3453 0604` | 123 | 11/30 |
-| Visa débito | `4002 7686 9439 5619` | 123 | 11/30 |
-
-| Qué querés ver | Nombre del titular | Documento |
+| Qué querés ver | Código de seguridad | En Amex |
 |---|---|---|
-| Pago aprobado | `APRO` | DNI 12345678 |
-| Rechazado por fondos | `FUND` | — |
-| Pago pendiente | `CONT` | — |
-| Rechazado, error general | `OTHE` | DNI 12345678 |
-| Código de seguridad inválido | `SECU` | — |
+| Pago aprobado | `200` | `0200` |
+| Rechazado | `400` | `0400` |
+| Pago en espera | `002` | `0002` |
 
-Vale la pena probar los tres primeros y no sólo el que sale bien. **`CONT` es el más importante de los tres**: deja el pago pendiente, que es lo que pasa de verdad con Rapipago y Pago Fácil, y es el camino que casi nadie prueba y el que después rompe en producción.
+Vale la pena probar los tres y no sólo el que sale bien. **`002` es el más importante**: deja el pago en espera, que es lo que pasa de verdad con un cupón de efectivo, y es el camino que casi nadie prueba y el que después rompe en producción. El código lo trata como **pendiente**, no como cobrado — un cupón emitido y sin pagar no se despacha.
 
----
-
-## Paso 7 · Probar el aviso de pago
-
-Esto va aparte, y conviene saberlo antes de pelearse con ello:
-
-> **Los pagos de prueba no envían notificaciones.** Es una limitación de Mercado Pago, no del código. La única forma de probar el receptor es con el botón **Simular** en *Tus integraciones → Webhooks*, eligiendo el evento *Pagos* y un identificador de pago.
-
-Si la simulación devuelve **200**, la firma se está verificando bien. Si devuelve **401**, la clave secreta no coincide con la que cargaste.
-
----
-
-## Si querés ver la pantalla antes de configurar nada
-
-Mercado Pago tiene una **[demostración de Checkout Pro](https://www.mercadopago.com.ar/developers/es/live-demo/checkout-pro)** que muestra la pantalla de pago tal cual la va a ver un comprador, sin cuenta y sin integrar nada. Sirve para saber a qué se sale desde el botón.
-
-Lo que **no** conviene es fabricar una pantalla propia que imite a Mercado Pago. Como pieza de portafolio resta en vez de sumar: una pasarela de mentira se nota, y la pregunta que va a hacer quien mire el proyecto —«¿esto cobra de verdad?»— se contesta sola y mal. Con el modo de prueba la respuesta es que sí, sólo que con tarjetas falsas.
+Sirve además cualquier otro código de la tabla de estados de Mobbex: `410` para fondos insuficientes, `602` para una devolución.
 
 ---
 
@@ -162,19 +168,17 @@ https://acentta.vercel.app/pedidos
 
 Pide la clave y muestra lo que entró: quién compró, a dónde va, cómo pagó, y un campo por pedido para **cargar el número de seguimiento**.
 
-Ese campo parece el menos interesante de la pantalla y es el más importante. **Es lo único que gana un contracargo.** Cuando alguien desconoce un pago, la única defensa es probar que la mercadería llegó, y eso se prueba con un número de seguimiento cargado en su momento. Por eso el filtro **«Sin seguimiento»** existe: son los pedidos cobrados que todavía no podés defender.
+Ese campo parece el menos interesante de la pantalla y es el más importante. **Es lo único que gana un contracargo.** Cuando alguien desconoce un pago, la única defensa es probar que la mercadería llegó, y eso se prueba con un número de seguimiento cargado en su momento. Por eso existe el filtro **«Sin seguimiento»**: son los pedidos cobrados que todavía no podés defender.
 
-El estado del pago no se toca desde acá — lo pone el aviso de Mercado Pago y nadie más. Un clic distraído no puede marcar como cobrado algo que no se cobró. Lo único que se puede cambiar a mano es cancelar o marcar como devuelto, que sí son decisiones tuyas.
+El estado del pago no se toca desde acá — lo pone el aviso de la pasarela y nadie más. Un clic distraído no puede marcar como cobrado algo que no se cobró. Lo único que se cambia a mano es cancelar o marcar como devuelto, que sí son decisiones tuyas.
 
 La sesión dura ocho horas y se corta después de diez intentos fallidos en quince minutos.
 
-### El botón «Consultar estados en Mercado Pago»
+### El botón de consultar estados
 
-Toma los pedidos que quedaron en *pendiente* y le pregunta a Mercado Pago, uno por uno, si el pago entró.
+Toma los pedidos que quedaron en *pendiente* y le pregunta a la pasarela, uno por uno, si el pago entró.
 
-**En modo de prueba es el único camino**, porque Mercado Pago no manda avisos para pagos de prueba: un pago de prueba aprobado deja el pedido en pendiente para siempre hasta que se lo consulte.
-
-**En producción es la red de seguridad**, y por eso no es una función de laboratorio. El aviso de pago es un mensaje que viaja por internet, y los mensajes que viajan por internet se pierden: un despliegue justo en ese momento, un corte, una función que tardó más de 22 segundos. **Un pedido que quedó pendiente por un aviso perdido es un pago cobrado que nadie va a despachar.** Conviene apretarlo una vez por día.
+**Es la red de seguridad, y no es una función de laboratorio.** El aviso de pago es un mensaje que viaja por internet, y los mensajes que viajan por internet se pierden: un despliegue justo en ese momento, un corte, una función que tardó de más. **Un pedido que quedó pendiente por un aviso perdido es un pago cobrado que nadie va a despachar.** Conviene apretarlo una vez por día.
 
 Sólo mira los pendientes: re-preguntar por algo aprobado hace ocho meses es gastar llamadas para confirmar lo que ya sabemos.
 
@@ -200,18 +204,26 @@ Los seis caracteres al azar del final existen para que nadie pueda recorrer los 
 
 Cuando el circuito esté verificado en prueba, cambiar **dos** variables y volver a desplegar:
 
-1. `MP_ACCESS_TOKEN` → el de **Credenciales de producción**.
-2. `MP_MODO` → `produccion`.
+1. `MOBBEX_API_KEY` y `MOBBEX_ACCESS_TOKEN` → los de tu entidad, no los públicos de la documentación.
+2. `MOBBEX_MODO` → `produccion`.
 
-**Las dos, y en ese orden mental.** Si cambiás sólo el token, el sitio bloquea el cobro a propósito y no vende nada; si cambiás sólo `MP_MODO`, sigue cobrando de mentira. El bloqueo molesta un minuto y evita el error que no se puede deshacer.
+**Las dos.** Si cambiás sólo las credenciales, el sitio sigue cobrando de mentira contra tu comercio real; si cambiás sólo `MOBBEX_MODO`, estarías intentando cobrar de verdad con las credenciales públicas de demostración, que no son tuyas.
 
-Antes de eso, las tres cosas que te faltaban cuando armamos esto:
+Mobbex recomienda que las primeras pruebas en producción sean por **más de $100**, con una tarjeta real tuya, y después devolverte la operación.
 
-**1 · Cuenta de Mercado Pago para vender.** Sin esto no hay credenciales de producción.
+Antes de eso, lo que falta del lado del negocio está en `ANTES-DE-VENDER.md`.
 
-**2 · Proveedor que entregue número de seguimiento por pedido.** El más importante y el que más se pasa por alto. Sin seguimiento, un contracargo se pierde solo: no hay forma de probar que entregaste. El pedido ya tiene el campo `seguimiento` esperando ese dato.
+---
 
-**3 · Dominio propio.** Nadie deja los datos de su tarjeta en una dirección terminada en `.vercel.app`. Al cambiarlo hay que actualizar la URL del webhook en Mercado Pago y `site` en `astro.config.mjs`.
+## Volver a Mercado Pago
+
+Si alguna vez cambia el arancel, o si querés mostrar las dos integraciones funcionando:
+
+1. `PASARELA` → `mercadopago`
+2. `MP_ACCESS_TOKEN`, `MP_WEBHOOK_SECRET` y `MP_MODO` cargadas.
+3. Redeploy.
+
+El resto del sitio no se entera. La cotización, el almacén de pedidos, la conciliación, el checkout, la confirmación y la pantalla de despacho no nombran ninguna pasarela — se puede verificar buscando `mercadopago` o `mobbex` en `src/`: aparecen en el adaptador, en el contrato y en el cableado de tres rutas, y en ningún lado más.
 
 ---
 
@@ -220,9 +232,9 @@ Antes de eso, las tres cosas que te faltaban cuando armamos esto:
 Honesto, para que no te agarre de sorpresa:
 
 - **No se manda correo de confirmación.** El pedido queda registrado y se consulta por número. Sumar correo pide otro proveedor y otra clave, y el circuito de cobro tiene que estar verificado antes de agregarle piezas.
-- **La página de confirmación sigue leyendo el pedido simulado.** El endpoint real ya existe (`/api/pedido`); falta conectarla.
 - **La pantalla de pedidos no manda el seguimiento al comprador.** Lo cargás vos y queda guardado; falta que se le avise, y eso depende del correo.
-- **El stock no se descuenta.** En dropshipping el stock es lo que dice el proveedor, así que descontar sobre un número que no controlamos es inventar precisión.
+- **El stock no se descuenta.** Con stock propio esto ya tiene sentido y pasa a ser una tarea real, no como cuando el catálogo era de un proveedor.
+- **`/api/crear-pago` no tiene límite de llamadas.** Es lo primero de `ANTES-DE-VENDER.md`: sin tope, alguien puede vaciar el plan gratuito del almacén creando pedidos vacíos.
 
 ---
 
@@ -233,8 +245,12 @@ cd "C:\Users\Martín Bazán\Downloads\Martin\PORTFOLIO\Proyecto 4\acentta"
 npm.cmd run auditar:cobro
 ```
 
-Corre sin red y sin credenciales, y comprueba tres cosas:
+Corre sin red y sin credenciales —el almacén y las dos APIs se reemplazan por dobles— y comprueba:
 
 - Que un precio mandado desde el navegador **no** cambie el total. Es la vulnerabilidad clásica de las tiendas hechas a mano: abrir las herramientas del navegador, cambiar $ 89.900 por $ 1 y pagar un peso.
-- Que un aviso con firma inválida se rechace — probado con once formas distintas de firma falsa.
-- Que el mismo aviso repetido ocho veces se procese una sola. Mercado Pago reintenta hasta ocho veces.
+- Que un aviso de Mercado Pago con firma inválida se rechace — probado con once formas distintas de firma falsa.
+- Que un aviso de Mobbex sin el token, con el token cortado o con un carácter de más se rechace.
+- **Que un aviso que miente no cambie nada**, aunque traiga el token correcto.
+- Que los treinta y pico de códigos de estado de Mobbex se traduzcan bien, con atención especial a los dos que parecen cobrados y no lo son: `3` (autorizada, sin capturar) y `2` (cupón emitido, sin pagar).
+- Que el mismo aviso repetido ocho veces se procese una sola, pero que un cambio real de estado —de aprobado a devuelto— sí entre.
+- Que si el monto cobrado no coincide con el cotizado, el pedido **no** se apruebe.

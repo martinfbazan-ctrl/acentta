@@ -17,7 +17,7 @@
 
 import type { APIRoute } from 'astro';
 import { actualizarPedido, hayAlmacen, listarPedidos } from '@lib/pedidos';
-import { buscarPagoPorPedido } from '@lib/mercadopago';
+import { elegirPasarela } from '@lib/pasarela';
 import { aplicarPago } from '@lib/conciliacion';
 import {
   cerrarSesion, claveCorrecta, crearSesion, galletaBorrada, galletaDeSesion,
@@ -110,7 +110,7 @@ export const POST: APIRoute = async ({ request, url }) => {
 
     /* El estado sólo se puede mover a mano a los dos que dependen de
        una decisión humana. Aprobado y rechazado los pone el aviso de
-       Mercado Pago y nadie más: si se pudieran tocar desde acá, un
+       la pasarela y nadie más: si se pudieran tocar desde acá, un
        clic distraído marcaría como cobrado algo que no se cobró. */
     const cambios: Record<string, unknown> = { seguimiento: seguimiento || undefined };
     if (cuerpo.estado === 'cancelado' || cuerpo.estado === 'devuelto') {
@@ -123,13 +123,13 @@ export const POST: APIRoute = async ({ request, url }) => {
     return json({ ok: true, numero, seguimiento: actualizado.seguimiento ?? null, estado: actualizado.estado });
   }
 
-  /* ---- Preguntarle a Mercado Pago por los pedidos pendientes ----
+  /* ---- Preguntarle a la pasarela por los pedidos pendientes ----
 
      La red de seguridad del circuito de cobro. El aviso de pago es un
      mensaje que llega por la red, y los mensajes que llegan por la
      red se pierden: un despliegue justo en ese momento, un corte, una
-     función que tardó más de 22 segundos. Y en modo de prueba Mercado
-     Pago directamente no los envía.
+     función que tardó de más. Y en modo de prueba Mercado Pago
+     directamente no los envía.
 
      Un pedido que quedó pendiente por un aviso perdido es un pago
      cobrado que nadie va a despachar. Esto invierte la dirección: en
@@ -139,6 +139,7 @@ export const POST: APIRoute = async ({ request, url }) => {
      re-preguntar por un pedido aprobado hace ocho meses es gastar
      llamadas para confirmar algo que ya sabemos. */
   if (accion === 'sincronizar') {
+    const pasarela = elegirPasarela();
     const pedidos = (await listarPedidos(100)).filter((p) => p.estado === 'pendiente');
 
     let revisados = 0;
@@ -149,7 +150,7 @@ export const POST: APIRoute = async ({ request, url }) => {
     for (const p of pedidos) {
       revisados++;
       try {
-        const pago = await buscarPagoPorPedido(p.numero);
+        const pago = await pasarela.buscarPagoPorPedido(p.numero);
         if (!pago) { sinPago++; continue; }
         const r = await aplicarPago(p, pago);
         if (r.cambio) cambiados++;

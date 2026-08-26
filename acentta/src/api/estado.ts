@@ -27,12 +27,14 @@
  */
 
 import type { APIRoute } from 'astro';
+import { variable } from '@lib/entorno';
 import { hayAlmacen } from '@lib/pedidos';
-import { consultarCuenta, hayCredenciales, modoDeclarado, variable } from '@lib/mercadopago';
+import { elegirPasarela, nombreDePasarela } from '@lib/pasarela';
+import { consultarCuenta } from '@lib/mercadopago';
 
 export const prerender = false;
 
-const PREFIJOS = ['KV_', 'UPSTASH_', 'REDIS_', 'MP_'];
+const PREFIJOS = ['KV_', 'UPSTASH_', 'REDIS_', 'MP_', 'MOBBEX_', 'PASARELA'];
 
 export const GET: APIRoute = async () => {
   const proceso = typeof process !== 'undefined' ? (process.env ?? {}) : {};
@@ -45,10 +47,17 @@ export const GET: APIRoute = async () => {
       .sort();
 
   const almacenListo = hayAlmacen();
-  const pagoListo = hayCredenciales();
-  const cuenta = pagoListo
+  const pasarela = elegirPasarela();
+  const pagoListo = pasarela.hayCredenciales();
+  const avisoVerificable = pasarela.hayAvisoVerificable();
+
+  /* Sólo tiene sentido preguntarle a Mercado Pago por su cuenta
+     cuando Mercado Pago es la pasarela activa. Con Mobbex encendido,
+     esa consulta usaría credenciales que probablemente ya no estén y
+     devolvería un error que parecería un problema. */
+  const cuenta = pasarela.nombre === 'mercadopago' && pagoListo
     ? await consultarCuenta()
-    : { ok: false, esCuentaDePrueba: false };
+    : null;
 
   return new Response(JSON.stringify({
     almacen: {
@@ -58,12 +67,31 @@ export const GET: APIRoute = async () => {
       UPSTASH_REDIS_REST_URL: Boolean(variable('UPSTASH_REDIS_REST_URL')),
       UPSTASH_REDIS_REST_TOKEN: Boolean(variable('UPSTASH_REDIS_REST_TOKEN')),
     },
-    mercadoPago: {
+    pasarela: {
+      /* Cuál está cobrando. Si esto dice algo distinto de lo que
+         esperabas, el resto del informe habla de la otra. */
+      activa: nombreDePasarela(),
       listo: pagoListo,
-      MP_ACCESS_TOKEN: pagoListo,
-      MP_WEBHOOK_SECRET: Boolean(variable('MP_WEBHOOK_SECRET')),
       /* Lo que declara la configuración del sitio. */
-      modoDeclarado: modoDeclarado(),
+      modoDeclarado: pasarela.modoDeclarado(),
+      /* Si esto es falso, la ruta de avisos rechaza todo: no hay con
+         qué comprobar quién los manda. */
+      avisoVerificable,
+    },
+    mobbex: {
+      MOBBEX_API_KEY: Boolean(variable('MOBBEX_API_KEY')),
+      MOBBEX_ACCESS_TOKEN: Boolean(variable('MOBBEX_ACCESS_TOKEN')),
+      /* Se informa el largo y no el valor: es lo único que hace falta
+         para saber si va a pasar el mínimo de 24. */
+      MOBBEX_WEBHOOK_TOKEN_largo: variable('MOBBEX_WEBHOOK_TOKEN').length,
+      MOBBEX_MODO: variable('MOBBEX_MODO') || '(sin declarar · se asume prueba)',
+    },
+    mercadoPago: {
+      /* Apagado salvo que PASARELA diga lo contrario. */
+      activo: pasarela.nombre === 'mercadopago',
+      MP_ACCESS_TOKEN: Boolean(variable('MP_ACCESS_TOKEN')),
+      MP_WEBHOOK_SECRET: Boolean(variable('MP_WEBHOOK_SECRET')),
+      MP_MODO: variable('MP_MODO') || '(sin declarar · se asume prueba)',
       /* Lo que dice Mercado Pago sobre el dueño del token. Las
          credenciales de prueba pertenecen a una cuenta cuyo alias
          empieza con TEST.
@@ -72,13 +100,6 @@ export const GET: APIRoute = async () => {
          entornos usan `APP_USR-`, así que ese chequeo daba siempre
          «producción» y avisaba de un peligro que no existía. */
       cuenta,
-      aviso: !cuenta.ok
-        ? 'No se pudo consultar la cuenta: revisar que el token sea válido.'
-        : cuenta.esCuentaDePrueba && modoDeclarado() === 'produccion'
-          ? 'Credenciales de prueba con el sitio declarado en producción. No cobra nada; corregir MP_MODO.'
-          : !cuenta.esCuentaDePrueba && modoDeclarado() !== 'produccion'
-            ? 'CUIDADO: las credenciales parecen de producción y el sitio dice estar en prueba. El cobro va a quedar bloqueado a propósito.'
-            : null,
     },
     /* Las dos fuentes por separado: si una variable aparece en una y
        no en la otra, el problema es de cómo se compiló y no de que
@@ -87,7 +108,7 @@ export const GET: APIRoute = async () => {
       enProcess: visibles(proceso),
       enImportMeta: visibles(meta),
     },
-    listoParaCobrar: almacenListo && pagoListo && Boolean(variable('MP_WEBHOOK_SECRET')),
+    listoParaCobrar: almacenListo && pagoListo && avisoVerificable,
   }, null, 2), {
     headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
   });

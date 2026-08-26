@@ -28,7 +28,7 @@
 
 import type { APIRoute } from 'astro';
 import { cotizar, ErrorDeCotizacion, type LineaPedida, type MetodoEnvio, type MetodoPago } from '@lib/cotizacion';
-import { cobroPermitido, crearPreferencia, hayCredenciales, modoDeclarado } from '@lib/mercadopago';
+import { elegirPasarela } from '@lib/pasarela';
 import { guardarPedido, hayAlmacen, nuevoNumero, type Comprador, type Entrega, type Pedido } from '@lib/pedidos';
 
 export const prerender = false;
@@ -43,10 +43,15 @@ const json = (datos: unknown, estado = 200) =>
 const texto = (v: unknown, max: number): string => String(v ?? '').trim().slice(0, max);
 
 export const POST: APIRoute = async ({ request, url }) => {
+  /* Cuál cobra lo decide una variable de entorno. Esta ruta no sabe
+     ni le importa: le pide un cobro a lo que haya y devuelve el
+     enlace que le den. */
+  const pasarela = elegirPasarela();
+
   /* Dos negativas antes de mirar el cuerpo. Cobrar sin poder
      registrar el pedido es exactamente lo que no puede pasar, así que
      es preferible un error claro a una venta sin respaldo. */
-  if (!hayCredenciales()) {
+  if (!pasarela.hayCredenciales()) {
     return json({ error: 'El cobro todavía no está configurado en este sitio.' }, 503);
   }
   if (!hayAlmacen()) {
@@ -133,31 +138,41 @@ export const POST: APIRoute = async ({ request, url }) => {
        prueba de Vercel, en una vista previa y en el dominio propio,
        sin tener que acordarse de cambiar nada. */
     const urlSitio = `${url.protocol}//${url.host}`;
-    const { id, enlace, liveMode } = await crearPreferencia({
+    const { id, enlace, real } = await pasarela.crearCobro({
       numeroPedido: pedido.numero,
-      items: cotizacion.lineas.map((l) => ({
+      lineas: cotizacion.lineas.map((l) => ({
         id: l.id,
-        title: l.variante ? `${l.nombre} · ${l.variante}` : l.nombre,
-        quantity: l.cantidad,
-        unit_price: l.precio,
+        nombre: l.variante ? `${l.nombre} · ${l.variante}` : l.nombre,
+        cantidad: l.cantidad,
+        precio: l.precio,
       })),
       envio: cotizacion.envio,
       descuento: cotizacion.descuento,
-      emailComprador: comprador.email,
+      /* El total cotizado por el servidor, explícito. Con Mobbex es
+         el número que se cobra; con Mercado Pago es redundante con la
+         suma de las líneas. Mandarlo siempre hace que las dos cobren
+         lo mismo sin que esta ruta tenga que saber cuál está activa. */
+      total: cotizacion.total,
+      comprador,
+      entrega,
       urlSitio,
     });
 
-    /* El seguro. Mercado Pago acaba de decir si este cobro es real, y
+    /* El seguro. La pasarela acaba de decir si este cobro es real, y
        la configuración del sitio dice en qué entorno creemos estar.
        Si no coinciden en la dirección peligrosa —cobro real mientras
        creíamos estar probando— no se devuelve el enlace.
 
-       Va acá y no antes porque `live_mode` es la respuesta, no la
-       pregunta: es lo único que lo sabe de verdad. El pedido queda
-       cancelado y la preferencia vence sola en media hora. */
-    if (!cobroPermitido(liveMode)) {
+       Con Mobbex esto no debería dispararse nunca, porque el campo
+       `test` impide el cobro real antes de que exista. Queda igual:
+       una defensa que no cuesta nada y que cubre el día que alguien
+       cambie ese detalle sin acordarse de este. */
+    if (!pasarela.cobroPermitido(real)) {
       await guardarPedido({ ...pedido, estado: 'cancelado', actualizado: new Date().toISOString() });
-      console.error(`crear-pago: BLOQUEADO. Mercado Pago devolvió live_mode=true y MP_MODO declara «${modoDeclarado()}».`);
+      console.error(
+        `crear-pago: BLOQUEADO. ${pasarela.nombre} abrió un cobro real y el sitio declara `
+        + `«${pasarela.modoDeclarado()}».`,
+      );
       return json({
         error: 'El cobro está en modo de prueba pero las credenciales son de producción. '
           + 'No se abrió el pago a propósito: sería un cobro real.',
@@ -166,9 +181,10 @@ export const POST: APIRoute = async ({ request, url }) => {
 
     return json({
       numero: pedido.numero,
+      pasarela: pasarela.nombre,
       preferencia: id,
       enlace,
-      modo: liveMode ? 'produccion' : 'prueba',
+      modo: real ? 'produccion' : 'prueba',
       /* Se devuelve el total cotizado por el servidor para que la
          página pueda mostrarlo antes de saltar. Es informativo: el
          que se cobra es el que ya viajó dentro de la preferencia. */

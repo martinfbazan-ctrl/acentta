@@ -8,17 +8,29 @@
  *      tiendas hechas a mano: abrir las herramientas del navegador,
  *      cambiar $ 89.900 por $ 1 y pagar un peso.
  *
- *   2. Un aviso de pago con firma inválida, ¿se acepta?
+ *   2. Un aviso de pago sin credencial válida, ¿se acepta?
  *      Tiene que dar que no. Sin esa verificación, cualquiera que
  *      descubra la dirección de la función manda «pago aprobado» y
  *      se lleva mercadería gratis.
  *
  *   3. El mismo aviso dos veces, ¿procesa dos veces?
- *      Tiene que dar que no. Mercado Pago reintenta hasta ocho veces
- *      si no le contestamos rápido.
+ *      Tiene que dar que no. Las pasarelas reintentan hasta ocho
+ *      veces si no les contestamos rápido.
+ *
+ *   4. Un aviso que MIENTE, ¿cambia algo?
+ *      Tiene que dar que no, y es la pregunta que se volvió central
+ *      al pasar a Mobbex: Mercado Pago firma sus avisos y Mobbex no.
+ *      Sin firma, lo único que queda entre un mensaje inventado y la
+ *      mercadería es que ningún dato del mensaje se escriba jamás
+ *      sin preguntarle antes a la API.
+ *
+ * Se prueban las dos pasarelas. Mercado Pago quedó apagado pero
+ * sigue en el repositorio, y un adaptador sin pruebas es un
+ * adaptador que nadie se va a animar a volver a encender.
  *
  * Corre sin red y sin credenciales: la cotización es aritmética
- * pura, la firma es un HMAC, y el almacén se reemplaza por un doble.
+ * pura, la firma es un HMAC, y el almacén y las dos APIs se
+ * reemplazan por dobles.
  *
  *     node pruebas/cobro.mjs
  */
@@ -340,6 +352,287 @@ const { firmaValida, cobroPermitido, fechaParaMercadoPago, enlaceDePago } = awai
 }
 
 /* ============================================================
+   4.b · MOBBEX · la pasarela que NO firma sus avisos
+   ------------------------------------------------------------
+   Mercado Pago manda un HMAC que se puede recalcular. Mobbex manda
+   `content-type: application/json` y nada más. Eso cambia dónde
+   está puesta la seguridad, y esta sección existe para probar que
+   está puesta donde tiene que estar.
+
+   El token de la dirección es la primera barrera y es floja a
+   propósito: viaja en la URL y las URLs terminan en registros. La
+   barrera real es que **nada de lo que trae el aviso se escribe**.
+   Por eso la prueba que más importa acá no es la del token sino la
+   de más abajo: un aviso que grita «aprobado, 999.999 pesos» tiene
+   que terminar escribiendo lo que diga la API, aunque diga lo
+   contrario.
+   ============================================================ */
+{
+  process.env.MOBBEX_API_KEY = 'clave-de-mentira';
+  process.env.MOBBEX_ACCESS_TOKEN = 'token-de-mentira';
+  process.env.MOBBEX_MODO = 'prueba';
+  process.env.MOBBEX_WEBHOOK_TOKEN = 'un-token-largo-de-mas-de-24-caracteres';
+
+  const mobbex = await cargar('src/lib/mobbex.ts', 'mobbex');
+  const { traducirCodigo, avisoLegitimo, claveDeAviso, cobroPermitido: permitidoMobbex,
+    hayAvisoVerificable, urlDeAviso, buscarPagoPorPedido, pagoDelAviso } = mobbex;
+
+  /* ---- La tabla de estados ----
+
+     Dos códigos son trampa y son los que justifican la sección: el 3
+     («autorizada») es una tarjeta que aceptó pero cuya plata todavía
+     no se capturó, y el 2 («en espera») es un cupón de efectivo
+     emitido y sin pagar. Los dos suenan a venta hecha. Si alguno
+     contara como aprobado, se despacharía mercadería contra plata
+     que puede no entrar nunca. */
+  const esperado = {
+    4: 'aprobado', 200: 'aprobado', 201: 'aprobado',
+    300: 'aprobado', 301: 'aprobado', 302: 'aprobado',
+    602: 'devuelto', 605: 'devuelto',
+    400: 'rechazado', 403: 'rechazado', 410: 'rechazado', 419: 'rechazado',
+    500: 'rechazado', 604: 'rechazado',
+    401: 'cancelado', 402: 'cancelado', 600: 'cancelado', 601: 'cancelado', 610: 'cancelado',
+    0: 'pendiente', 1: 'pendiente', 2: 'pendiente', 3: 'pendiente',
+    100: 'pendiente', 210: 'pendiente', 299: 'pendiente', 603: 'pendiente', 800: 'pendiente',
+  };
+  for (const [codigo, debe] of Object.entries(esperado)) {
+    const dio = traducirCodigo(codigo);
+    ok(dio === debe, `el código ${codigo} de Mobbex se tradujo como «${dio}» y tendría que ser «${debe}»`);
+    /* Y en número, que es como viene en el cuerpo del aviso. */
+    ok(traducirCodigo(Number(codigo)) === debe, `el código ${codigo} en número se tradujo distinto que en texto`);
+  }
+  ok(traducirCodigo('3') !== 'aprobado',
+    '¡GRAVE! una autorización sin captura contaría como cobrada: se despacharía contra plata que puede no entrar');
+  ok(traducirCodigo('2') !== 'aprobado',
+    '¡GRAVE! un cupón de efectivo emitido y sin pagar contaría como cobrado');
+  ok(traducirCodigo('7777') === 'pendiente',
+    'un código que Mobbex agregue mañana tiene que caer en pendiente, no en aprobado');
+
+  /* ---- El token del aviso ---- */
+  const avisoCon = (busqueda, cuerpo = {}) => ({
+    url: new URL(`https://acentta.com/api/aviso-de-pago${busqueda}`),
+    headers: new Headers(),
+    cuerpo,
+  });
+  const bueno = process.env.MOBBEX_WEBHOOK_TOKEN;
+
+  ok(hayAvisoVerificable(), 'con el token cargado tendría que poder verificarse el aviso');
+  ok(avisoLegitimo(avisoCon(`?fuente=mobbex&token=${encodeURIComponent(bueno)}`)),
+    'un aviso con el token correcto fue rechazado — así no entraría ningún aviso real');
+
+  const rechazaAviso = (busqueda, porque) =>
+    ok(!avisoLegitimo(avisoCon(busqueda)), `¡GRAVE! se aceptó ${porque}`);
+
+  rechazaAviso('?fuente=mobbex', 'un aviso sin token');
+  rechazaAviso('?fuente=mobbex&token=', 'un aviso con el token vacío');
+  rechazaAviso('?fuente=mobbex&token=cualquier-cosa-que-alguien-invente', 'un aviso con un token inventado');
+  rechazaAviso(`?fuente=mobbex&token=${encodeURIComponent(bueno.slice(0, -1))}`, 'un token al que le falta el último carácter');
+  rechazaAviso(`?fuente=mobbex&token=${encodeURIComponent(bueno)}X`, 'un token con un carácter de más');
+
+  /* Un token corto se puede probar a fuerza bruta contra una
+     dirección pública, y da la misma sensación de seguridad que uno
+     largo. Se rechaza de entrada. */
+  process.env.MOBBEX_WEBHOOK_TOKEN = 'corto';
+  ok(!hayAvisoVerificable(), 'un token de 5 caracteres no tendría que contar como verificable');
+  ok(!avisoLegitimo(avisoCon('?token=corto')),
+    '¡GRAVE! un token de 5 caracteres alcanzaría para aprobar pedidos');
+
+  process.env.MOBBEX_WEBHOOK_TOKEN = '';
+  ok(!avisoLegitimo(avisoCon('?token=')), '¡GRAVE! sin token configurado se aceptó un aviso sin token');
+  ok(!hayAvisoVerificable(), 'sin token configurado no puede haber aviso verificable');
+  process.env.MOBBEX_WEBHOOK_TOKEN = bueno;
+
+  /* La dirección que se le da a Mobbex lleva el token adentro. */
+  ok(urlDeAviso('https://acentta.com').includes(encodeURIComponent(bueno)),
+    'la dirección de avisos no lleva el token');
+  ok(avisoLegitimo(avisoCon(new URL(urlDeAviso('https://acentta.com')).search)),
+    'la dirección que armamos no pasa nuestra propia verificación');
+
+  /* ---- La clave de idempotencia ----
+
+     Tiene que incluir el estado. Con la clave sin estado, la
+     devolución de un pedido ya aprobado compartía clave con la
+     aprobación y se descartaba en silencio: la plata volvía y el
+     pedido seguía diciendo «aprobado, listo para despachar». */
+  const cuerpoCon = (estado) => ({
+    type: 'checkout',
+    data: { payment: { id: 'pag-1', reference: 'AC-260826-ABC123', status: { code: estado } } },
+  });
+  const claveAprobado = claveDeAviso(avisoCon('?token=x', cuerpoCon('200')));
+  const claveRepetido = claveDeAviso(avisoCon('?token=x', cuerpoCon('200')));
+  const claveDevuelto = claveDeAviso(avisoCon('?token=x', cuerpoCon('602')));
+
+  ok(claveAprobado === claveRepetido, 'el mismo aviso dos veces tendría que dar la misma clave');
+  ok(claveAprobado !== claveDevuelto,
+    '¡GRAVE! una devolución compartiría clave con la aprobación y se descartaría: la plata vuelve y el pedido sigue diciendo aprobado');
+  ok(claveDeAviso(avisoCon('?token=x', {})) === null, 'un aviso vacío no tendría que dar clave');
+
+  /* ---- LO IMPORTANTE: no se le cree al aviso ----
+
+     Se arma el peor aviso posible: token válido —supongamos que se
+     filtró— y un cuerpo que dice que el pedido está pagado por casi
+     un millón de pesos. La API, que es la que sabe, dice que ese
+     pago fue rechazado y por otro monto.
+
+     Lo que devuelva `pagoDelAviso` tiene que ser lo que dice la API.
+     Si alguna vez alguien "optimiza" esto leyendo el estado del
+     cuerpo para ahorrarse una llamada, esta prueba se pone roja. */
+  const fetchOriginal = globalThis.fetch;
+  let consultas = 0;
+  globalThis.fetch = async (url) => {
+    consultas++;
+    const u = new URL(String(url));
+    const ref = u.searchParams.get('reference');
+    return {
+      ok: true,
+      json: async () => ({
+        result: true,
+        data: {
+          docs: [
+            /* Una operación de OTRO pedido cuyo número contiene al
+               nuestro. Mobbex filtra por coincidencia, así que esto
+               llega igual y hay que descartarlo de este lado. */
+            { uid: 'op-ajena', status: '200', total: 999999, reference: `${ref}-EXTRA`, currency: 'test' },
+            /* La nuestra, la de verdad. */
+            { uid: 'op-real', status: '400', total: 45900, reference: ref, currency: 'test' },
+          ],
+        },
+      }),
+    };
+  };
+
+  const avisoMentiroso = avisoCon(`?fuente=mobbex&token=${encodeURIComponent(bueno)}`, {
+    type: 'checkout',
+    data: {
+      payment: {
+        id: 'pag-falso',
+        reference: 'AC-260826-ABC123',
+        status: { code: '200' },
+        total: 999999,
+      },
+    },
+  });
+
+  const consultado = await pagoDelAviso(avisoMentiroso);
+  ok(consultas === 1, 'no se consultó a la API: el estado saldría del cuerpo del aviso');
+  ok(consultado?.estado === 'rechazado',
+    `¡GRAVE! el aviso decía «aprobado» y se le creyó: quedó en «${consultado?.estado}». `
+    + 'Sin firma que verificar, creerle al cuerpo es regalar la mercadería');
+  ok(consultado?.monto === 45900,
+    `¡GRAVE! el monto salió del aviso (${consultado?.monto}) y no de la consulta`);
+  ok(consultado?.id === 'op-real',
+    'el identificador tendría que ser el de la operación consultada, no el que dijo el aviso');
+  ok(consultado?.referenciaExterna === 'AC-260826-ABC123',
+    '¡GRAVE! se tomó la operación de otro pedido cuyo número contiene al nuestro');
+
+  /* Un aviso sin referencia no sirve para nada y no se inventa. */
+  ok(await pagoDelAviso(avisoCon('?token=x', { type: 'checkout', data: {} })) === null,
+    'un aviso sin número de pedido no tendría que devolver ningún pago');
+
+  /* ---- Un cobro real llegando a un sitio declarado en prueba ----
+
+     No debería poder pasar, porque el campo `test` lo impide al
+     crear el cobro. Si pasa igual es porque alguien cobró de verdad
+     contra este registro, y eso no se aprueba solo. */
+  globalThis.fetch = async (url) => ({
+    ok: true,
+    json: async () => ({
+      result: true,
+      data: {
+        docs: [{
+          uid: 'op-real-de-verdad', status: '200', total: 45900,
+          reference: new URL(String(url)).searchParams.get('reference'),
+          currency: 'ars',
+        }],
+      },
+    }),
+  });
+  const sospechoso = await buscarPagoPorPedido('AC-260826-ABC123');
+  ok(sospechoso?.estado === 'pendiente',
+    '¡GRAVE! un cobro en pesos reales se aprobó solo con el sitio declarado en modo de prueba');
+  ok(String(sospechoso?.detalle).includes('REVISAR'), 'el pago sospechoso no quedó marcado para revisar');
+
+  /* Sin operaciones propias, no hay pago. */
+  globalThis.fetch = async () => ({ ok: true, json: async () => ({ result: true, data: { docs: [] } }) });
+  ok(await buscarPagoPorPedido('AC-260826-ABC123') === null, 'sin operaciones tendría que devolver null');
+
+  globalThis.fetch = fetchOriginal;
+
+  /* ---- El seguro entre prueba y producción ---- */
+  ok(permitidoMobbex(false, 'prueba'), 'un cobro de prueba con el sitio en prueba tendría que pasar');
+  ok(permitidoMobbex(true, 'produccion'), 'un cobro real con el sitio en producción tendría que pasar');
+  ok(!permitidoMobbex(true, 'prueba'),
+    '¡GRAVE! un cobro REAL pasaría con el sitio declarado en prueba');
+}
+
+/* ============================================================
+   4.c · La conciliación no conoce ninguna pasarela
+   ------------------------------------------------------------
+   Antes traducía los estados por su cuenta, y ese vocabulario era
+   el de Mercado Pago. Al sumar Mobbex habría habido que duplicarlo
+   acá. Ahora recibe los cinco estados ya traducidos venga de donde
+   venga, y lo único que decide es la regla del monto — que es la
+   que impide que un pago manipulado apruebe un pedido.
+   ============================================================ */
+{
+  const guardados = [];
+  const { aplicarPago } = await cargar('src/lib/conciliacion.ts', 'conciliacion');
+
+  /* El almacén se reemplaza por uno que anota en vez de escribir. */
+  process.env.KV_REST_API_URL = 'https://almacen-de-mentira';
+  process.env.KV_REST_API_TOKEN = 'token-de-mentira';
+  const fetchOriginal = globalThis.fetch;
+  globalThis.fetch = async (_u, opciones) => {
+    const orden = JSON.parse(opciones.body);
+    if (orden[0] === 'GET') {
+      return { ok: true, json: async () => ({ result: JSON.stringify(pedidoBase) }) };
+    }
+    if (orden[0] === 'SET') guardados.push(JSON.parse(orden[2]));
+    return { ok: true, json: async () => ({ result: 'OK' }) };
+  };
+
+  const pedidoBase = {
+    numero: 'AC-260826-ABC123', estado: 'pendiente',
+    creado: new Date().toISOString(), actualizado: new Date().toISOString(),
+    cotizacion: { total: 45900 },
+  };
+
+  const pago = (extra) => ({
+    id: 'op-1', estado: 'aprobado', crudo: '200', detalle: '',
+    monto: 45900, referenciaExterna: pedidoBase.numero, ...extra,
+  });
+
+  /* El caso normal. */
+  const bien = await aplicarPago(pedidoBase, pago());
+  ok(bien.estado === 'aprobado' && !bien.revisar, 'un pago correcto tendría que aprobar el pedido');
+
+  /* EL INTENTO: se cobró mucho menos de lo cotizado. Puede ser un
+     cambio de precio o puede ser manipulación; en los dos casos la
+     respuesta es la misma. */
+  const poco = await aplicarPago(pedidoBase, pago({ monto: 1 }));
+  ok(poco.revisar === true && poco.estado === 'pendiente',
+    '¡GRAVE! se aprobó un pedido de 45.900 pesos cobrando 1 peso');
+
+  /* Y de más también: puede ser un error nuestro de cotización. */
+  const mucho = await aplicarPago(pedidoBase, pago({ monto: 90000 }));
+  ok(mucho.revisar === true, 'cobrar de más tampoco tendría que aprobarse solo');
+
+  /* Un peso de diferencia es redondeo de la pasarela, no fraude. */
+  const redondeo = await aplicarPago(pedidoBase, pago({ monto: 45900.6 }));
+  ok(!redondeo.revisar && redondeo.estado === 'aprobado',
+    'una diferencia de redondeo no tendría que frenar el pedido');
+
+  /* El detalle guarda el código sin traducir: «rechazado» no ayuda a
+     entender nada, el 410 de Mobbex sí. */
+  await aplicarPago(pedidoBase, pago({ estado: 'rechazado', crudo: '410', detalle: 'fondos insuficientes' }));
+  const ultimo = guardados[guardados.length - 1];
+  ok(String(ultimo?.detallePago).includes('410'),
+    'el detalle del pago perdió el código original de la pasarela');
+
+  globalThis.fetch = fetchOriginal;
+}
+
+/* ============================================================
    5 · Un aviso repetido no se procesa dos veces
    ============================================================ */
 {
@@ -441,8 +734,10 @@ const { firmaValida, cobroPermitido, fechaParaMercadoPago, enlaceDePago } = awai
 /* ============================================================ */
 console.log('\n=== COBRO · el circuito de pago ===');
 console.log('  el precio lo pone el catálogo, no el navegador');
-console.log('  la firma del aviso se verifica y se compara en tiempo constante');
-console.log('  un aviso repetido no procesa dos veces');
+console.log('  Mercado Pago · la firma se verifica y se compara en tiempo constante');
+console.log('  Mobbex · sin firma, el aviso sólo dice qué preguntar: el estado sale de la API');
+console.log('  un aviso repetido no procesa dos veces, pero un cambio de estado sí entra');
+console.log('  si el monto cobrado no coincide con el cotizado, el pedido no se aprueba');
 
 if (fallos.length) {
   console.log(`\n  ${fallos.length} problema(s):`);

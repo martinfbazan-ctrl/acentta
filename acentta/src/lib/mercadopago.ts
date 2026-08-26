@@ -1,6 +1,20 @@
 /**
  * acentta · lo mínimo de Mercado Pago, escrito a mano
  * ---------------------------------------------------------------
+ * ┌───────────────────────────────────────────────────────────────┐
+ * │ APAGADO. El sitio cobra con Mobbex desde que se comparó el    │
+ * │ arancel de las dos: el de Mercado Pago resultó casi el doble. │
+ * │                                                               │
+ * │ Esto no es código muerto y no se borra. Se enciende poniendo  │
+ * │ `PASARELA=mercadopago` en las variables de entorno, y esa     │
+ * │ posibilidad es media razón por la que existe `pasarela.ts`:   │
+ * │ una decisión comercial que se revierte cambiando una variable │
+ * │ es una decisión que se puede volver a discutir sin miedo.     │
+ * │                                                               │
+ * │ Cumple el mismo contrato que Mobbex, así que si alguna vez se │
+ * │ enciende, el resto del sitio no se entera.                    │
+ * └───────────────────────────────────────────────────────────────┘
+ *
  * Tres cosas: crear una preferencia, consultar un pago y validar la
  * firma de un aviso. Son tres llamadas HTTP y un HMAC, así que no se
  * suma el SDK oficial: en una función que maneja plata, cada
@@ -19,15 +33,12 @@
  */
 
 import crypto from 'node:crypto';
+import { variable } from '@lib/entorno';
+import type {
+  Aviso, CobroCreado, DatosDeCobro, EstadoPago, PagoConsultado, Pasarela,
+} from '@lib/pasarela';
 
 const API = 'https://api.mercadopago.com';
-
-/** Igual que en el almacén: se lee al usarse, y de las dos fuentes. */
-export function variable(nombre: string): string {
-  const meta = (import.meta as unknown as { env?: Record<string, string | undefined> }).env ?? {};
-  const proceso = typeof process !== 'undefined' ? (process.env ?? {}) : {};
-  return proceso[nombre] ?? meta[nombre] ?? '';
-}
 
 function token(): string {
   const t = variable('MP_ACCESS_TOKEN');
@@ -308,12 +319,35 @@ export async function crearPreferenciaMinima(): Promise<Record<string, unknown>>
   };
 }
 
-export interface PagoConsultado {
-  id: string;
-  estado: 'approved' | 'pending' | 'in_process' | 'rejected' | 'refunded' | 'cancelled' | 'charged_back' | string;
-  detalle: string;
-  monto: number;
-  referenciaExterna: string;
+/**
+ * Los estados de Mercado Pago a los cinco de acá.
+ *
+ * Misma regla que en el otro adaptador: lo que no está claramente
+ * cobrado es pendiente. `in_process` es una revisión antifraude en
+ * curso, y `pending` puede ser un cupón de efectivo todavía sin
+ * pagar; ninguno de los dos se despacha.
+ */
+export function traducirEstadoMP(estado: string): EstadoPago {
+  switch (estado) {
+    case 'approved': return 'aprobado';
+    case 'rejected': return 'rechazado';
+    case 'cancelled': return 'cancelado';
+    case 'refunded':
+    case 'charged_back': return 'devuelto';
+    default: return 'pendiente'; // pending, in_process y cualquier novedad
+  }
+}
+
+function normalizar(d: Record<string, unknown>, idSiFalta = ''): PagoConsultado {
+  const crudo = String(d.status ?? 'desconocido');
+  return {
+    id: String(d.id ?? idSiFalta),
+    estado: traducirEstadoMP(crudo),
+    crudo,
+    detalle: String(d.status_detail ?? ''),
+    monto: Number(d.transaction_amount ?? 0),
+    referenciaExterna: String(d.external_reference ?? ''),
+  };
 }
 
 /**
@@ -329,14 +363,7 @@ export async function consultarPago(id: string): Promise<PagoConsultado> {
     headers: { Authorization: `Bearer ${token()}` },
   });
   if (!r.ok) throw new Error(`No se pudo consultar el pago ${id}: ${r.status}`);
-  const d = (await r.json()) as Record<string, unknown>;
-  return {
-    id: String(d.id ?? id),
-    estado: String(d.status ?? 'desconocido'),
-    detalle: String(d.status_detail ?? ''),
-    monto: Number(d.transaction_amount ?? 0),
-    referenciaExterna: String(d.external_reference ?? ''),
-  };
+  return normalizar((await r.json()) as Record<string, unknown>, id);
 }
 
 /**
@@ -373,13 +400,8 @@ export async function buscarPagoPorPedido(numeroPedido: string): Promise<PagoCon
      más reciente. */
   const elegido = resultados.find((p) => p.status === 'approved') ?? resultados[0]!;
 
-  return {
-    id: String(elegido.id ?? ''),
-    estado: String(elegido.status ?? 'desconocido'),
-    detalle: String(elegido.status_detail ?? ''),
-    monto: Number(elegido.transaction_amount ?? 0),
-    referenciaExterna: String(elegido.external_reference ?? numeroPedido),
-  };
+  const pago = normalizar(elegido);
+  return { ...pago, referenciaExterna: pago.referenciaExterna || numeroPedido };
 }
 
 /**
@@ -436,3 +458,85 @@ export function firmaValida(opciones: {
   if (a.length !== b.length) return false;
   return crypto.timingSafeEqual(a, b);
 }
+
+/* ------------------------------------------------------------------ *
+ * El adaptador
+ * ------------------------------------------------------------------ *
+ * Todo lo de arriba es de Mercado Pago y habla su idioma. Esto de acá
+ * es la capa fina que lo hace intercambiable con Mobbex: traduce
+ * nombres, no agrega comportamiento.
+ */
+
+export function hayAvisoVerificable(): boolean {
+  return Boolean(variable('MP_WEBHOOK_SECRET'));
+}
+
+/** El contrato pide `crearCobro`; Mercado Pago lo llama preferencia. */
+async function crearCobro(datos: DatosDeCobro): Promise<CobroCreado> {
+  const { id, enlace, liveMode } = await crearPreferencia({
+    numeroPedido: datos.numeroPedido,
+    items: datos.lineas.map((l) => ({
+      id: l.id,
+      title: l.nombre,
+      quantity: l.cantidad,
+      unit_price: l.precio,
+    })),
+    envio: datos.envio,
+    descuento: datos.descuento,
+    emailComprador: datos.comprador.email,
+    urlSitio: datos.urlSitio,
+  });
+  return { id, enlace, real: liveMode };
+}
+
+/**
+ * El identificador que Mercado Pago firma es el de la dirección, no
+ * el del cuerpo. Se saca acá una sola vez para que la verificación y
+ * la consulta usen exactamente el mismo.
+ */
+function idDelAviso(aviso: Aviso): string | null {
+  return aviso.url.searchParams.get('data.id') ?? aviso.url.searchParams.get('id');
+}
+
+function avisoLegitimo(aviso: Aviso): boolean {
+  return firmaValida({
+    xSignature: aviso.headers.get('x-signature'),
+    xRequestId: aviso.headers.get('x-request-id'),
+    dataId: idDelAviso(aviso),
+    secreto: variable('MP_WEBHOOK_SECRET'),
+  });
+}
+
+function claveDeAviso(aviso: Aviso): string | null {
+  const cuerpo = aviso.cuerpo as { data?: { id?: string }; action?: string };
+  const id = String(cuerpo.data?.id ?? idDelAviso(aviso) ?? '');
+  if (!id) return null;
+  /* La acción distingue el alta del pago de una actualización
+     posterior. Sin ella, la devolución de un pago ya procesado
+     compartía clave con la aprobación y se descartaba en silencio. */
+  return `mp:${id}:${cuerpo.action ?? 'payment'}`;
+}
+
+async function pagoDelAviso(aviso: Aviso): Promise<PagoConsultado | null> {
+  const cuerpo = aviso.cuerpo as { type?: string; data?: { id?: string } };
+  const tipo = cuerpo.type ?? aviso.url.searchParams.get('type') ?? '';
+  /* Mercado Pago avisa de muchas cosas; sólo los pagos nos importan. */
+  if (tipo !== 'payment') return null;
+
+  const id = String(cuerpo.data?.id ?? idDelAviso(aviso) ?? '');
+  if (!id) return null;
+  return consultarPago(id);
+}
+
+export const mercadoPago: Pasarela = {
+  nombre: 'mercadopago',
+  hayCredenciales,
+  hayAvisoVerificable,
+  modoDeclarado,
+  cobroPermitido,
+  crearCobro,
+  buscarPagoPorPedido,
+  avisoLegitimo,
+  claveDeAviso,
+  pagoDelAviso,
+};

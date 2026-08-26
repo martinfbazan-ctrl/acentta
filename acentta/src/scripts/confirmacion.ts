@@ -3,8 +3,8 @@
  * ---------------------------------------------------------------
  * Dos orígenes posibles, y el orden importa.
  *
- * 1. `?pedido=AC-…` en la dirección — es lo que devuelve Mercado
- *    Pago al volver del pago. Se consulta el pedido real al
+ * 1. `?pedido=AC-…` en la dirección — es lo que devuelve la pasarela
+ *    al volver del pago. Se consulta el pedido real al
  *    servidor. Éste manda.
  * 2. Sin ese parámetro, el pedido simulado del almacenamiento del
  *    navegador, que es lo que usa la demostración cuando el cobro no
@@ -166,7 +166,21 @@ async function mostrarPedidoReal(numero: string): Promise<boolean> {
    se caen las ocho auditorías por un detalle de empaquetado.
    ============================================================ */
 async function arrancar() {
-const numeroEnLaUrl = new URLSearchParams(location.search).get('pedido');
+/* El número que viene en la dirección, saneado.
+
+   Las pasarelas agregan sus propios parámetros a la dirección de
+   retorno —Mobbex suma `status`, `type` y `transactionId`— y no
+   todas se fijan en que la dirección ya traía una consulta. Si en
+   vez de `&` pegan otro `?`, el valor que se lee acá termina siendo
+   `AC-260826-ABC123?status=200` y el pedido «no existe».
+
+   Es un error de una sola línea que se ve como un pedido perdido, en
+   la pantalla en la que la persona acaba de pagar. Se corta en el
+   primer carácter que no pertenezca a un número de pedido y listo. */
+const crudoEnLaUrl = new URLSearchParams(location.search).get('pedido');
+const numeroEnLaUrl = crudoEnLaUrl
+  ? (crudoEnLaUrl.toUpperCase().match(/^AC-\d{6}-[A-Z0-9]{6}/)?.[0] ?? crudoEnLaUrl)
+  : null;
 
 if (numeroEnLaUrl) {
   /* Mientras se consulta, se muestra el número que ya tenemos: es

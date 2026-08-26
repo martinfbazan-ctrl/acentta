@@ -4,7 +4,7 @@
  * Hay dos caminos por los que se entera el sitio de que un pago
  * cambió de estado:
  *
- *   · el aviso de Mercado Pago, que llega solo;
+ *   · el aviso de la pasarela, que llega solo;
  *   · la consulta a mano desde la pantalla de pedidos, para los que
  *     quedaron pendientes porque el aviso nunca llegó.
  *
@@ -21,21 +21,10 @@
  */
 
 import { actualizarPedido, type EstadoPedido, type Pedido } from '@lib/pedidos';
-import type { PagoConsultado } from '@lib/mercadopago';
+import type { PagoConsultado } from '@lib/pasarela';
 
-/** Diferencia tolerada por redondeo de Mercado Pago, en pesos. */
+/** Diferencia tolerada por redondeo de la pasarela, en pesos. */
 const TOLERANCIA = 1;
-
-export function traducirEstado(estado: string): EstadoPedido {
-  switch (estado) {
-    case 'approved': return 'aprobado';
-    case 'rejected': return 'rechazado';
-    case 'cancelled': return 'cancelado';
-    case 'refunded':
-    case 'charged_back': return 'devuelto';
-    default: return 'pendiente'; // pending, in_process y cualquier novedad
-  }
-}
 
 export interface Resultado {
   estado: EstadoPedido;
@@ -45,7 +34,12 @@ export interface Resultado {
 }
 
 export async function aplicarPago(pedido: Pedido, pago: PagoConsultado): Promise<Resultado> {
-  const estado = traducirEstado(pago.estado);
+  /* Ya viene traducido. La traducción vive en cada adaptador porque
+     es lo único que cambia entre una pasarela y otra: acá llegan los
+     mismos cinco estados venga de donde venga el pago. Cuando esto
+     traducía por su cuenta, conocía el vocabulario de Mercado Pago —y
+     ese conocimiento habría que haberlo duplicado al sumar Mobbex. */
+  const estado: EstadoPedido = pago.estado;
   const esperado = pedido.cotizacion.total;
   const diferencia = Math.abs(pago.monto - esperado);
 
@@ -65,11 +59,15 @@ export async function aplicarPago(pedido: Pedido, pago: PagoConsultado): Promise
 
   const cambio = pedido.estado !== estado || pedido.pagoId !== pago.id;
 
+  /* En el detalle se guarda lo que dijo la pasarela sin traducir. Es
+     lo que sirve cuando hay que entender por qué se rechazó algo:
+     «rechazado» no dice nada, «cc_rejected_insufficient_amount» o el
+     código 410 de Mobbex sí. */
   await actualizarPedido(pedido.numero, {
     estado,
     pagoId: pago.id,
-    detallePago: `${pago.estado}${pago.detalle ? ` · ${pago.detalle}` : ''}`,
+    detallePago: `${pago.crudo}${pago.detalle ? ` · ${pago.detalle}` : ''}`,
   });
 
-  return { estado, cambio, revisar: false, nota: pago.estado };
+  return { estado, cambio, revisar: false, nota: pago.crudo };
 }
