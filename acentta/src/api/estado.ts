@@ -27,6 +27,7 @@
  */
 
 import type { APIRoute } from 'astro';
+import crypto from 'node:crypto';
 import { variable } from '@lib/entorno';
 import { hayAlmacen } from '@lib/pedidos';
 import { elegirPasarela, nombreDePasarela } from '@lib/pasarela';
@@ -105,6 +106,8 @@ export const GET: APIRoute = async ({ url }) => {
          caracteres no alcanza para detectarlo: hay que mirar que
          todos sean los que corresponden. */
       const soloAlfanumerico = /^[A-Za-z0-9]+$/.test(clave.trim());
+      const huella = (v: string) =>
+        v ? crypto.createHash('sha256').update(v.trim()).digest('hex').slice(0, 12) : '';
 
       return {
         MOBBEX_API_KEY: Boolean(clave),
@@ -116,6 +119,28 @@ export const GET: APIRoute = async ({ url }) => {
         MOBBEX_ACCESS_TOKEN_largo: token.length,
         MOBBEX_WEBHOOK_TOKEN_largo: variable('MOBBEX_WEBHOOK_TOKEN').length,
         MOBBEX_MODO: variable('MOBBEX_MODO') || '(sin declarar · se asume prueba)',
+
+        /*
+          Doce caracteres del resumen SHA-256 de cada credencial.
+
+          Sirve para responder la única pregunta que quedaba abierta
+          después de que el cobro mínimo también diera 401: ¿el valor
+          cargado es EXACTAMENTE el de la documentación, o es otro que
+          casualmente tiene la misma forma? Un carácter cambiado deja
+          el largo en 40 y la forma alfanumérica intacta.
+
+          Comparar resúmenes contesta eso sin publicar el valor: de
+          doce caracteres de un SHA-256 no se vuelve al original.
+          Y estas credenciales son públicas de todos modos.
+
+          Cuando el sitio pase a las credenciales propias, estas dos
+          líneas se borran: la huella de un secreto real no tiene por
+          qué estar en una dirección abierta, aunque no lo revele.
+        */
+        huellaApiKey: huella(clave),
+        huellaAccessToken: huella(token),
+        coincideConLaDocumentacion:
+          huella(clave) === '5672cf13deb9' && huella(token) === '30af8be3dc6a',
 
         /* El error más probable y el más difícil de ver mirando el
            panel: los dos valores en el casillero del otro. */
