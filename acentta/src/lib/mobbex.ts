@@ -303,6 +303,70 @@ export async function crearCobro(datos: DatosDeCobro): Promise<CobroCreado> {
 }
 
 /* ------------------------------------------------------------------ *
+ * Un cobro mínimo, para aislar culpas
+ * ------------------------------------------------------------------ *
+ * Cuando Mobbex contesta 401 «el API Key es obligatorio» con las dos
+ * credenciales cargadas y bien formadas, hay dos familias de causa y
+ * desde afuera se ven idénticas:
+ *
+ *   · las credenciales no sirven —vencidas, revocadas, con un
+ *     carácter raro que no se ve—;
+ *   · alguno de los campos que agregamos nosotros al cobro le
+ *     molesta, y el mensaje que devuelve apunta a otro lado.
+ *
+ * Ésta manda el ejemplo exacto de la documentación y nada más: sin
+ * envío, sin dirección, sin retorno, sin aviso, sin opciones. Si con
+ * ésta el cobro se abre, el problema es un campo nuestro y se va
+ * probando de a uno. Si tampoco, el problema no está en el código.
+ *
+ * Es la misma técnica que sirvió para desenredar el botón de pagar
+ * apagado de Mercado Pago, y por eso vuelve a estar acá.
+ *
+ * Sólo funciona en modo de prueba: en producción abriría cobros
+ * reales de cien pesos, que es justo lo que no puede quedar
+ * accesible por una dirección.
+ */
+export async function probarCredenciales(): Promise<Record<string, unknown>> {
+  if (modoDeclarado() === 'produccion') {
+    return { salteado: 'sólo se puede probar en modo de prueba' };
+  }
+  if (!hayCredenciales()) {
+    return { salteado: 'faltan las credenciales' };
+  }
+
+  const cuerpo = {
+    total: 100.53,
+    description: 'checkout de prueba',
+    reference: `DIAG-${Date.now()}`,
+    currency: 'ARS',
+    test: true,
+    customer: {
+      email: 'demo@mobbex.com',
+      name: 'cliente demo',
+      identification: '12123123',
+    },
+  };
+
+  try {
+    const r = await fetch(`${API}/p/checkout`, {
+      method: 'POST',
+      headers: cabeceras(),
+      body: JSON.stringify(cuerpo),
+    });
+    const texto = await r.text();
+    return {
+      estadoHttp: r.status,
+      /* Recortada: sólo hace falta el principio, y una respuesta
+         entera podría traer datos que no queremos publicar. */
+      respuesta: texto.slice(0, 500),
+      abrioElCobro: texto.includes('"url"'),
+    };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : String(err) };
+  }
+}
+
+/* ------------------------------------------------------------------ *
  * Preguntar por un pago
  * ------------------------------------------------------------------ */
 

@@ -31,12 +31,13 @@ import { variable } from '@lib/entorno';
 import { hayAlmacen } from '@lib/pedidos';
 import { elegirPasarela, nombreDePasarela } from '@lib/pasarela';
 import { consultarCuenta } from '@lib/mercadopago';
+import { probarCredenciales } from '@lib/mobbex';
 
 export const prerender = false;
 
 const PREFIJOS = ['KV_', 'UPSTASH_', 'REDIS_', 'MP_', 'MOBBEX_', 'PASARELA'];
 
-export const GET: APIRoute = async () => {
+export const GET: APIRoute = async ({ url }) => {
   const proceso = typeof process !== 'undefined' ? (process.env ?? {}) : {};
   const meta = (import.meta as unknown as { env?: Record<string, string | undefined> }).env ?? {};
 
@@ -97,10 +98,19 @@ export const GET: APIRoute = async () => {
       const esUuid = (v: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v.trim());
       const sobra = (v: string) => v !== v.trim();
 
+      /* Un carácter invisible que no se ve y no cambia el largo.
+         Copiar desde una página web puede traer un espacio duro, un
+         guion blando o una marca de dirección de texto; el valor
+         sigue midiendo 40 y deja de ser la credencial. Contar
+         caracteres no alcanza para detectarlo: hay que mirar que
+         todos sean los que corresponden. */
+      const soloAlfanumerico = /^[A-Za-z0-9]+$/.test(clave.trim());
+
       return {
         MOBBEX_API_KEY: Boolean(clave),
         /* La clave de aplicación son 40 caracteres alfanuméricos, sin guiones. */
         MOBBEX_API_KEY_largo: clave.length,
+        MOBBEX_API_KEY_soloAlfanumerico: soloAlfanumerico,
         /* El token de la entidad es un UUID: 36 caracteres con guiones. */
         MOBBEX_ACCESS_TOKEN: Boolean(token),
         MOBBEX_ACCESS_TOKEN_largo: token.length,
@@ -123,12 +133,26 @@ export const GET: APIRoute = async () => {
               : sobra(clave) || sobra(token)
                 ? 'Alguna credencial tiene un espacio o un salto de línea al principio o al final. '
                   + 'Volvé a pegarla sin el sobrante.'
-                : clave.length !== 40 || !esUuid(token)
-                  ? `La forma no es la esperada: la API Key tiene ${clave.length} caracteres `
-                    + `(se esperan 40) y el Access Token ${token.length} (se esperan 36, con guiones).`
-                  : null,
+                : !soloAlfanumerico
+                  ? 'La API Key tiene algún carácter que no es letra ni número. Suele ser uno '
+                    + 'invisible que viajó al copiar desde una página, y no cambia el largo. '
+                    + 'Volvé a escribirla a mano.'
+                  : clave.length !== 40 || !esUuid(token)
+                    ? `La forma no es la esperada: la API Key tiene ${clave.length} caracteres `
+                      + `(se esperan 40) y el Access Token ${token.length} (se esperan 36, con guiones).`
+                    : null,
       };
     })(),
+
+    /*
+      El cobro mínimo, sólo si se lo pide con `?probar=mobbex`.
+      No corre solo: abre un checkout de prueba en Mobbex, y una
+      dirección de diagnóstico que dispara operaciones cada vez que
+      alguien la carga es una dirección que hace ruido.
+    */
+    pruebaDeCobro: url.searchParams.get('probar') === 'mobbex'
+      ? await probarCredenciales()
+      : '(agregá ?probar=mobbex para abrir un cobro mínimo de prueba)',
     mercadoPago: {
       /* Apagado salvo que PASARELA diga lo contrario. */
       activo: pasarela.nombre === 'mercadopago',
