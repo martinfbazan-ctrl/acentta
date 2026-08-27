@@ -56,8 +56,18 @@ const API = 'https://api.mobbex.com';
  * Credenciales y modo
  * ------------------------------------------------------------------ */
 
-const apiKey = () => variable('MOBBEX_API_KEY');
-const accessToken = () => variable('MOBBEX_ACCESS_TOKEN');
+/* Se recortan los extremos a propósito.
+ *
+ * Un espacio o un salto de línea que viajó con el copiar y pegar
+ * desde el panel de Mobbex al de Vercel convierte una credencial
+ * válida en un 401, y el mensaje que devuelve Mobbex —«el API Key es
+ * obligatorio»— manda a buscar en el lugar equivocado: parece que la
+ * variable no está cargada cuando en realidad está de más.
+ *
+ * Recortar acá no esconde nada: `/api/estado` avisa igual cuando
+ * detecta el sobrante, para que se corrija en el origen. */
+const apiKey = () => variable('MOBBEX_API_KEY').trim();
+const accessToken = () => variable('MOBBEX_ACCESS_TOKEN').trim();
 
 export function hayCredenciales(): boolean {
   return Boolean(apiKey() && accessToken());

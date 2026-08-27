@@ -78,14 +78,57 @@ export const GET: APIRoute = async () => {
          qué comprobar quién los manda. */
       avisoVerificable,
     },
-    mobbex: {
-      MOBBEX_API_KEY: Boolean(variable('MOBBEX_API_KEY')),
-      MOBBEX_ACCESS_TOKEN: Boolean(variable('MOBBEX_ACCESS_TOKEN')),
-      /* Se informa el largo y no el valor: es lo único que hace falta
-         para saber si va a pasar el mínimo de 24. */
-      MOBBEX_WEBHOOK_TOKEN_largo: variable('MOBBEX_WEBHOOK_TOKEN').length,
-      MOBBEX_MODO: variable('MOBBEX_MODO') || '(sin declarar · se asume prueba)',
-    },
+    /*
+      De las credenciales se informa la FORMA, nunca el valor.
+
+      Existe por un 401 de Mobbex —«el API Key es obligatorio»— con
+      las dos variables cargadas. Que estén cargadas y que sirvan son
+      dos cosas distintas, y desde afuera se ven igual: un booleano en
+      `true` no distingue una credencial correcta de una pegada al
+      revés, con un espacio de más o cortada al copiar.
+
+      El largo y la forma alcanzan para separar esos casos y no
+      revelan nada: saber que un texto tiene 40 caracteres no ayuda a
+      adivinar cuáles son.
+    */
+    mobbex: (() => {
+      const clave = variable('MOBBEX_API_KEY');
+      const token = variable('MOBBEX_ACCESS_TOKEN');
+      const esUuid = (v: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v.trim());
+      const sobra = (v: string) => v !== v.trim();
+
+      return {
+        MOBBEX_API_KEY: Boolean(clave),
+        /* La clave de aplicación son 40 caracteres alfanuméricos, sin guiones. */
+        MOBBEX_API_KEY_largo: clave.length,
+        /* El token de la entidad es un UUID: 36 caracteres con guiones. */
+        MOBBEX_ACCESS_TOKEN: Boolean(token),
+        MOBBEX_ACCESS_TOKEN_largo: token.length,
+        MOBBEX_WEBHOOK_TOKEN_largo: variable('MOBBEX_WEBHOOK_TOKEN').length,
+        MOBBEX_MODO: variable('MOBBEX_MODO') || '(sin declarar · se asume prueba)',
+
+        /* El error más probable y el más difícil de ver mirando el
+           panel: los dos valores en el casillero del otro. */
+        parecenIntercambiadas: esUuid(clave) && !esUuid(token),
+        /* El segundo más probable: un espacio o un salto de línea que
+           viajó con el copiar y pegar. */
+        sobranEspacios: sobra(clave) || sobra(token),
+
+        aviso:
+          !clave || !token
+            ? 'Falta cargar alguna de las dos credenciales de Mobbex.'
+            : esUuid(clave) && !esUuid(token)
+              ? 'Parecen estar cambiadas de lugar: la API Key tiene forma de token de entidad. '
+                + 'La API Key son 40 caracteres sin guiones; el Access Token es un UUID de 36.'
+              : sobra(clave) || sobra(token)
+                ? 'Alguna credencial tiene un espacio o un salto de línea al principio o al final. '
+                  + 'Volvé a pegarla sin el sobrante.'
+                : clave.length !== 40 || !esUuid(token)
+                  ? `La forma no es la esperada: la API Key tiene ${clave.length} caracteres `
+                    + `(se esperan 40) y el Access Token ${token.length} (se esperan 36, con guiones).`
+                  : null,
+      };
+    })(),
     mercadoPago: {
       /* Apagado salvo que PASARELA diga lo contrario. */
       activo: pasarela.nombre === 'mercadopago',
