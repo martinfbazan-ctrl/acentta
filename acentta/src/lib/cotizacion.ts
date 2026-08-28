@@ -43,6 +43,7 @@
 
 import { porId } from '@lib/catalogo';
 import { calcularEnvio } from '@lib/envio';
+import { cajaDe, comoParametro, type Caja } from '@lib/paquetes';
 import { UMBRAL_ENVIO_GRATIS } from '@tipos/catalogo';
 
 /** Lo único que el navegador tiene derecho a decidir. */
@@ -67,6 +68,27 @@ export interface LineaCotizada {
 export type MetodoEnvio = 'domicilio' | 'sucursal';
 export type MetodoPago = 'tarjeta' | 'transferencia';
 
+/**
+ * Una tarifa traída de afuera, del operador logístico.
+ *
+ * Es opcional a propósito. `cotizar()` sigue siendo pura y sin red:
+ * quien tiene la tarifa la pasa, y quien no la tiene obtiene la de la
+ * tabla propia. Eso permite que las pruebas del circuito de cobro
+ * corran sin credenciales y sin internet, que es lo que las hace
+ * correrse seguido.
+ */
+export interface TarifaExterna {
+  /** Lo que paga el comprador, en pesos. */
+  costo: number;
+  /** Días hábiles que suma sobre el plazo de preparación. */
+  diasExtra: number;
+  /** Nombre para mostrar: «OCA», «Andreani». */
+  correo?: string;
+  /** Identificadores que hacen falta después, al despachar. */
+  correoId?: string;
+  servicio?: string;
+}
+
 export interface Cotizacion {
   lineas: LineaCotizada[];
   subtotal: number;
@@ -76,6 +98,28 @@ export interface Cotizacion {
   diasExtra: number;
   descuento: number;
   total: number;
+
+  /* ---- Lo que hace falta para cotizar y despachar de verdad ---- */
+
+  /** Kilos sumados del pedido. */
+  peso: number;
+  /**
+   * Las cajas, en el formato que espera Envíopack: `29x11x11,29x11x11`.
+   *
+   * Se devuelve desde acá y no se calcula aparte para que quien
+   * quiera pedir una tarifa real no tenga que repetir la validación
+   * del pedido. El circuito es: cotizar con la tabla —barato, sin
+   * red—, usar el peso y las cajas que salen de ahí para preguntarle
+   * al correo, y volver a cotizar con la tarifa puesta. Dos pasadas
+   * de una función pura no le cuestan nada a nadie.
+   */
+  paquetes: string;
+  /** De dónde salió el costo de envío que figura arriba. */
+  fuenteEnvio: 'tabla' | 'operador';
+  /** Qué correo lo va a llevar, cuando lo dijo el operador. */
+  correo?: string;
+  correoId?: string;
+  servicio?: string;
 }
 
 export class ErrorDeCotizacion extends Error {
@@ -109,6 +153,15 @@ export function cotizar(
   cp: string,
   metodoEnvio: MetodoEnvio = 'domicilio',
   metodoPago: MetodoPago = 'tarjeta',
+  /**
+   * La tarifa del operador logístico, cuando se la pudo conseguir.
+   *
+   * Va última y es opcional para que ninguna llamada existente tenga
+   * que cambiar: sin ella, esto se comporta exactamente como antes.
+   * La tabla de zonas deja de ser la verdad y pasa a ser la red de
+   * seguridad — que es para lo que sirve una tabla hecha a mano.
+   */
+  tarifa?: TarifaExterna,
 ): Cotizacion {
   if (!Array.isArray(pedidas) || pedidas.length === 0) {
     throw new ErrorDeCotizacion('El pedido no tiene productos.');
@@ -118,6 +171,7 @@ export function cotizar(
   }
 
   const lineas: LineaCotizada[] = [];
+  const cajas: Caja[] = [];
   let peso = 0;
 
   for (const p of pedidas) {
@@ -170,6 +224,12 @@ export function cotizar(
       imagen: producto.imagenes[0]!.src,
     });
     peso += producto.peso * cantidad;
+
+    /* Una caja por unidad. Sale un poco más caro que la verdad —dos
+       termos entran en una sola— y se hace igual porque el error
+       caro es el otro: cotizar de menos aparece al despachar, con la
+       venta ya cobrada, y la diferencia la pone el vendedor. */
+    for (let i = 0; i < cantidad; i++) cajas.push(cajaDe(producto));
   }
 
   const subtotal = lineas.reduce((s, l) => s + l.subtotal, 0);
@@ -196,12 +256,25 @@ export function cotizar(
   }
 
   const zona = calculo.zona;
-  const diasExtra = calculo.diasExtra!;
+
+  /* La tarifa del operador manda sobre la tabla, pero la COBERTURA la
+     sigue decidiendo la tabla: si el código postal no está en nuestras
+     zonas, no se vende, aunque el correo diga que llega. Es una
+     decisión de negocio —a dónde queremos mandar— y no una capacidad
+     técnica del correo. */
+  const usaOperador = Boolean(tarifa && tarifa.costo >= 0);
+  const diasExtra = usaOperador ? tarifa!.diasExtra : calculo.diasExtra!;
   let envio = 0;
 
   if (!envioGratis) {
-    envio = calculo.costo!;
-    if (metodoEnvio === 'sucursal') envio = Math.max(0, envio - DESCUENTO_SUCURSAL);
+    envio = usaOperador ? Math.round(tarifa!.costo) : calculo.costo!;
+    /* El descuento por retirar en sucursal es nuestro y se aplica a
+       cualquiera de las dos fuentes. Cuando el operador ya cotizó
+       contra una sucursal, la diferencia viene incluida en su número
+       y este descuento no corresponde. */
+    if (metodoEnvio === 'sucursal' && !usaOperador) {
+      envio = Math.max(0, envio - DESCUENTO_SUCURSAL);
+    }
   }
 
   const descuento = metodoPago === 'transferencia'
@@ -217,5 +290,13 @@ export function cotizar(
     throw new ErrorDeCotizacion('El total del pedido no es válido.');
   }
 
-  return { lineas, subtotal, envio, envioGratis, zona, diasExtra, descuento, total };
+  return {
+    lineas, subtotal, envio, envioGratis, zona, diasExtra, descuento, total,
+    peso: Math.round(peso * 100) / 100,
+    paquetes: comoParametro(cajas),
+    fuenteEnvio: usaOperador ? 'operador' : 'tabla',
+    correo: tarifa?.correo,
+    correoId: tarifa?.correoId,
+    servicio: tarifa?.servicio,
+  };
 }

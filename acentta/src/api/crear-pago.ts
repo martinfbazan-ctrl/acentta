@@ -27,7 +27,8 @@
  */
 
 import type { APIRoute } from 'astro';
-import { cotizar, ErrorDeCotizacion, type LineaPedida, type MetodoEnvio, type MetodoPago } from '@lib/cotizacion';
+import { ErrorDeCotizacion, type LineaPedida, type MetodoEnvio, type MetodoPago } from '@lib/cotizacion';
+import { cotizarConCorreo } from '@lib/tarifa';
 import { elegirPasarela } from '@lib/pasarela';
 import { guardarPedido, hayAlmacen, nuevoNumero, type Comprador, type Entrega, type Pedido } from '@lib/pedidos';
 
@@ -98,12 +99,17 @@ export const POST: APIRoute = async ({ request, url }) => {
 
   const metodoPago = (texto(cuerpo.metodoPago, 20) || 'tarjeta') as MetodoPago;
 
-  /* ---- El total ---- */
+  /* ---- El total ----
+
+     Le pregunta el precio del envío al correo y, si no contesta, usa
+     la tabla propia. Lo que no cambia es dónde se decide el total:
+     acá, en el servidor, contra el catálogo. El navegador sigue sin
+     poder opinar sobre un solo peso. */
   let cotizacion;
   try {
-    cotizacion = cotizar(
+    cotizacion = await cotizarConCorreo(
       (cuerpo.items ?? []) as LineaPedida[],
-      entrega.cp,
+      { cp: entrega.cp, provincia: entrega.provincia, ciudad: entrega.ciudad },
       entrega.metodo,
       metodoPago === 'transferencia' ? 'transferencia' : 'tarjeta',
     );
