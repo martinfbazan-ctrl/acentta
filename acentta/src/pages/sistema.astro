@@ -15,7 +15,8 @@ import Skeleton from '@componentes/Skeleton.astro';
 import EstadoVacio from '@componentes/EstadoVacio.astro';
 import { rangoDeEntrega } from '@lib/formato';
 import TarjetaProducto from '@componentes/TarjetaProducto.astro';
-import { porSlug } from '@lib/catalogo';
+import { todos, tieneDescuento, esUltimasUnidades, estaAgotado } from '@lib/catalogo';
+import { UMBRAL_ENVIO_GRATIS, type Producto } from '@tipos/catalogo';
 
 const colores = [
   { token: '--arena',          valor: '#F9F5EF', uso: 'Fondo general del sitio',                 contraste: 'superficie', decorativo: true },
@@ -51,15 +52,56 @@ const entrega = rangoDeEntrega(5, 9);
 
 /* Casos borde de la tarjeta, tomados del catálogo real: no son
    maquetas hechas para la documentación, son los productos que
-   efectivamente tienen ese problema. */
+   efectivamente tienen ese problema.
+ *
+ * [ERROR CORREGIDO] Antes esto nombraba seis productos por su
+ * dirección, con `!` para callar al chequeo de tipos:
+ *
+ *     { p: porSlug('manta-tejida-sierra')!, nota: '…' }
+ *
+ * Un `!` es una promesa que le hacemos al compilador, y ésta era
+ * falsa: el día que el catálogo se recortó, tres de esos seis dejaron
+ * de existir. El chequeo de tipos pasó limpio —se lo habíamos
+ * prohibido mirar— y la página reventó al construir, con un
+ * «Cannot read properties of undefined» que no menciona ningún
+ * producto ni ningún catálogo.
+ *
+ * Ahora cada caso se BUSCA por la característica que lo define. Un
+ * catálogo que cambia deja de romper esta página: si algún día no hay
+ * ningún producto agotado, ese ejemplo simplemente no se muestra, que
+ * es exactamente lo que corresponde — no hay nada que documentar.
+ */
+const catalogo = todos();
+
+/** El primero que cumpla, o nada. Nunca revienta. */
+const buscar = (condicion: (p: Producto) => boolean) => catalogo.find(condicion);
+
 const bordes = [
-  { p: porSlug('lampara-de-pie-arco')!,            nota: 'Habitual · descuento, ranking y envío gratis' },
-  { p: porSlug('colgante-domo-laton-cable-textil')!, nota: 'Nombre de 92 caracteres' },
-  { p: porSlug('manta-tejida-sierra')!,            nota: 'Sin ninguna opinión todavía' },
-  { p: porSlug('alfombra-yute-redonda-150')!,      nota: 'Últimas unidades · stock real de 3' },
-  { p: porSlug('banqueta-nordica-fresno')!,        nota: 'Agotado' },
-  { p: porSlug('camino-de-mesa-telar-natural')!,   nota: 'Precio bajo · sin envío gratis' },
-];
+  {
+    p: buscar((p) => tieneDescuento(p) && !!p.rating && p.precio >= UMBRAL_ENVIO_GRATIS),
+    nota: 'Habitual · descuento, ranking y envío gratis',
+  },
+  {
+    p: buscar((p) => p.nombre.length > 60),
+    nota: `Nombre largo: se corta en dos líneas`,
+  },
+  {
+    p: buscar((p) => p.cantidadOpiniones === 0),
+    nota: 'Sin ninguna opinión todavía',
+  },
+  {
+    p: buscar((p) => esUltimasUnidades(p)),
+    nota: 'Últimas unidades · stock real bajo',
+  },
+  {
+    p: buscar((p) => estaAgotado(p)),
+    nota: 'Agotado',
+  },
+  {
+    p: buscar((p) => p.precio < UMBRAL_ENVIO_GRATIS && !tieneDescuento(p)),
+    nota: 'Precio bajo · sin envío gratis',
+  },
+].filter((b): b is { p: Producto; nota: string } => Boolean(b.p));
 ---
 
 <Base
