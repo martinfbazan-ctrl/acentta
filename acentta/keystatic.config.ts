@@ -211,16 +211,32 @@ export default config({
         /* ---------- Envío ---------- */
         dimensiones: fields.object(
           {
-            alto: fields.integer({ label: 'Alto (cm)', defaultValue: 0 }),
+            alto: fields.integer({
+              label: 'Alto (cm)',
+              description: 'Del producto, no de la caja.',
+              defaultValue: 0,
+            }),
             ancho: fields.integer({ label: 'Ancho (cm)', defaultValue: 0 }),
             profundidad: fields.integer({ label: 'Profundidad (cm)', defaultValue: 0 }),
           },
-          { label: 'Dimensiones del paquete' }
+          {
+            /* [ERROR CORREGIDO] Esto decía «Dimensiones del paquete» y
+               son las del PRODUCTO. La diferencia no es de redacción:
+               el sitio estima la caja sumándole 2 cm por lado a lo que
+               se carga acá. Quien leyera la etiqueta y midiera la caja
+               real habría hecho que el correo cotice una caja más
+               grande de la que viaja, y esa diferencia se le cobra al
+               comprador en cada venta. */
+            label: 'Medidas del producto',
+            description:
+              'Medí el producto, no la caja: el sitio le suma el embalaje solo. '
+              + 'Con esto y el peso se le pide la tarifa al correo.',
+          }
         ),
 
         peso: fields.number({
           label: 'Peso (kg)',
-          description: 'Define el costo del envío. Con decimales, por ejemplo 14.2.',
+          description: 'Del producto embalado. Define el costo del envío. Con decimales: 0.6',
           validation: { isRequired: true, min: 0.01 },
         }),
 

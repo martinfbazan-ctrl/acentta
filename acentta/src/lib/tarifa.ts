@@ -42,7 +42,7 @@ import {
   cotizar, ErrorDeCotizacion,
   type Cotizacion, type LineaPedida, type MetodoEnvio, type MetodoPago,
 } from '@lib/cotizacion';
-import { cotizarDomicilio, hayCredenciales } from '@lib/enviopack';
+import { elegirLogistica } from '@lib/logistica';
 
 export interface DatosDeEnvio {
   cp: string;
@@ -77,14 +77,20 @@ export async function cotizarConCorreo(
      a dónde llega el correo. */
   if (conTabla.envioGratis) return conTabla;
 
-  if (!hayCredenciales() || !envio.provincia) return conTabla;
+  const operador = elegirLogistica();
+  if (!operador.hayCredenciales() || !envio.provincia) return conTabla;
 
   try {
-    const tarifa = await cotizarDomicilio({
+    const tarifa = await operador.cotizarDomicilio({
       provincia: envio.provincia,
       cp: envio.cp,
+      localidad: envio.ciudad,
       peso: conTabla.peso,
       paquetes: conTabla.paquetes,
+      /* Para el seguro, cuando la operativa lo incluye: se declara lo
+         que realmente vale la mercadería. Declarar de menos abarata
+         el seguro y deja el envío mal cubierto justo cuando importa. */
+      valorDeclarado: conTabla.subtotal,
     });
 
     if (!tarifa) return conTabla;
@@ -96,7 +102,7 @@ export async function cotizarConCorreo(
        es nuestro y tiene que subir; cualquier otra cosa —red, tiempo
        agotado, un 500 de ellos— es del operador y no frena la venta. */
     if (err instanceof ErrorDeCotizacion) throw err;
-    console.error('tarifa: Envíopack no cotizó, se usa la tabla —', err);
+    console.error(`tarifa: ${operador.nombre} no cotizó, se usa la tabla —`, err);
     return conTabla;
   }
 }

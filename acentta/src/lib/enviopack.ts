@@ -1,6 +1,21 @@
 /**
  * acentta · Envíopack
  * ---------------------------------------------------------------
+ * ┌───────────────────────────────────────────────────────────────┐
+ * │ APAGADO. Su formulario de direcciones sólo acepta CABA y      │
+ * │ Buenos Aires como provincia de ORIGEN, en los dos tipos de    │
+ * │ dirección. acentta despacha desde Córdoba capital, así que no │
+ * │ se puede operar — y eso no está en ninguna documentación: se  │
+ * │ descubrió con la cuenta abierta y las credenciales en la mano.│
+ * │                                                               │
+ * │ No se borra. El código está escrito y probado; lo que costó   │
+ * │ fue descubrir el impedimento, no escribirlo. Se enciende con  │
+ * │ `LOGISTICA=enviopack` el día que haya un depósito en el AMBA. │
+ * │                                                               │
+ * │ Cumple el mismo contrato que OCA, así que si se enciende, el  │
+ * │ resto del sitio no se entera.                                 │
+ * └───────────────────────────────────────────────────────────────┘
+ *
  * Cotizar el envío de verdad y despachar sin copiar números a mano.
  *
  * Envíopack es un agregador: habla con OCA, Andreani, Urbano y otros,
@@ -37,6 +52,7 @@
 
 import { variable } from '@lib/entorno';
 import type { TarifaExterna } from '@lib/cotizacion';
+import type { Logistica } from '@lib/logistica';
 
 const API = 'https://api.enviopack.com';
 
@@ -56,6 +72,29 @@ const secretKey = () => variable('ENVIOPACK_SECRET_KEY').trim();
  * código postal», que es un diagnóstico completamente equivocado.
  */
 const deposito = () => variable('ENVIOPACK_DEPOSITO').trim();
+
+/**
+ * De dónde sale el paquete. Es la decisión operativa más importante
+ * de toda la integración y no se nota hasta que se opera.
+ *
+ *   D · COLECTA. El correo pasa por tu puerta. Cómodo, pero pasa una
+ *       o dos veces por semana: un pedido que entra el martes puede
+ *       salir recién el viernes. Y la red de colecta de Envíopack es
+ *       del AMBA — de ahí el cartel «sólo se puede realizar envíos
+ *       desde Buenos Aires» al cargar una dirección de tipo Depósito.
+ *
+ *   S · DESPACHO DESDE SUCURSAL. Llevás el paquete a una sucursal del
+ *       correo. Es trabajo tuyo, y a cambio el envío arranca el mismo
+ *       día. Operando desde Córdoba con pedidos chicos, gana por
+ *       varios días.
+ *
+ * El valor de fábrica es `S` porque es la decisión tomada. Que esté
+ * en una variable y no clavado es para el día que el volumen haga que
+ * ir a la sucursal deje de tener sentido.
+ */
+export function modoDeDespacho(): 'D' | 'S' {
+  return variable('ENVIOPACK_DESPACHO').trim().toUpperCase() === 'D' ? 'D' : 'S';
+}
 
 export function hayCredenciales(): boolean {
   return Boolean(apiKey() && secretKey());
@@ -91,16 +130,78 @@ async function token(): Promise<string> {
   });
 
   if (!r.ok) {
-    /* Sin el cuerpo de la respuesta: puede traer parte de la
-       credencial y esto termina en un registro. */
-    throw new Error(`Envíopack no autenticó (${r.status}).`);
+    /* [DECISIÓN REVISADA] Antes esto tiraba «no autenticó (401)» y
+       nada más, para no arrastrar la credencial a un registro. La
+       prudencia era correcta y la consecuencia no: Envíopack explica
+       en el cuerpo por qué rechaza —credencial inválida, cuenta sin
+       activar, aplicación sin permisos— y ese texto es exactamente lo
+       que hace falta para saber si el problema es tuyo o de ellos.
+       Sin él, un 401 manda a revisar el código, que está bien.
+
+       Se incluye el cuerpo, pero antes se tachan las credenciales por
+       si vinieran repetidas en el eco del error. */
+    const crudo = (await r.text().catch(() => '')).slice(0, 300);
+    const limpio = [apiKey(), secretKey()]
+      .filter(Boolean)
+      .reduce((t, secreto) => t.split(secreto).join('«oculto»'), crudo);
+    throw new Error(`Envíopack no autenticó (${r.status})${limpio ? `: ${limpio}` : '.'}`);
   }
 
-  const d = (await r.json().catch(() => ({}))) as { access_token?: string };
-  if (!d.access_token) throw new Error('Envíopack no devolvió un token.');
+  const d = (await r.json().catch(() => null)) as unknown;
+  const valor = buscarToken(d);
 
-  tokenEnMemoria = { valor: d.access_token, vence: Date.now() + DURACION_MS };
-  return d.access_token;
+  if (!valor) {
+    /* [ERROR CORREGIDO] Antes esto leía `d.access_token` y nada más,
+       porque es el nombre que usa la documentación. Cuando la
+       respuesta llegó con otra forma —200, sesión abierta, token
+       adentro— el mensaje fue «Envíopack no devolvió un token», que
+       acusa a Envíopack de algo que hizo bien.
+
+       Ahora se busca el token donde esté, y si de verdad no está se
+       informan las CLAVES de la respuesta, no los valores: alcanzan
+       para saber qué forma tiene sin publicar el token, que es
+       exactamente la credencial que abre la cuenta. */
+    const claves = d && typeof d === 'object' ? Object.keys(d).join(', ') : typeof d;
+    throw new Error(
+      `Envíopack autenticó pero no encontré el token en la respuesta. `
+      + `La respuesta trae: ${claves || '(nada)'}`,
+    );
+  }
+
+  tokenEnMemoria = { valor, vence: Date.now() + DURACION_MS };
+  return valor;
+}
+
+/**
+ * Busca el token de acceso sin exigir que venga en un lugar exacto.
+ *
+ * La documentación dice `access_token` en la raíz, y así estaba
+ * escrito. Pero una API que devuelve 200 y una sesión válida no está
+ * fallando: si el dato viene envuelto en un `data`, o con otro
+ * nombre, el que falla es el que lee. Esta función acepta las formas
+ * razonables y descarta la única que sería un error tomar: el token
+ * de refresco, que también dice «token» y no sirve para llamar.
+ *
+ * El largo mínimo evita confundirlo con un `"token": "ok"` o
+ * cualquier otro campo corto que casualmente se llame parecido.
+ */
+function buscarToken(valor: unknown, profundidad = 0): string | undefined {
+  if (profundidad > 3 || !valor || typeof valor !== 'object') return undefined;
+  const entradas = Object.entries(valor as Record<string, unknown>);
+
+  /* Primero en este nivel: si hay un `access_token` acá, gana sobre
+     cualquier cosa parecida que haya más adentro. */
+  for (const [clave, v] of entradas) {
+    if (typeof v !== 'string' || v.length < 20) continue;
+    if (/refresh/i.test(clave)) continue;
+    if (/token/i.test(clave)) return v;
+  }
+
+  for (const [, v] of entradas) {
+    const hallado = buscarToken(v, profundidad + 1);
+    if (hallado) return hallado;
+  }
+  return undefined;
 }
 
 /** Para las pruebas: olvidarse del token guardado. */
@@ -314,6 +415,50 @@ export async function cotizarSucursal(datos: {
     .sort((a, b) => a.tarifa.costo - b.tarifa.costo);
 }
 
+/**
+ * Lo que TE cuesta a vos el envío, no lo que paga el comprador.
+ *
+ * Es el único endpoint que acepta `despacho`, y por eso existe acá
+ * aparte: es el que responde la pregunta operativa —cuánto cambia
+ * llevar el paquete a la sucursal contra esperar la colecta— y con
+ * qué correos se puede hacer cada cosa desde tu provincia.
+ *
+ * No se usa en el checkout: mostrarle al comprador lo que pagás vos
+ * sería vender el envío al costo sin haberlo decidido. Se usa para
+ * decidir y para diagnosticar.
+ */
+export async function cotizarCosto(datos: {
+  provincia: string;
+  cp: string;
+  peso: number;
+  paquetes: string;
+  despacho?: 'D' | 'S';
+  modalidad?: 'D' | 'S';
+}): Promise<CotizacionCruda[]> {
+  const provincia = codigoDeProvincia(datos.provincia);
+  if (!provincia) return [];
+
+  const lista = (await llamar('/cotizar/costo', {
+    parametros: {
+      provincia,
+      codigo_postal: String(datos.cp).trim(),
+      peso: datos.peso.toFixed(2),
+      paquetes: datos.paquetes,
+      despacho: datos.despacho ?? modoDeDespacho(),
+      modalidad: datos.modalidad ?? 'D',
+      ...(deposito() ? { direccion_envio: deposito() } : {}),
+    },
+  })) as CotizacionCruda[];
+
+  return Array.isArray(lista) ? lista : [];
+}
+
+/** Los correos disponibles para la cuenta. Sirve para diagnosticar. */
+export async function listarCorreos(): Promise<{ id?: string; nombre?: string }[]> {
+  const lista = (await llamar('/correos')) as { id?: string; nombre?: string }[];
+  return Array.isArray(lista) ? lista : [];
+}
+
 function aTarifa(c: CotizacionCruda): TarifaExterna | null {
   const costo = Number(c.valor);
   if (!Number.isFinite(costo) || costo < 0) return null;
@@ -424,7 +569,13 @@ export async function despachar(datos: DatosDeDespacho): Promise<Despacho> {
       direccion_envio: Number(deposito()),
       destinatario: `${datos.nombre} ${datos.apellido}`.trim().slice(0, 50),
       observaciones: datos.entrega.referencias?.slice(0, 200),
+      /* `modalidad` es a dónde LLEGA: D, al domicilio del comprador.
+         `despacho` es de dónde SALE: S, lo llevás vos a la sucursal.
+         Son dos campos distintos y es fácil confundirlos porque
+         comparten las mismas dos letras. Confundirlos no da error:
+         da un envío programado para una colecta que nadie pidió. */
       modalidad: 'D',
+      despacho: modoDeDespacho(),
       correo: datos.correoId ?? null,
       servicio: datos.servicio ?? null,
       confirmado: true,
@@ -473,9 +624,33 @@ export async function consultarEnvio(envioId: number): Promise<{
  * volver a servirlo sería mover un PDF por gusto. La dirección lleva
  * el token, así que se genera en el momento y no se guarda.
  */
-export async function urlDeEtiqueta(envioId: number): Promise<string> {
+export async function urlDeEtiqueta(envioId: number | string): Promise<string> {
   const url = new URL(`${API}/envios/${envioId}/etiqueta`);
   url.searchParams.set('access_token', await token());
   url.searchParams.set('formato', 'pdf');
   return url.toString();
 }
+
+/* ------------------------------------------------------------------ *
+ * El adaptador
+ * ------------------------------------------------------------------ *
+ * La capa fina que lo hace intercambiable con OCA. Traduce nombres,
+ * no agrega comportamiento.
+ *
+ * `origen()` devuelve el AMBA y no Córdoba a propósito: es la
+ * restricción que dejó a este operador afuera, y dejarla escrita
+ * evita que alguien lo vuelva a encender esperando otra cosa.
+ */
+export const enviopack: Logistica = {
+  nombre: 'enviopack',
+  hayCredenciales,
+  origen: () => ({
+    cp: variable('ENVIOPACK_CP_ORIGEN').trim() || '1000',
+    provincia: variable('ENVIOPACK_PROVINCIA_ORIGEN').trim() || 'CABA',
+    localidad: variable('ENVIOPACK_LOCALIDAD_ORIGEN').trim() || 'CABA',
+  }),
+  cotizarDomicilio: (p) => cotizarDomicilio({
+    provincia: p.provincia, cp: p.cp, peso: p.peso, paquetes: p.paquetes,
+  }),
+  urlDeEtiqueta,
+};
