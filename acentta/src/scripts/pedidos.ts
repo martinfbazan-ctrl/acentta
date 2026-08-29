@@ -22,6 +22,7 @@ interface PedidoPanel {
   pagoId: string | null;
   detallePago: string | null;
   seguimiento: string | null;
+  comprobante: string | null;
   comprador: { email: string; nombre: string; apellido: string; dni: string; telefono: string };
   entrega: {
     metodo: string; cp: string; provincia: string; ciudad: string;
@@ -84,6 +85,18 @@ function tarjeta(p: PedidoPanel): string {
       <p class="pedido__envio-aviso" hidden data-aviso></p>
       ${p.seguimiento ? '' : `<p class="pedido__envio-nota">Sin este número, un contracargo se pierde: es la única forma de probar que el pedido llegó.</p>`}
     </div>
+
+    ${p.estado === 'aprobado' ? `
+    <div class="pedido__envio">
+      <span class="pedido__envio-titulo">Comprobante de ARCA</span>
+      <input type="text" value="${esc(p.comprobante ?? '')}" placeholder="0001-00000012"
+             aria-label="Número de comprobante del pedido ${esc(p.numero)}" data-campo-comprobante />
+      <button class="boton boton--secundario" type="button" data-guardar-comprobante>
+        <span class="boton__texto">Guardar</span>
+      </button>
+      <p class="pedido__envio-aviso" hidden data-aviso-comprobante></p>
+      ${p.comprobante ? '' : `<p class="pedido__envio-nota">Emitilo en Comprobantes en línea de ARCA y pegá acá el número. Factura C, consumidor final.</p>`}
+    </div>` : ''}
   </article>`;
 }
 
@@ -95,6 +108,10 @@ function pintar() {
   const visibles = todos.filter((p) => {
     if (filtro === 'todos') return true;
     if (filtro === 'sin-seguimiento') return !p.seguimiento && p.estado === 'aprobado';
+    /* Sólo lo cobrado se factura. Un pedido pendiente o rechazado en
+       la lista de facturación sería una factura de una venta que no
+       ocurrió, y eso se deshace con una nota de crédito. */
+    if (filtro === 'sin-facturar') return !p.comprobante && p.estado === 'aprobado';
     return p.estado === filtro;
   });
 
@@ -102,10 +119,12 @@ function pintar() {
   vacio.hidden = visibles.length > 0;
 
   const sinSeguimiento = todos.filter((p) => p.estado === 'aprobado' && !p.seguimiento).length;
+  const sinFacturar = todos.filter((p) => p.estado === 'aprobado' && !p.comprobante).length;
   const cuenta = $('[data-cuenta]');
   if (cuenta) {
     cuenta.textContent = `${visibles.length} de ${todos.length} pedidos`
-      + (sinSeguimiento ? ` · ${sinSeguimiento} aprobado${sinSeguimiento > 1 ? 's' : ''} sin seguimiento` : '');
+      + (sinSeguimiento ? ` · ${sinSeguimiento} aprobado${sinSeguimiento > 1 ? 's' : ''} sin seguimiento` : '')
+      + (sinFacturar ? ` · ${sinFacturar} sin facturar` : '');
   }
 }
 
@@ -146,6 +165,44 @@ document.addEventListener('click', async (e) => {
     aviso.textContent = 'Guardado';
     const p = todos.find((x) => x.numero === numero);
     if (p) p.seguimiento = campo.value.trim() || null;
+    window.setTimeout(() => { aviso.hidden = true; }, 2500);
+  } else {
+    aviso.textContent = r.status === 401
+      ? 'La sesión venció. Recargá la página.'
+      : 'No se pudo guardar.';
+  }
+});
+
+/* ---- Guardar el número de comprobante ----
+   Manejador aparte del seguimiento y no un formulario compartido: son
+   dos tareas de momentos distintos —se factura al cobrar, se despacha
+   después— y un botón que guarda las dos cosas a la vez obliga a
+   tener las dos listas para poder guardar cualquiera. */
+document.addEventListener('click', async (e) => {
+  const boton = (e.target as HTMLElement).closest('[data-guardar-comprobante]');
+  if (!boton) return;
+
+  const tarjetaDom = boton.closest<HTMLElement>('[data-pedido]');
+  const campo = tarjetaDom?.querySelector<HTMLInputElement>('[data-campo-comprobante]');
+  const aviso = tarjetaDom?.querySelector<HTMLElement>('[data-aviso-comprobante]');
+  if (!tarjetaDom || !campo || !aviso) return;
+
+  const numero = tarjetaDom.dataset.pedido!;
+  const r = await fetch('/api/admin?accion=comprobante', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ numero, comprobante: campo.value }),
+  });
+
+  aviso.hidden = false;
+  if (r.ok) {
+    aviso.textContent = 'Guardado';
+    const p = todos.find((x) => x.numero === numero);
+    if (p) p.comprobante = campo.value.trim() || null;
+    /* Se vuelve a pintar: si estabas mirando «Sin facturar», el pedido
+       que acabás de facturar tiene que irse de la lista solo. Ver
+       desaparecer lo hecho es la mitad de para qué sirve la lista. */
+    pintar();
     window.setTimeout(() => { aviso.hidden = true; }, 2500);
   } else {
     aviso.textContent = r.status === 401

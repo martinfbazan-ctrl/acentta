@@ -193,6 +193,59 @@ for (const clave of ['X-Content-Type-Options', 'Referrer-Policy', 'Permissions-P
 ok(vercel.trailingSlash === false,
   'vercel.json no fija trailingSlash: los enlaces del sitio no llevan barra final y sin esto cada uno paga una redirección');
 
+/* ============================================================
+   6 · Nadie arma una dirección de foto por su cuenta
+   ------------------------------------------------------------
+   Existe por un defecto que costó caro y que no se vio durante
+   meses. Seis guiones escribían la dirección de las fotos a mano:
+
+       src="https://images.unsplash.com/${i.imagen}?w=200&q=72"
+
+   Mientras todas las fotos fueron de banco, funcionó. El día que
+   entró el primer producto con foto propia, esa línea produjo
+   `https://images.unsplash.com//imagenes/productos/...webp` —una
+   dirección que no existe— y la foto desapareció de la galería, del
+   mini-carrito, del carrito, del checkout, de la confirmación y del
+   seguimiento. Seis pantallas, un solo error, repetido seis veces.
+
+   Lo encontró el dueño del sitio mirando su primer producto real, no
+   una prueba. Por eso esto ahora es una prueba.
+
+   La regla: la única que sabe cómo se arma la dirección de una foto
+   es `src/lib/imagenes.ts`. Cualquier otro archivo que nombre el
+   dominio del banco de fotos está duplicando esa lógica, y la copia
+   va a quedar desactualizada — no es una hipótesis, ya pasó.
+   ============================================================ */
+{
+  const permitidos = new Set([
+    path.join('src', 'lib', 'imagenes.ts'),
+    /* El layout abre la conexión al banco por adelantado. Nombra el
+       dominio pero no arma ninguna dirección de foto. */
+    path.join('src', 'layouts', 'Base.astro'),
+  ]);
+
+  const recorrer = (dir) => fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
+    const completo = path.join(dir, e.name);
+    if (e.isDirectory()) return recorrer(completo);
+    return /\.(ts|astro|mjs)$/.test(e.name) ? [completo] : [];
+  });
+
+  for (const archivo of recorrer(path.join(RAIZ, 'src'))) {
+    const relativo = path.relative(RAIZ, archivo);
+    if (permitidos.has(relativo)) continue;
+    const texto = fs.readFileSync(archivo, 'utf8');
+    /* Sólo cuenta cuando se está construyendo una dirección, no
+       cuando el dominio aparece en un comentario que explica
+       justamente este error. */
+    if (/["'`]https:\/\/images\.unsplash\.com\//.test(texto)) {
+      fallos.push(
+        `${relativo} arma una dirección de foto a mano. Tiene que usar foto() o srcset() `
+        + 'de @lib/imagenes, o las fotos propias se rompen en esa pantalla',
+      );
+    }
+  }
+}
+
 /* ============================================================ */
 console.log('\n=== LISTO PARA PUBLICAR ===');
 console.log(`  ${TODAS.length} páginas revisadas`);

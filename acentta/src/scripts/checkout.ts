@@ -10,6 +10,7 @@
 
 import { leer, resumen, leerCP, guardarCP, vaciar, subtotal } from '@lib/carrito';
 import { precio as fPrecio, cuota, rangoDeEntrega } from '@lib/formato';
+import { foto } from '@lib/imagenes';
 import { normalizarCP, calcularEnvio } from '@lib/envio';
 
 const contenedor = document.querySelector<HTMLElement>('.checkout');
@@ -279,7 +280,7 @@ if (contenedor) {
 
     document.querySelector<HTMLElement>('[data-ck-items]')!.innerHTML = items.map((i) => `
       <article class="ck-item">
-        <img class="ck-item__foto" src="https://images.unsplash.com/${i.imagen}?auto=format&fit=crop&w=150&q=72" alt="" width="52" height="65" loading="lazy" />
+        <img class="ck-item__foto" src="${foto(i.imagen, 150)}" alt="" width="52" height="65" loading="lazy" />
         <div class="ck-item__datos">
           <p class="ck-item__nombre">${i.nombre}</p>
           <p class="ck-item__meta">${i.variante ? i.variante + ' · ' : ''}${i.cantidad} u.</p>

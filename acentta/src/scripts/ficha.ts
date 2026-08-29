@@ -9,6 +9,7 @@
 
 import { calcularEnvio } from '@lib/envio';
 import { precio as fPrecio, rangoDeEntrega } from '@lib/formato';
+import { foto, srcset } from '@lib/imagenes';
 import { UMBRAL_ENVIO_GRATIS } from '@tipos/catalogo';
 
 /* ============================================================
@@ -25,12 +26,43 @@ if (galeria) {
     const tira = tiras[indice];
     if (!tira) return;
     const src = tira.dataset.src!;
-    /* Se reemplaza src y srcset a la vez: si queda el srcset viejo,
+
+    /* [ERROR CORREGIDO] Acá había una segunda copia de cómo se arma
+       la dirección de una foto, escrita a mano y clavada al dominio
+       del banco de fotos: pegaba el identificador de la foto detrás
+       de la dirección de Unsplash y le agregaba los parámetros de
+       recorte.
+
+       Mientras todas las fotos eran de banco, funcionaba. Cuando se
+       sumó soporte para fotos propias se actualizó el componente que
+       pinta la galería, pero no este guion — y nadie se dio cuenta
+       porque no había ningún producto con fotos propias todavía.
+
+       El resultado con una foto propia era el dominio del banco con
+       la ruta del archivo propio pegada detrás, una dirección que
+       no existe: la miniatura se veía —la pinta el componente, que sí
+       estaba bien— y al hacerle clic la foto grande desaparecía. Y
+       volver a la primera tampoco la recuperaba, porque pasaba por
+       este mismo código.
+
+       Ahora usa las mismas funciones que el componente. Una sola
+       forma de armar una dirección de foto en todo el sitio: cuando
+       cambie, cambia en un lugar.
+
+       Se reemplazan src y srcset a la vez: si queda el srcset viejo,
        el navegador puede seguir sirviendo la foto anterior. */
-    principal.src = `https://images.unsplash.com/${src}?auto=format&fit=crop&w=1000&q=72`;
-    principal.srcset = [400, 600, 800, 1200, 1600]
-      .map((a) => `https://images.unsplash.com/${src}?auto=format&fit=crop&w=${a}&q=72 ${a}w`)
-      .join(', ');
+    principal.src = foto(src, 1000);
+
+    /* Una foto propia no tiene srcset: se sirve tal cual, porque no
+       hay servicio de recorte detrás. Ahí el atributo hay que
+       BORRARLO, no asignarle nada — `img.srcset = undefined` deja la
+       cadena literal «undefined» y el navegador sale a buscar un
+       archivo con ese nombre. Es el mismo error de una línea que
+       acabamos de arreglar, disfrazado. */
+    const conjunto = srcset(src);
+    if (conjunto) principal.srcset = conjunto;
+    else principal.removeAttribute('srcset');
+
     principal.alt = tira.dataset.alt ?? '';
     for (const t of tiras) t.removeAttribute('aria-current');
     tira.setAttribute('aria-current', 'true');

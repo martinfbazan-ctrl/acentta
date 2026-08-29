@@ -46,7 +46,4 @@ plazoEnvio:
 rating: 4.1
 cantidadOpiniones: 45
 badges: []
-crossSell:
-  - p12
-  - p13
-  - p11
+crossSell: []

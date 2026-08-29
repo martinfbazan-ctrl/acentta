@@ -71,6 +71,23 @@ export interface Pedido {
   /** Se carga a mano cuando el proveedor despacha. Es lo único que
    *  gana un contracargo. */
   seguimiento?: string;
+
+  /**
+   * Número del comprobante emitido en ARCA, cuando ya se facturó.
+   *
+   * La factura se emite a mano desde Comprobantes en línea, que es
+   * gratis y oficial. El sitio no la emite ni la consulta: se limita
+   * a llevar la cuenta de qué falta facturar, que es el trabajo que
+   * de otro modo se hace de memoria.
+   *
+   * Es un texto libre a propósito y no un número: acá entra
+   * `0001-00000012` como lo escribe ARCA, que es lo que después hay
+   * que poder buscar. Que exista este campo es lo que convierte un
+   * pedido en «ya facturado»; no hay un estado aparte, porque un
+   * estado que se pone a mano y no representa nada verificable es un
+   * estado que miente en cuanto alguien se olvida de tocarlo.
+   */
+  comprobante?: string;
 }
 
 /**

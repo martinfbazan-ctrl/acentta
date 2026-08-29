@@ -55,6 +55,7 @@ export const GET: APIRoute = async ({ request }) => {
       pagoId: p.pagoId ?? null,
       detallePago: p.detallePago ?? null,
       seguimiento: p.seguimiento ?? null,
+      comprobante: p.comprobante ?? null,
       comprador: p.comprador,
       entrega: p.entrega,
       items: p.cotizacion.lineas.map((l) => ({
@@ -97,6 +98,30 @@ export const POST: APIRoute = async ({ request, url }) => {
 
   /* ---- De acá en adelante, hace falta sesión ---- */
   if (!(await autorizado(request))) return json({ error: 'Sesión no válida.' }, 401);
+
+  /* ---- Cargar el número de comprobante ----
+
+     La factura se emite a mano en ARCA. Acá sólo se anota cuál se
+     emitió para este pedido, que es lo que saca al pedido de la lista
+     de pendientes. Va aparte del seguimiento porque son dos tareas
+     distintas que se hacen en momentos distintos: se factura al
+     cobrar, se despacha después. */
+  if (accion === 'comprobante') {
+    let cuerpo: { numero?: string; comprobante?: string };
+    try { cuerpo = (await request.json()) as typeof cuerpo; } catch { return json({ error: 'Pedido mal formado.' }, 400); }
+
+    const numero = String(cuerpo.numero ?? '').trim().toUpperCase();
+    if (!/^AC-\d{6}-[A-Z0-9]{6}$/.test(numero)) return json({ error: 'Número de pedido inválido.' }, 400);
+
+    /* Vacío borra la anotación: sirve para deshacer un tipeo, y es
+       preferible a que el único camino sea dejar un número falso. */
+    const comprobante = String(cuerpo.comprobante ?? '').trim().slice(0, 40);
+
+    const actualizado = await actualizarPedido(numero, { comprobante: comprobante || undefined });
+    if (!actualizado) return json({ error: 'No encontramos ese pedido.' }, 404);
+
+    return json({ ok: true, numero, comprobante: actualizado.comprobante ?? null });
+  }
 
   /* ---- Cargar el número de seguimiento ---- */
   if (accion === 'seguimiento') {

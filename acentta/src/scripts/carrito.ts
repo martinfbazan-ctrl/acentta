@@ -13,6 +13,7 @@ import {
   type ItemCarrito,
 } from '@lib/carrito';
 import { precio as fPrecio, estadoEnvioGratis } from '@lib/formato';
+import { foto } from '@lib/imagenes';
 import { UMBRAL_ENVIO_GRATIS } from '@tipos/catalogo';
 
 const sinMovimiento = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -92,7 +93,7 @@ function pintarMini(items: ItemCarrito[]) {
 
   lista.innerHTML = items.map((i) => `
     <article class="mini-item">
-      <img class="mini-item__foto" src="https://images.unsplash.com/${i.imagen}?auto=format&fit=crop&w=200&q=72" alt="" width="68" height="85" loading="lazy" />
+      <img class="mini-item__foto" src="${foto(i.imagen, 200)}" alt="" width="68" height="85" loading="lazy" />
       <div class="mini-item__datos">
         <p class="mini-item__nombre"><a href="/producto/${i.slug}">${i.nombre}</a></p>
         ${i.variante ? `<p class="mini-item__variante">${i.variante}</p>` : ''}

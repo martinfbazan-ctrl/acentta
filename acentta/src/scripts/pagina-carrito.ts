@@ -8,6 +8,7 @@ import {
   type ItemCarrito,
 } from '@lib/carrito';
 import { precio as fPrecio, cuota, estadoEnvioGratis } from '@lib/formato';
+import { foto } from '@lib/imagenes';
 import { normalizarCP } from '@lib/envio';
 import { UMBRAL_ENVIO_GRATIS } from '@tipos/catalogo';
 import { mostrarAviso } from './carrito';
@@ -28,7 +29,7 @@ if (carro) {
       const pocoStock = i.stockMax <= 5;
       return `
       <article class="carro-item">
-        <img class="carro-item__foto" src="https://images.unsplash.com/${i.imagen}?auto=format&fit=crop&w=250&q=72" alt="" width="96" height="120" loading="lazy" />
+        <img class="carro-item__foto" src="${foto(i.imagen, 250)}" alt="" width="96" height="120" loading="lazy" />
         <div class="carro-item__datos">
           <p class="carro-item__nombre"><a href="/producto/${i.slug}">${i.nombre}</a></p>
           ${i.variante ? `<p class="carro-item__variante">${i.variante}</p>` : ''}

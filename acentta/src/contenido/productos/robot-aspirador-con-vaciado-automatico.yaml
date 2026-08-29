@@ -56,7 +56,4 @@ unidadesVendidas: 189
 badges:
   - oferta
   - mas_vendido
-crossSell:
-  - p29
-  - p20
-  - p36
+crossSell: []

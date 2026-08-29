@@ -2,6 +2,7 @@
 
 import { leerPedido, estadoActual, fechaDePaso, PASOS, ESTADOS, type EstadoPedido, type PedidoGuardado } from '@lib/pedido';
 import { precio as fPrecio, fechaLarga, rangoDeEntrega } from '@lib/formato';
+import { foto } from '@lib/imagenes';
 
 const forma = document.querySelector<HTMLFormElement>('[data-seguimiento-forma]');
 
@@ -46,7 +47,7 @@ if (forma) {
     /* Productos */
     document.querySelector<HTMLElement>('[data-sg-items]')!.innerHTML = pedido.items.map((i) => `
       <article class="sg-item">
-        <img class="sg-item__foto" src="https://images.unsplash.com/${i.imagen}?auto=format&fit=crop&w=200&q=72" alt="" width="64" height="80" loading="lazy" />
+        <img class="sg-item__foto" src="${foto(i.imagen, 200)}" alt="" width="64" height="80" loading="lazy" />
         <div class="sg-item__datos">
           <p class="sg-item__nombre"><a href="/producto/${i.slug}">${i.nombre}</a></p>
           <p class="sg-item__meta">${i.variante ? i.variante + ' · ' : ''}${i.cantidad} u.</p>

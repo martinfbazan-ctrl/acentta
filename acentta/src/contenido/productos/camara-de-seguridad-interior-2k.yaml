@@ -55,7 +55,4 @@ cantidadOpiniones: 167
 unidadesVendidas: 231
 badges:
   - oferta
-crossSell:
-  - p33
-  - p34
-  - p36
+crossSell: []

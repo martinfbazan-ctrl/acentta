@@ -46,7 +46,4 @@ rating: 4.3
 cantidadOpiniones: 37
 badges:
   - oferta
-crossSell:
-  - p12
-  - p06
-  - p05
+crossSell: []
