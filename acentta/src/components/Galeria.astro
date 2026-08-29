@@ -51,7 +51,7 @@ const unaSola = imagenes.length === 1;
             aria-label={`Ver foto ${i + 1} de ${imagenes.length}`}
             aria-current={i === 0 ? 'true' : undefined}
           >
-            <img src={foto(img.src, 200)} alt="" width="100" height="125" loading="lazy" decoding="async" />
+            <img src={foto(img.src, 200)} alt="" width="100" height="100" loading="lazy" decoding="async" />
           </button>
         </li>
       ))}
@@ -66,10 +66,36 @@ const unaSola = imagenes.length === 1;
       <path d="M5 5l10 10M15 5L5 15" stroke-linecap="round" />
     </svg>
   </button>
+  {/* Las flechas sólo tienen sentido con más de una foto. Con una
+      sola serían dos botones que no hacen nada, y un lector de
+      pantalla los anunciaría igual. */}
+  {imagenes.length > 1 && (
+    <>
+      <button class="zoom__paso zoom__paso--antes" type="button" data-zoom-antes aria-label="Foto anterior">
+        <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M15 5l-7 7 7 7" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </button>
+      <button class="zoom__paso zoom__paso--despues" type="button" data-zoom-despues aria-label="Foto siguiente">
+        <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M9 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </button>
+    </>
+  )}
+
   <!-- Sin src: un src vacío hace que algunos navegadores pidan la
        propia página como si fuera una imagen. La fuente y el texto
        alternativo los pone el guion al abrir el zoom. -->
   <img class="zoom__foto" data-zoom-foto alt="" />
+
+  {imagenes.length > 1 && (
+    /* «2 de 4». Sin esto no hay forma de saber cuántas faltan, y la
+       flecha parece que no hace nada cuando la foto siguiente se
+       parece a la anterior — que con fotos de producto pasa siempre.
+       `aria-live` lo anuncia al cambiar, para quien no ve la foto. */
+    <p class="zoom__cuenta tabular" data-zoom-cuenta aria-live="polite"></p>
+  )}
 </dialog>
 
 <style>
@@ -84,26 +110,21 @@ const unaSola = imagenes.length === 1;
   }
   .galeria__foto {
     width: 100%;
-    aspect-ratio: 4 / 5;
+    aspect-ratio: var(--proporcion-producto);
     object-fit: cover;
     display: block;
   }
 
-  /* En una pantalla angosta, 4/5 a todo el ancho da una foto de más
-     de 440 px de alto. Sumada al encabezado y a las miniaturas, el
-     precio queda debajo del pliegue y hay que bajar para saber cuánto
-     sale — en la pantalla donde se decide la compra.
+  /* Antes acá había una excepción para móvil: la foto pasaba de 4/5 a
+     cuadrada porque a todo el ancho daba más de 440 px de alto y
+     empujaba el precio debajo del pliegue, en la pantalla donde se
+     decide la compra.
 
-     Pasa a cuadrada, que es la proporción que usan las tiendas en
-     móvil por este mismo motivo, y las miniaturas se achican. Se
-     recuperan unos 110 px: alcanza para que el nombre y el precio
-     entren sin bajar. La foto sigue completa a un toque, en el zoom.
-
-     Sólo por debajo de 900, que es donde la ficha es de una columna.
-     En escritorio la galería queda al lado del precio y el alto no
-     compite con nada. */
+     Esa excepción ya no hace falta: al pasar todo el sitio a fotos
+     cuadradas, el móvil quedó como estaba y el escritorio ganó lo
+     mismo. Lo que sí se mantiene es achicar las miniaturas, que es
+     de donde salen los últimos píxeles. */
   @media (max-width: 899px) {
-    .galeria__foto { aspect-ratio: 1 / 1; }
     .galeria { gap: var(--e-2); }
     .galeria__tira { width: 52px; }
   }
@@ -143,7 +164,7 @@ const unaSola = imagenes.length === 1;
     cursor: pointer;
     transition: border-color var(--v-rapido) var(--curva);
   }
-  .galeria__tira img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; display: block; }
+  .galeria__tira img { width: 100%; aspect-ratio: var(--proporcion-producto); object-fit: cover; display: block; }
   .galeria__tira:hover { border-color: var(--gris-500); }
   .galeria__tira[aria-current='true'] { border-color: var(--tinta); }
 
@@ -160,6 +181,54 @@ const unaSola = imagenes.length === 1;
   }
   .zoom::backdrop { background: rgba(28, 24, 20, .78); backdrop-filter: blur(3px); }
   .zoom__foto { display: block; width: 100%; height: auto; max-height: 94vh; object-fit: contain; }
+
+  /* Las flechas van sobre la foto, centradas verticalmente y pegadas
+     a cada borde. Fondo propio y no transparentes: una flecha blanca
+     sobre una foto de producto blanca desaparece, y con fotos de
+     catálogo el fondo blanco es la regla y no la excepción. */
+  .zoom__paso {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    /* 44 px es el mínimo táctil. No es un número de diseño: es lo que
+       mide la yema de un pulgar y lo que pide la norma. */
+    width: 44px; height: 44px;
+    display: grid; place-items: center;
+    background: var(--papel);
+    border: 1px solid var(--gris-200);
+    border-radius: 50%;
+    color: var(--tinta);
+    cursor: pointer;
+    z-index: 1;
+    box-shadow: var(--sombra-1);
+  }
+  .zoom__paso--antes { left: var(--e-3); }
+  .zoom__paso--despues { right: var(--e-3); }
+  .zoom__paso:hover { background: var(--gris-050); }
+
+  .zoom__cuenta {
+    position: absolute;
+    bottom: var(--e-3);
+    left: 50%;
+    transform: translateX(-50%);
+    margin: 0;
+    padding: var(--e-1) var(--e-3);
+    background: var(--papel);
+    border: 1px solid var(--gris-200);
+    border-radius: var(--r-badge);
+    font-size: 0.8125rem;
+    /* --gris-800 y no un gris más claro: 9,3:1 contra el fondo. Es
+       texto chico sobre un panel claro y tiene que leerse. */
+    color: var(--gris-800);
+  }
+
+  /* En móvil el botón de cerrar y la flecha derecha se pisan: la
+     flecha baja para dejarle el ángulo libre. */
+  @media (max-width: 599px) {
+    .zoom__paso { width: 40px; height: 40px; }
+    .zoom__paso--antes { left: var(--e-2); }
+    .zoom__paso--despues { right: var(--e-2); }
+  }
   .zoom__cerrar {
     position: absolute;
     top: var(--e-3); right: var(--e-3);

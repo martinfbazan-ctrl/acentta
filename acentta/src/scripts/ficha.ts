@@ -21,10 +21,18 @@ if (galeria) {
   const tiras = [...galeria.querySelectorAll<HTMLButtonElement>('.galeria__tira')];
   const zoom = document.querySelector<HTMLDialogElement>('[data-zoom]');
   const zoomFoto = document.querySelector<HTMLImageElement>('[data-zoom-foto]');
+  const zoomCuenta = document.querySelector<HTMLElement>('[data-zoom-cuenta]');
+
+  /* Cuál se está viendo. Una sola variable para la galería y para el
+     zoom: si fueran dos, cerrar el zoom en la foto 3 devolvería a la
+     página mostrando la 1, y esa desincronización es de las que nadie
+     reporta como error pero deja la sensación de que algo falla. */
+  let actual = 0;
 
   const mostrar = (indice: number) => {
     const tira = tiras[indice];
     if (!tira) return;
+    actual = indice;
     const src = tira.dataset.src!;
 
     /* [ERROR CORREGIDO] Acá había una segunda copia de cómo se arma
@@ -83,12 +91,73 @@ if (galeria) {
   });
 
   if (zoom && zoomFoto) {
+    /**
+     * Pinta el zoom con la foto que corresponda.
+     *
+     * Mueve también la galería de atrás con `mostrar()`. Es a
+     * propósito: al cerrar, la página queda en la foto que se estaba
+     * mirando, no en la que se abrió. Lo contrario es un salto que
+     * hace dudar de si el clic hizo algo.
+     *
+     * Se piden 1600 px y no la que está en pantalla: el zoom existe
+     * justamente para ver detalle, y reutilizar la versión chica de
+     * la galería sería ampliar una foto ya reducida.
+     */
+    const pintarZoom = (indice: number) => {
+      const tira = tiras[indice];
+      if (!tira) return;
+      mostrar(indice);
+
+      const src = tira.dataset.src!;
+      zoomFoto.src = foto(src, 1600);
+      const conjunto = srcset(src);
+      if (conjunto) zoomFoto.srcset = conjunto;
+      else zoomFoto.removeAttribute('srcset');
+      zoomFoto.alt = tira.dataset.alt ?? '';
+
+      if (zoomCuenta) zoomCuenta.textContent = `${indice + 1} de ${tiras.length}`;
+    };
+
+    /* El resto se calcula con módulo: de la última se pasa a la
+       primera. Un carrusel que se planta en la punta obliga a
+       retroceder una por una para volver, y nadie lo hace. */
+    const correr = (paso: number) => pintarZoom((actual + paso + tiras.length) % tiras.length);
+
     document.querySelector('[data-abrir-zoom]')?.addEventListener('click', () => {
-      zoomFoto.src = principal.currentSrc || principal.src;
-      zoomFoto.alt = principal.alt;
+      pintarZoom(actual);
       zoom.showModal();
     });
     document.querySelector('[data-cerrar-zoom]')?.addEventListener('click', () => zoom.close());
+    document.querySelector('[data-zoom-antes]')?.addEventListener('click', () => correr(-1));
+    document.querySelector('[data-zoom-despues]')?.addEventListener('click', () => correr(1));
+
+    /* Las flechas del teclado, que es como se recorre una galería
+       abierta a pantalla completa. Escape ya lo cierra solo: es
+       comportamiento propio de <dialog> y no hay que programarlo. */
+    zoom.addEventListener('keydown', (e) => {
+      if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+      e.preventDefault();
+      correr(e.key === 'ArrowRight' ? 1 : -1);
+    });
+
+    /* Y el gesto de arrastrar, que en un teléfono es lo primero que
+       intenta cualquiera frente a una foto abierta. Se exige un
+       desplazamiento horizontal claro y mayor que el vertical: sin
+       eso, un intento de desplazar la página cambia de foto sin
+       querer. */
+    let inicioX = 0;
+    let inicioY = 0;
+    zoom.addEventListener('touchstart', (e) => {
+      inicioX = e.changedTouches[0]!.clientX;
+      inicioY = e.changedTouches[0]!.clientY;
+    }, { passive: true });
+    zoom.addEventListener('touchend', (e) => {
+      const dx = e.changedTouches[0]!.clientX - inicioX;
+      const dy = e.changedTouches[0]!.clientY - inicioY;
+      if (Math.abs(dx) < 45 || Math.abs(dx) <= Math.abs(dy)) return;
+      correr(dx < 0 ? 1 : -1);
+    }, { passive: true });
+
     /* Clic en el fondo cierra: el diálogo ocupa sólo la foto, así que
        cualquier clic fuera de ella cae en el propio <dialog>. */
     zoom.addEventListener('click', (e) => { if (e.target === zoom) zoom.close(); });

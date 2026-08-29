@@ -29,7 +29,7 @@ if (carro) {
       const pocoStock = i.stockMax <= 5;
       return `
       <article class="carro-item">
-        <img class="carro-item__foto" src="${foto(i.imagen, 250)}" alt="" width="96" height="120" loading="lazy" />
+        <img class="carro-item__foto" src="${foto(i.imagen, 250)}" alt="" width="96" height="96" loading="lazy" />
         <div class="carro-item__datos">
           <p class="carro-item__nombre"><a href="/producto/${i.slug}">${i.nombre}</a></p>
           ${i.variante ? `<p class="carro-item__variante">${i.variante}</p>` : ''}

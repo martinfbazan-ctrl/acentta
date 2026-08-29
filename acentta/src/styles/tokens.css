@@ -95,6 +95,25 @@
   --r-badge: 4px;
   --r-tarjeta: 10px;
   --r-modal: 16px;
+
+  /**
+   * La proporción de toda foto de producto del sitio.
+   *
+   * Estaba escrita como `4 / 5` en siete lugares —la tarjeta, la
+   * galería, las miniaturas, el esqueleto de carga, el bento de la
+   * home y las cuatro listas de items del circuito de compra— porque
+   * las fotos provisorias del prototipo eran verticales.
+   *
+   * Las fotos reales de Stanley y Corkcicle son cuadradas, como casi
+   * todas las de catálogo de marca. Con el marco vertical, la foto
+   * cuadrada se recortaba arriba y abajo: se perdía producto.
+   *
+   * Vive acá y no repartida porque cambiarla tiene que ser una
+   * decisión de una línea. El día que el catálogo cambie de forma
+   * otra vez —y va a pasar— se toca este número y el sitio entero
+   * acompaña.
+   */
+  --proporcion-producto: 1 / 1;
   --r-pastilla: 999px;
 
   /* ---------- ELEVACIÓN · dos niveles ----------

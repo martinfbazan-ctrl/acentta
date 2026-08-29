@@ -603,7 +603,7 @@
 
 .skeleton--texto { height: 12px; border-radius: 3px; }
 .skeleton--titulo { height: 18px; border-radius: 3px; width: 70%; }
-.skeleton--imagen { aspect-ratio: 4 / 5; width: 100%; }
+.skeleton--imagen { aspect-ratio: var(--proporcion-producto); width: 100%; }
 .skeleton--boton { height: 44px; width: 140px; }
 
 .skeleton-tarjeta { display: flex; flex-direction: column; gap: var(--e-3); }
@@ -693,7 +693,7 @@
 .ficha-prod__foto {
   width: 100%;
   height: auto;
-  aspect-ratio: 4 / 5;
+  aspect-ratio: var(--proporcion-producto);
   object-fit: cover;
   transition: transform var(--v-lento) var(--curva);
 }

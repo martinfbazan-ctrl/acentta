@@ -81,7 +81,7 @@ function pintarItems(items: PedidoReal['items']) {
   if (!caja) return;
   caja.innerHTML = items.map((i) => `
     <article class="cf-item">
-      <img class="cf-item__foto" src="${foto(i.imagen, 150)}" alt="" width="52" height="65" loading="lazy" />
+      <img class="cf-item__foto" src="${foto(i.imagen, 150)}" alt="" width="52" height="52" loading="lazy" />
       <div class="cf-item__datos">
         <p class="cf-item__nombre">${i.nombre}</p>
         <p class="cf-item__meta">${i.variante ? i.variante + ' · ' : ''}${i.cantidad} u.</p>
