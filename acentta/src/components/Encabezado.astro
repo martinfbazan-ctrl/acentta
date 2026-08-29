@@ -22,11 +22,14 @@ const { items = 0 } = Astro.props;
    base de datos y desastroso para el visitante: una barra de nueve
    enlaces no se lee, se escanea y se abandona. Deco inteligente
    entra como puerta única y adentro se abre en cinco. */
+/* Bazar va primero porque es lo que acentta vende de verdad. El
+   orden de esta lista es una decisión comercial, no alfabética: lo
+   que está a la izquierda es lo que se mira. */
 const categorias = [
+  { nombre: 'Bazar', href: '/bazar' },
   { nombre: 'Iluminación', href: '/categoria/iluminacion' },
   { nombre: 'Textil', href: '/categoria/textil' },
   { nombre: 'Alfombras', href: '/categoria/alfombras' },
-  { nombre: 'Muebles chicos', href: '/categoria/muebles-chicos' },
   { nombre: 'Deco inteligente', href: '/deco-inteligente' },
   { nombre: 'Ofertas', href: '/ofertas', destacado: true },
 ];

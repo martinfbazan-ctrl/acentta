@@ -34,6 +34,10 @@ import { config, fields, collection } from '@keystatic/core';
    propósito: el panel no puede inventar una categoría que el sitio no
    sepa mostrar. */
 const CATEGORIAS = [
+  { label: 'Bazar · Vasos y botellas', value: 'vasos-y-botellas' },
+  { label: 'Bazar · Termos', value: 'termos' },
+  { label: 'Bazar · Mate', value: 'mate' },
+  { label: 'Bazar · Café', value: 'cafe' },
   { label: 'Decoración · Iluminación', value: 'iluminacion' },
   { label: 'Decoración · Textil', value: 'textil' },
   { label: 'Decoración · Alfombras', value: 'alfombras' },
@@ -82,17 +86,18 @@ export default config({
         rubro: fields.select({
           label: 'Rubro',
           options: [
+            { label: 'Bazar', value: 'bazar' },
             { label: 'Decoración', value: 'decoracion' },
             { label: 'Deco inteligente', value: 'deco-inteligente' },
           ],
-          defaultValue: 'decoracion',
+          defaultValue: 'bazar',
         }),
 
         categoria: fields.select({
           label: 'Categoría',
           description: 'Tiene que corresponder al rubro elegido arriba.',
           options: [...CATEGORIAS],
-          defaultValue: 'iluminacion',
+          defaultValue: 'vasos-y-botellas',
         }),
 
         /* ---------- Precio ---------- */

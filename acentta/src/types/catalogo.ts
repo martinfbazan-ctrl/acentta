@@ -12,8 +12,20 @@
  * diferencia entre encontrar el error ahora o descubrirlo en vivo.
  */
 
-/** Rubros del catálogo. El segundo existe para probar que el sistema escala. */
-export type Rubro = 'decoracion' | 'deco-inteligente';
+/**
+ * Rubros del catálogo.
+ *
+ * `bazar` es el que acentta vende de verdad: vasos térmicos,
+ * botellas, termos y mates, con stock propio y despacho propio. Los
+ * otros dos fueron catálogo de demostración mientras se construía el
+ * sitio, y se van a ir cuando haya bazar suficiente para reemplazarlos.
+ *
+ * No se borraron todavía por una razón concreta y no por nostalgia:
+ * las páginas de rubro y la grilla de la home toman la primera foto
+ * de cada categoría, así que un rubro sin productos no queda vacío,
+ * queda roto.
+ */
+export type Rubro = 'bazar' | 'decoracion' | 'deco-inteligente';
 
 /** Subcategorías, agrupadas por rubro. */
 export type CategoriaDecoracion =
@@ -29,7 +41,19 @@ export type CategoriaDecoInteligente =
   | 'seguridad'
   | 'conectividad';
 
-export type Categoria = CategoriaDecoracion | CategoriaDecoInteligente;
+/**
+ * Las categorías de bazar siguen la forma en que la gente busca estas
+ * cosas, no la que usa el fabricante. Stanley las agrupa por
+ * «hidratación»; nadie escribe eso en un buscador. Escribe «vaso
+ * térmico», «botella» o «termo».
+ */
+export type CategoriaBazar =
+  | 'vasos-y-botellas'
+  | 'termos'
+  | 'mate'
+  | 'cafe';
+
+export type Categoria = CategoriaDecoracion | CategoriaDecoInteligente | CategoriaBazar;
 
 /**
  * Estados que puede tener un producto en la grilla.

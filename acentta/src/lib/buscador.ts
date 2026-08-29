@@ -56,6 +56,9 @@ const SINONIMOS: Record<string, string> = {
 
 /** Términos por rubro, para que "inteligente" o "smart" encuentren algo. */
 const SINONIMOS_RUBRO: Record<string, string> = {
+  /* Marcas y palabras de uso, no sólo el nombre del rubro. La gente
+     busca «stanley» o «vaso termico», nunca «bazar». */
+  bazar: 'bazar stanley coleman termico termica vaso vasos botella botellas termo termos mate cuencher quencher acero inoxidable',
   decoracion: 'decoracion deco hogar casa ambiente living dormitorio comedor',
   'deco-inteligente': 'deco inteligente smart tecnologia electronica domotica automatico enchufe',
 };

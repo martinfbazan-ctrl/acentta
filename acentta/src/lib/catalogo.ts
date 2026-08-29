@@ -128,6 +128,10 @@ export interface ResumenCategoria {
 }
 
 const NOMBRES_CATEGORIA: Record<string, { nombre: string; descripcion: string }> = {
+  'vasos-y-botellas': { nombre: 'Vasos y botellas', descripcion: 'Térmicos, con manija y sorbete' },
+  termos: { nombre: 'Termos', descripcion: 'Para el mate y para el viaje' },
+  mate: { nombre: 'Mate', descripcion: 'Mates, bombillas y yerberas' },
+  cafe: { nombre: 'Café', descripcion: 'Vasos de viaje y cafeteras' },
   iluminacion: { nombre: 'Iluminación', descripcion: 'De pie, de mesa y colgantes' },
   textil: { nombre: 'Textil', descripcion: 'Mesa, sillón y cama' },
   alfombras: { nombre: 'Alfombras', descripcion: 'Lana, kilim y yute' },
@@ -157,23 +161,58 @@ export const CATEGORIAS_DECO_INTELIGENTE: Categoria[] = [
   'conectividad',
 ];
 
+export const CATEGORIAS_BAZAR: Categoria[] = [
+  'vasos-y-botellas',
+  'termos',
+  'mate',
+  'cafe',
+];
+
 export const CATEGORIAS_TODAS: Categoria[] = [
+  ...CATEGORIAS_BAZAR,
   ...CATEGORIAS_DECORACION,
   ...CATEGORIAS_DECO_INTELIGENTE,
 ];
 
-/** A qué rubro pertenece una categoría. Lo usan las migas de pan. */
+/**
+ * A qué rubro pertenece una categoría. Lo usan las migas de pan.
+ *
+ * [ERROR CORREGIDO] Esto era un ternario: «si está en decoración es
+ * decoración, si no es deco inteligente». Con dos rubros funcionaba;
+ * al entrar el tercero, **todo lo de bazar habría pasado a figurar
+ * como deco inteligente**, y no con un error sino con una miga de pan
+ * equivocada en cada ficha de producto.
+ *
+ * Es la clase de defecto que no rompe nada y ensucia todo. Ahora es
+ * un mapa: agregar un rubro obliga a declarar a qué pertenece, y si
+ * una categoría queda sin dueño lo dice.
+ */
+const RUBRO_DE: Record<string, Rubro> = {
+  ...Object.fromEntries(CATEGORIAS_BAZAR.map((c) => [c, 'bazar' as Rubro])),
+  ...Object.fromEntries(CATEGORIAS_DECORACION.map((c) => [c, 'decoracion' as Rubro])),
+  ...Object.fromEntries(CATEGORIAS_DECO_INTELIGENTE.map((c) => [c, 'deco-inteligente' as Rubro])),
+};
+
 export function rubroDeCategoria(c: Categoria): Rubro {
-  return CATEGORIAS_DECORACION.includes(c) ? 'decoracion' : 'deco-inteligente';
+  const r = RUBRO_DE[c];
+  if (!r) throw new Error(`La categoría «${c}» no está asignada a ningún rubro.`);
+  return r;
 }
 
 export const NOMBRE_RUBRO: Record<Rubro, string> = {
+  bazar: 'Bazar',
   decoracion: 'Decoración',
   'deco-inteligente': 'Deco inteligente',
 };
 
 function resumir(claves: Categoria[]): ResumenCategoria[] {
-  return claves.map((clave) => {
+  /* Una categoría sin productos no se muestra.
+     Antes esto tomaba `items[0]!` directamente y una categoría vacía
+     no dejaba una tarjeta vacía: tiraba la página entera. Mientras
+     todas las categorías tenían productos el defecto no existía; al
+     abrir bazar con una sola categoría cargada, sí. Un catálogo en
+     construcción es el estado normal de un catálogo, no un caso raro. */
+  return claves.filter((c) => porCategoria(c).length > 0).map((clave) => {
     const items = porCategoria(clave);
     const primera = items[0]!;
     return {
@@ -185,6 +224,10 @@ function resumir(claves: Categoria[]): ResumenCategoria[] {
       imagen: { src: primera.imagenes[0]!.src, alt: primera.imagenes[0]!.alt },
     };
   });
+}
+
+export function categoriasDeBazar(): ResumenCategoria[] {
+  return resumir(CATEGORIAS_BAZAR);
 }
 
 export function categoriasDeDecoracion(): ResumenCategoria[] {
