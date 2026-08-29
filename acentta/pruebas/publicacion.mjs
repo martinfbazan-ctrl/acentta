@@ -246,6 +246,59 @@ ok(vercel.trailingSlash === false,
   }
 }
 
+/* ============================================================
+   7 · Todo producto nombrado a mano existe en el catálogo
+   ------------------------------------------------------------
+   Varias páginas piden un producto puntual por su dirección para
+   armar el hero, la portada del caso de estudio o los ejemplos del
+   sistema de diseño, y lo hacen con `!`:
+
+       const arco = porSlug('lampara-de-pie-arco')!;
+
+   Ese signo le promete al compilador que el producto existe. La
+   promesa vale hasta que alguien edita el catálogo. El día que se
+   recortó, tres promesas se volvieron falsas y el sitio dejó de
+   compilar con un «Cannot read properties of undefined» que no
+   menciona ni el producto ni el catálogo: hay que ir a buscarlo.
+
+   Esta comprobación convierte ese rastro de pila en una línea que
+   dice qué archivo nombra qué producto inexistente. Y corre sin
+   construir nada, así que avisa antes.
+   ============================================================ */
+{
+  const dirProductos = path.join(RAIZ, 'src', 'contenido', 'productos');
+  const existentes = new Set(
+    fs.readdirSync(dirProductos)
+      .filter((f) => f.endsWith('.yaml'))
+      .map((f) => f.replace(/\.yaml$/, '')),
+  );
+
+  const recorrer = (dir) => fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
+    const completo = path.join(dir, e.name);
+    if (e.isDirectory()) return recorrer(completo);
+    return /\.(ts|astro)$/.test(e.name) ? [completo] : [];
+  });
+
+  for (const archivo of recorrer(path.join(RAIZ, 'src'))) {
+    const relativo = path.relative(RAIZ, archivo);
+    for (const linea of fs.readFileSync(archivo, 'utf8').split('\n')) {
+      /* Los comentarios se saltean: varios explican justamente este
+         error y nombran el producto que ya no está. Documentar un
+         defecto no puede contar como cometerlo. */
+      const limpia = linea.trim();
+      if (limpia.startsWith('*') || limpia.startsWith('//') || limpia.startsWith('/*')) continue;
+
+      for (const m of linea.matchAll(/porSlug\(\s*'([^']+)'/g)) {
+        if (!existentes.has(m[1])) {
+          fallos.push(
+            `${relativo} nombra el producto «${m[1]}», que ya no está en el catálogo`,
+          );
+        }
+      }
+    }
+  }
+}
+
 /* ============================================================ */
 console.log('\n=== LISTO PARA PUBLICAR ===');
 console.log(`  ${TODAS.length} páginas revisadas`);

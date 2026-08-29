@@ -73,8 +73,20 @@ const entrega = rangoDeEntrega(5, 9);
  */
 const catalogo = todos();
 
-/** El primero que cumpla, o nada. Nunca revienta. */
-const buscar = (condicion: (p: Producto) => boolean) => catalogo.find(condicion);
+/**
+ * El primero que cumpla y que no se haya usado ya, o nada.
+ *
+ * Nunca revienta, y no repite: con un catálogo chico, dos condiciones
+ * distintas caen fácil en el mismo producto —el agotado también suele
+ * ser el más barato— y una página que documenta seis casos mostrando
+ * dos veces la misma tarjeta documenta cinco.
+ */
+const usados = new Set<string>();
+const buscar = (condicion: (p: Producto) => boolean) => {
+  const p = catalogo.find((x) => !usados.has(x.id) && condicion(x));
+  if (p) usados.add(p.id);
+  return p;
+};
 
 const bordes = [
   {
@@ -551,18 +563,22 @@ const bordes = [
         son los productos del catálogo que efectivamente tienen cada problema.
       </p>
 
+      {/* Se recorren las que hay, sin nombrar posiciones. Con índices
+          fijos, un catálogo más chico que los seis casos volvía a
+          romper la página — que es justamente el defecto que se acaba
+          de arreglar más arriba. */}
       <div class="grilla-productos" style="margin-bottom:24px">
-        {bordes.slice(0, 3).map((b) => <TarjetaProducto producto={b.p} />)}
-        <TarjetaProducto producto={bordes[3]!.p} />
+        {bordes.slice(0, 4).map((b) => <TarjetaProducto producto={b.p} />)}
       </div>
       <ul class="notas-borde">
         {bordes.slice(0, 4).map((b) => <li><b>{b.p.nombre.slice(0, 28)}…</b> {b.nota}</li>)}
       </ul>
 
-      <div class="grilla-productos" style="margin:24px 0">
-        <TarjetaProducto producto={bordes[4]!.p} />
-        <TarjetaProducto producto={bordes[5]!.p} />
-      </div>
+      {bordes.length > 4 && (
+        <div class="grilla-productos" style="margin:24px 0">
+          {bordes.slice(4).map((b) => <TarjetaProducto producto={b.p} />)}
+        </div>
+      )}
 
       <div class="aclaracion">
         <p><b>Tres decisiones de la tarjeta.</b></p>

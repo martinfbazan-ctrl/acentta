@@ -30,27 +30,50 @@ import {
   HERO_MOVIL, HERO_ESCRITORIO, CORTE_HERO,
 } from '@lib/imagenes';
 import { precio, rangoDeEntrega } from '@lib/formato';
-import { porSlug, enOferta, ahorroEnPorcentaje } from '@lib/catalogo';
+import { porSlug, todos, enOferta, ahorroEnPorcentaje } from '@lib/catalogo';
+import type { Producto } from '@tipos/catalogo';
 import { IMAGEN_HERO } from '@lib/hero';
 
-const arco = porSlug('lampara-de-pie-arco')!;
-const alfombra = porSlug('alfombra-bereber-trenzada-160x230')!;
-const proyector = porSlug('proyector-de-cielo-estrellado-aurora')!;
-const robot = porSlug('robot-aspirador-con-vaciado-automatico')!;
+/**
+ * [ERROR CORREGIDO] Estos cuatro se pedían por su dirección con `!`:
+ *
+ *     const proyector = porSlug('proyector-de-cielo-estrellado-aurora')!;
+ *
+ * El `!` le promete al compilador que el producto existe. Cuando el
+ * catálogo se recortó, ese proyector dejó de existir y la promesa se
+ * volvió falsa: el chequeo de tipos siguió pasando —se lo habíamos
+ * prohibido mirar— y el hero iba a reventar al construir la home.
+ * No llegó a hacerlo sólo porque el build murió antes en otra página
+ * con exactamente el mismo defecto.
+ *
+ * Ahora se pide por dirección y, si no está, se cae a cualquier
+ * producto de la categoría. Y la lámina cuyo producto no aparezca se
+ * saca del carrusel en lugar de romper la página: un hero con tres
+ * láminas es un hero; un hero que no compila no es nada.
+ */
+const deCategoria = (c: Producto['categoria']) => todos().find((p) => p.categoria === c);
 
-/* Los dos descuentos salen del catálogo, no están escritos a mano:
-   si cambia un precio, cambia el titular solo. */
-const maxDescuento = ahorroEnPorcentaje(enOferta(1)[0]!);
-const descuentoRobot = ahorroEnPorcentaje(robot);
+const arco = porSlug('lampara-de-pie-arco') ?? deCategoria('iluminacion');
+const alfombra = porSlug('alfombra-bereber-trenzada-160x230') ?? deCategoria('alfombras');
+const proyector = deCategoria('proyectores');
+const robot = deCategoria('limpieza');
+
+/* Los descuentos salen del catálogo, no están escritos a mano: si
+   cambia un precio, cambia el titular solo. Y si algún día no hay
+   nada en oferta, esto da cero en vez de reventar. */
+const ofertas = enOferta(1);
+const maxDescuento = ofertas.length ? ahorroEnPorcentaje(ofertas[0]!) : 0;
+const descuentoRobot = robot ? ahorroEnPorcentaje(robot) : 0;
 
 const laminas = [
   /* ---- Decoración ---- */
   {
     etiqueta: 'Iluminación',
     titulo: 'Enciende el ambiente,<br />no la habitación',
-    bajada: `Lámparas que arman un rincón en lugar de alumbrar un cuarto entero. Si te llevas la de arco, llega ${rangoDeEntrega(arco.plazoEnvio.min, arco.plazoEnvio.max)}.`,
+    bajada: `Lámparas que arman un rincón en lugar de alumbrar un cuarto entero. Si te llevas la de arco, llega ${arco ? rangoDeEntrega(arco.plazoEnvio.min, arco.plazoEnvio.max) : 'en pocos días'}.`,
     principal: { texto: 'Ver iluminación', href: '/categoria/iluminacion' },
-    secundario: { texto: 'Ver la lámpara de arco', href: `/producto/${arco.slug}` },
+    secundario: { texto: 'Ver la lámpara de arco', href: `/producto/${arco?.slug ?? ''}` },
+    producto: arco,
     /* Definida en @lib/hero para que el layout pueda precargarla. */
     imagen: IMAGEN_HERO,
   },
@@ -60,7 +83,8 @@ const laminas = [
     bajada: `Una alfombra delimita un ambiente mejor que una pared, y se puede mover. Lana, kilim y yute desde ${precio(41200)}. Hasta ${maxDescuento} % menos, sin precios inflados para simular la rebaja.`,
     principal: { texto: 'Ver alfombras', href: '/categoria/alfombras' },
     secundario: { texto: 'Ver ofertas', href: '/ofertas' },
-    imagen: alfombra.imagenes[1]!,
+    imagen: alfombra?.imagenes[1] ?? alfombra?.imagenes[0],
+    producto: alfombra,
   },
 
   /* ---- Deco inteligente ---- */
@@ -69,8 +93,11 @@ const laminas = [
     titulo: 'Un cielo entero<br />con un solo enchufe',
     bajada: 'Proyectores y veladores que cambian el cuarto apagando el resto de las luces. Se programan desde el teléfono y se apagan solos a la hora que les digas.',
     principal: { texto: 'Ver proyectores', href: '/categoria/proyectores' },
-    secundario: { texto: 'Ver el Aurora', href: `/producto/${proyector.slug}` },
-    imagen: proyector.imagenes[0]!,
+    /* El texto sale del nombre del producto y no escrito a mano: si
+       mañana el proyector es otro, el botón no miente. */
+    secundario: { texto: proyector ? `Ver el ${proyector.nombre.split(' ').slice(-1)[0]}` : 'Ver proyectores', href: `/producto/${proyector?.slug ?? ''}` },
+    imagen: proyector?.imagenes[0],
+    producto: proyector,
   },
   {
     etiqueta: 'Deco inteligente · Limpieza',
@@ -78,9 +105,13 @@ const laminas = [
     bajada: `Robots que aspiran, pasan el trapo y vuelven solos a la base. El de vaciado automático está ${descuentoRobot} % menos y el envío se calcula antes de pagar.`,
     principal: { texto: 'Ver Deco inteligente', href: '/deco-inteligente' },
     secundario: { texto: 'Cómo funciona el envío', href: '/envios' },
-    imagen: robot.imagenes[0]!,
+    imagen: robot?.imagenes[0],
+    producto: robot,
   },
-];
+]
+  /* La lámina cuyo producto ya no está en el catálogo se va. */
+  .filter((l) => l.producto && l.imagen)
+  .map(({ producto: _p, ...l }) => ({ ...l, imagen: l.imagen! }));
 ---
 
 <section
