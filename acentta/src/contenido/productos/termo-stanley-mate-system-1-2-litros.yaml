@@ -68,8 +68,6 @@ especificaciones:
     valor: Si
   - clave: Peso
     valor: 950 gr
-  - clave: Dimensiones
-    valor: 32,8 cm x 10.8 cm
 dimensiones:
   alto: 328
   ancho: 108
