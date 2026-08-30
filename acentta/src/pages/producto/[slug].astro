@@ -285,7 +285,47 @@ const esquema = {
     grid-template-columns: minmax(0, 1fr); gap: var(--e-8); }
   @media (min-width: 900px) {
     .ficha__cuerpo { grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: var(--e-16); }
-    .ficha__galeria { position: sticky; top: var(--e-24); align-self: start; }
+
+    /* [ERROR CORREGIDO] La galería se quedaba pegada arriba y se veía
+       cortada por abajo al bajar la página.
+     *
+     * La causa: `position: sticky` con `top` fija el borde SUPERIOR.
+     * Si el elemento es más alto que la pantalla —y acá lo era: foto
+     * cuadrada a 620 px de ancho más la fila de miniaturas, contra
+     * un portátil de 800 px de alto menos los 96 px de `top` menos
+     * el encabezado— su parte de abajo queda permanentemente fuera
+     * de la vista. No es que se corte al scrollear: nunca se pudo
+     * ver, y al fijarse arriba deja de acompañar el scroll y parece
+     * que se trabó.
+     *
+     * Es el mismo defecto que tuvo la tarjeta del carrito, y por la
+     * misma razón. Se resuelve igual: la galería nunca puede ser más
+     * alta que lo que queda de pantalla.
+     *
+     * `top` baja de 96 a 24 px, que es aire suficiente y devuelve
+     * 72 px de alto útil. */
+    .ficha__galeria {
+      position: sticky;
+      top: var(--e-6);
+      align-self: start;
+      max-height: calc(100vh - var(--e-6) - var(--e-4));
+      /* Que el bloque respete ese tope achicando la foto, en vez de
+         desbordarlo. Sin esto el `max-height` no hace nada visible:
+         el contenido se sale igual. */
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    /* La foto cede primero; las miniaturas conservan su alto. */
+    .ficha__galeria :global(.galeria) { min-height: 0; height: 100%; }
+    .ficha__galeria :global(.galeria__marco) { min-height: 0; }
+    .ficha__galeria :global(.galeria__foto) {
+      height: 100%;
+      /* La proporción deja de mandar cuando la pantalla es el límite:
+         `contain` mantiene el producto entero y centrado dentro del
+         alto disponible. */
+      aspect-ratio: auto;
+    }
   }
 
   /* ---- Columna de compra ---- */

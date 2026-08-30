@@ -91,11 +91,33 @@ export function novedades(limite = 4): Producto[] {
   return productos.filter((p) => p.badges.includes('nuevo')).slice(0, limite);
 }
 
-/** Cross-sell resuelto: de IDs a productos, salteando los agotados. */
+/**
+ * Cross-sell resuelto, salteando los agotados.
+ *
+ * [ERROR CORREGIDO] Esto resolvía sólo por identificador —`b01`—
+ * mientras el panel titulaba el campo «Dirección del producto», que
+ * es el slug. Quien lo completara como decía la etiqueta cargaba un
+ * dato válido que no resolvía nada: la sección «Completá el ambiente»
+ * simplemente no aparecía, sin ningún error.
+ *
+ * Una etiqueta que pide una cosa y un código que espera otra es un
+ * defecto del que nadie sospecha, porque los dos lados parecen bien
+ * mirados por separado. Ahora se acepta cualquiera de los dos: el
+ * identificador es cómodo para quien conoce el catálogo y la
+ * dirección es la que se lee en la barra del navegador.
+ */
 export function complementos(p: Producto, limite = 3): Producto[] {
   return p.crossSell
-    .map(porId)
+    .map((referencia) => {
+      const limpia = String(referencia ?? '').trim();
+      if (!limpia) return undefined;
+      /* Por si alguien pega la dirección completa del producto. */
+      const slug = limpia.replace(/^https?:\/\/[^/]+/, '').replace(/^\/?producto\//, '').replace(/\/$/, '');
+      return porId(limpia) ?? porSlug(slug) ?? porSlug(limpia);
+    })
     .filter((x): x is Producto => x !== undefined && !estaAgotado(x))
+    /* Un producto no se recomienda a sí mismo. */
+    .filter((x) => x.id !== p.id)
     .slice(0, limite);
 }
 

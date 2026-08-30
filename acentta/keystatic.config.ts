@@ -211,13 +211,30 @@ export default config({
         /* ---------- Envío ---------- */
         dimensiones: fields.object(
           {
-            alto: fields.integer({
+            /* [ERROR CORREGIDO] Esto era `fields.integer`, y las medidas
+               de producto tienen decimales: un termo mide 32,8 cm.
+               Al no aceptar la coma, «32,8» se guardó como 328 y el
+               termo pasó a medir tres metros y veintiocho.
+
+               No dio ningún error: dio un producto enorme, y con él
+               una cotización de envío enorme que se le habría cobrado
+               a un comprador. El número se ve raro en la ficha, pero
+               hay que estar mirando para notarlo. */
+            alto: fields.number({
               label: 'Alto (cm)',
-              description: 'Del producto, no de la caja.',
-              defaultValue: 0,
+              description: 'Del producto, no de la caja. Con decimales: 32.8',
+              validation: { isRequired: true, min: 0.1 },
             }),
-            ancho: fields.integer({ label: 'Ancho (cm)', defaultValue: 0 }),
-            profundidad: fields.integer({ label: 'Profundidad (cm)', defaultValue: 0 }),
+            ancho: fields.number({
+              label: 'Ancho (cm)',
+              description: 'En un producto cilíndrico, el diámetro.',
+              validation: { isRequired: true, min: 0.1 },
+            }),
+            profundidad: fields.number({
+              label: 'Profundidad (cm)',
+              description: 'En un producto cilíndrico, el diámetro otra vez.',
+              validation: { isRequired: true, min: 0.1 },
+            }),
           },
           {
             /* [ERROR CORREGIDO] Esto decía «Dimensiones del paquete» y
@@ -297,7 +314,12 @@ export default config({
         }),
 
         crossSell: fields.array(
-          fields.text({ label: 'Dirección del producto' }),
+          fields.text({
+            label: 'Producto relacionado',
+            description:
+              'El identificador o la dirección del producto, como figura en su ficha. '
+              + 'Por ejemplo: b01 o vaso-stanley-quencher-protour-wild-blooms-887.',
+          }),
           {
             label: 'Completá el ambiente',
             description:
