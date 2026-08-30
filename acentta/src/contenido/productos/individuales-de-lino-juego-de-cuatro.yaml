@@ -48,6 +48,7 @@ dimensiones:
   ancho: 34
   profundidad: 25
 peso: 0.6
+iva: '0.21'
 plazoEnvio:
   min: 4
   max: 8

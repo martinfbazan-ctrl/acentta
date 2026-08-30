@@ -83,6 +83,26 @@ export default config({
           },
         }),
 
+        /**
+         * El identificador interno.
+         *
+         * [ERROR CORREGIDO] Esto no estaba en el esquema, y Keystatic
+         * descarta al guardar las claves que no conoce. Editar un
+         * producto viejo desde el panel le habría borrado el `id`
+         * silenciosamente — y con él, cualquier «Completá el
+         * ambiente» de otro producto que lo referenciara.
+         *
+         * No se muestra para completar: se muestra para que no se
+         * pierda. Los productos nuevos pueden dejarlo vacío, y el
+         * sitio usa la dirección como identificador.
+         */
+        id: fields.text({
+          label: 'Identificador interno',
+          description:
+            'No lo cambies si el producto ya está publicado: otros productos pueden '
+            + 'referenciarlo. En un producto nuevo se puede dejar vacío.',
+        }),
+
         rubro: fields.select({
           label: 'Rubro',
           options: [
@@ -285,7 +305,11 @@ export default config({
         rating: fields.number({
           label: 'Puntaje promedio',
           description:
-            'De 1 a 5. Dejar vacío si el producto todavía no tiene opiniones: el sitio muestra «Todavía sin opiniones» en lugar de cinco estrellas apagadas.',
+            'De 1 a 5, y SÓLO de opiniones que recibió acentta. Va junto con la cantidad '
+            + 'de opiniones de abajo: uno sin el otro no compila, porque un puntaje sin '
+            + 'opiniones es un número inventado y una cantidad sin puntaje no se puede '
+            + 'mostrar. Si el producto todavía no tiene ninguna, dejá los dos vacíos: el '
+            + 'sitio muestra «Todavía sin opiniones», que es la verdad.',
         }),
 
         cantidadOpiniones: fields.integer({

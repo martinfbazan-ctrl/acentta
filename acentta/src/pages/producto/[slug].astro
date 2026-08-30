@@ -308,23 +308,25 @@ const esquema = {
       position: sticky;
       top: var(--e-6);
       align-self: start;
-      max-height: calc(100vh - var(--e-6) - var(--e-4));
-      /* Que el bloque respete ese tope achicando la foto, en vez de
-         desbordarlo. Sin esto el `max-height` no hace nada visible:
-         el contenido se sale igual. */
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
     }
-    /* La foto cede primero; las miniaturas conservan su alto. */
-    .ficha__galeria :global(.galeria) { min-height: 0; height: 100%; }
-    .ficha__galeria :global(.galeria__marco) { min-height: 0; }
+
+    /* [SEGUNDO INTENTO] El primero puso un tope de altura al bloque y
+     * `overflow: hidden` para que ese tope hiciera efecto. Eso no
+     * arregló el recorte: LO CAUSÓ. Recortar es literalmente lo que
+     * hace `overflow: hidden` — el problema seguía siendo el mismo,
+     * sólo que ahora lo provocaba yo en lugar del navegador.
+     *
+     * Lo que hace falta es que la foto se ACHIQUE, no que se corte.
+     * El tope va sobre la foto: la caja se vuelve más baja de lo que
+     * pide la proporción, y `object-fit: contain` mantiene el producto
+     * entero y centrado adentro, con aire a los costados.
+     *
+     * Los 150 px que se restan son la fila de miniaturas más su
+     * separación. Sin eso, la foto ocuparía toda la pantalla y las
+     * miniaturas volverían a quedar fuera de la vista. */
     .ficha__galeria :global(.galeria__foto) {
-      height: 100%;
-      /* La proporción deja de mandar cuando la pantalla es el límite:
-         `contain` mantiene el producto entero y centrado dentro del
-         alto disponible. */
-      aspect-ratio: auto;
+      max-height: calc(100vh - var(--e-6) - 150px);
+      object-fit: contain;
     }
   }
 

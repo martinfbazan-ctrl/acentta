@@ -1,30 +1,26 @@
 nombre: Termo Stanley Mate-System | 1.2 litros
 rubro: bazar
-categoria: termos
-precio: 182000
-precioAnterior: 195000
+categoria: vasos-y-botellas
+precio: 135000
+precioAnterior: 160000
 variantes:
   - tipo: color
-    nombre: Negro Mate
-    muestra: '#0A0A0A'
+    nombre: Verde
+    muestra: '#617665'
     stock: 1
-    imagen: 1
 imagenes:
   - archivo: >-
-      /imagenes/productos/termo-stanley-mate-system-1-2-litros/imagenes/0/archivo.jpg
-    idRemoto: Termo Stanley Mate-System | 1.2 litros
+      /imagenes/productos/termo-stanley-mate-system-1-2-litros-1/imagenes/0/archivo.jpg
     alt: Termo Stanley Mate-System | 1.2 litros
     ancho: 1000
     alto: 1000
   - archivo: >-
-      /imagenes/productos/termo-stanley-mate-system-1-2-litros/imagenes/1/archivo.jpg
-    idRemoto: Termo Stanley Mate-System | 1.2 litros
+      /imagenes/productos/termo-stanley-mate-system-1-2-litros-1/imagenes/1/archivo.jpg
     alt: Termo Stanley Mate-System | 1.2 litros
     ancho: 1000
     alto: 1000
   - archivo: >-
-      /imagenes/productos/termo-stanley-mate-system-1-2-litros/imagenes/2/archivo.jpg
-    idRemoto: Termo Stanley Mate-System | 1.2 litros
+      /imagenes/productos/termo-stanley-mate-system-1-2-litros-1/imagenes/2/archivo.jpg
     alt: Termo Stanley Mate-System | 1.2 litros
     ancho: 1000
     alto: 1000
@@ -56,7 +52,7 @@ especificaciones:
     valor: De por vida
   - clave: Aislamiento al vacío de doble pared
     valor: Si
-  - clave: Acero Inoxidable 18/8
+  - clave: Acero inoxidable 18/8
     valor: Si
   - clave: A prueba de fugas
     valor: Si
@@ -64,10 +60,8 @@ especificaciones:
     valor: Si
   - clave: Libre de BPA
     valor: Si
-  - clave: Peso
-    valor: 950 gr
   - clave: SKU
-    valor: 10-10297-020
+    valor: 10-10297-016
 dimensiones:
   alto: 32.8
   ancho: 10.8
@@ -75,7 +69,7 @@ dimensiones:
 peso: 0.95
 iva: '0.21'
 plazoEnvio:
-  min: 3
+  min: 5
   max: 10
 cantidadOpiniones: 0
 badges:

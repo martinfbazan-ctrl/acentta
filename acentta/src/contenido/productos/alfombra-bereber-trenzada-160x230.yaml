@@ -43,6 +43,7 @@ dimensiones:
   ancho: 160
   profundidad: 2
 peso: 9.8
+iva: '0.21'
 plazoEnvio:
   min: 7
   max: 13

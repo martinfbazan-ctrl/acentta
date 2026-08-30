@@ -41,6 +41,7 @@ dimensiones:
   ancho: 55
   profundidad: 55
 peso: 12.3
+iva: '0.21'
 plazoEnvio:
   min: 7
   max: 13

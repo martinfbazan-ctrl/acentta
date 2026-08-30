@@ -40,6 +40,7 @@ dimensiones:
   ancho: 7
   profundidad: 5
 peso: 0.2
+iva: '0.21'
 plazoEnvio:
   min: 7
   max: 13

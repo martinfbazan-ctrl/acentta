@@ -45,6 +45,7 @@ dimensiones:
   ancho: 60
   profundidad: 60
 peso: 21.4
+iva: '0.21'
 plazoEnvio:
   min: 8
   max: 15

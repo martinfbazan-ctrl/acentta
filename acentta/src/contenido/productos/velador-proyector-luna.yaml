@@ -44,6 +44,7 @@ dimensiones:
   ancho: 15
   profundidad: 15
 peso: 0.5
+iva: '0.21'
 plazoEnvio:
   min: 6
   max: 12

@@ -3,47 +3,65 @@ id: b01
 rubro: bazar
 categoria: vasos-y-botellas
 precio: 135000
+precioAnterior: 160000
 variantes:
   - tipo: color
     nombre: Wild Blooms
-    muestra: "#1C1A17"
-    stock: 6
+    muestra: '#1C1A17'
+    stock: 1
     imagen: 0
 imagenes:
-  - archivo: /imagenes/productos/stanley-quencher-wild-blooms-1.webp
-    alt: Vaso Stanley Quencher ProTour Wild Blooms de 887 ml, con estampa de flores blancas y doradas sobre negro
+  - alt: >-
+      Vaso Stanley Quencher ProTour Wild Blooms de 887 ml, con estampa de flores
+      blancas y doradas sobre negro
     ancho: 1200
     alto: 1200
-  - archivo: /imagenes/productos/stanley-quencher-wild-blooms-2.webp
-    alt: El vaso de perfil, con la manija negra y el aro dorado bajo la tapa
+  - alt: El vaso de perfil, con la manija negra y el aro dorado bajo la tapa
     ancho: 1200
     alto: 1200
-  - archivo: /imagenes/productos/stanley-quencher-wild-blooms-4.webp
-    alt: El vaso con el sorbete levantado, listo para tomar
+  - alt: El vaso con el sorbete levantado, listo para tomar
     ancho: 1200
     alto: 1200
-  - archivo: /imagenes/productos/stanley-quencher-wild-blooms-3.webp
-    alt: Detalle de la tapa Flip Straw abatible y del texturizado de la manija
+  - alt: Detalle de la tapa Flip Straw abatible y del texturizado de la manija
     ancho: 640
     alto: 640
-descripcion: "El Quencher con tapa ProTour: levantás el sorbete para tomar y lo cerrás cuando terminás, sin derrames en la mochila ni en el auto. Aislamiento al vacío de doble pared, 9 horas de frío y hasta 40 con hielo. Entra en la mayoría de los portavasos."
+descripcion: >-
+  Disfrutá tus bebidas frías de forma práctica y segura con el Stanley Quencher
+  con tapa ProTour.
+
+
+  Su innovadora tapa permite levantar el sorbete para beber y cerrarlo
+  fácilmente cuando terminás, ayudando a evitar derrames y pérdidas, ya sea que
+  lo lleves en la mochila, el bolso o en el auto.
+
+
+  Su aislamiento al vacío de doble pared mantiene tus bebidas frías hasta 9
+  horas, y con hielo puede conservarlas frías por hasta 40 horas.
+
+
+  Además, su diseño está pensado para adaptarse a la mayoría de los portavasos,
+  convirtiéndolo en el compañero ideal para el trabajo, el gimnasio, los viajes
+  o el día a día.
+
+
+  Stanley Quencher ProTour: comodidad, rendimiento y frío durante horas.
 especificaciones:
   - clave: Capacidad
     valor: 887 ml
+  - clave: Garantía
+    valor: De por vida
   - clave: Material
     valor: Acero inoxidable 18/8 reciclado
+  - clave: Conserva frío
+    valor: 9 horas · 40 con hielo
   - clave: Tapa
     valor: ProTour Flip Straw, a prueba de fugas
   - clave: Sorbete
     valor: Removible, para limpiar por dentro
-  - clave: Conserva frío
-    valor: 9 horas · 40 con hielo
   - clave: Apto lavavajillas
     valor: Sí
   - clave: Libre de BPA
     valor: Sí
-  - clave: Garantía
-    valor: De por vida
   - clave: SKU
     valor: 10-12485-1311
 dimensiones:
@@ -51,11 +69,11 @@ dimensiones:
   ancho: 14
   profundidad: 9
 peso: 0.6
+iva: '0.21'
 plazoEnvio:
-  min: 2
-  max: 5
-rating: 5
-cantidadOpiniones: 12
+  min: 5
+  max: 10
+cantidadOpiniones: 0
 badges:
   - nuevo
 crossSell: []

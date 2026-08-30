@@ -47,6 +47,7 @@ dimensiones:
   ancho: 8
   profundidad: 8
 peso: 0.3
+iva: '0.21'
 plazoEnvio:
   min: 8
   max: 15
