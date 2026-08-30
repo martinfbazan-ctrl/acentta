@@ -5,30 +5,28 @@ precio: 182000
 precioAnterior: 195000
 variantes:
   - tipo: color
-    nombre: Verde Mate
-    muestra: '#688372'
+    nombre: Negro Mate
+    muestra: '#0A0A0A'
     stock: 1
     imagen: 1
 imagenes:
   - archivo: >-
       /imagenes/productos/termo-stanley-mate-system-1-2-litros/imagenes/0/archivo.jpg
-    alt: Termo Stanley Mate-System | 1.2 litros black
+    idRemoto: Termo Stanley Mate-System | 1.2 litros
+    alt: Termo Stanley Mate-System | 1.2 litros
     ancho: 1000
     alto: 1000
   - archivo: >-
-      /imagenes/productos/termo-stanley-mate-system-1-2-litros/imagenes/1/archivo.webp
-    alt: Termo Stanley Mate-System | 1.2 litros black
-    ancho: 800
+      /imagenes/productos/termo-stanley-mate-system-1-2-litros/imagenes/1/archivo.jpg
+    idRemoto: Termo Stanley Mate-System | 1.2 litros
+    alt: Termo Stanley Mate-System | 1.2 litros
+    ancho: 1000
     alto: 1000
   - archivo: >-
-      /imagenes/productos/termo-stanley-mate-system-1-2-litros/imagenes/2/archivo.png
-    alt: Termo Stanley Mate-System | 1.2 litros black
-    ancho: 800
-    alto: 1000
-  - archivo: >-
-      /imagenes/productos/termo-stanley-mate-system-1-2-litros/imagenes/3/archivo.webp
-    alt: Termo Stanley Mate-System | 1.2 litros black
-    ancho: 800
+      /imagenes/productos/termo-stanley-mate-system-1-2-litros/imagenes/2/archivo.jpg
+    idRemoto: Termo Stanley Mate-System | 1.2 litros
+    alt: Termo Stanley Mate-System | 1.2 litros
+    ancho: 1000
     alto: 1000
 descripcion: >-
   En Argentina, el mate es mucho más que una bebida: es parte de nuestra cultura
@@ -69,9 +67,9 @@ especificaciones:
   - clave: Peso
     valor: 950 gr
 dimensiones:
-  alto: 328
-  ancho: 108
-  profundidad: 108
+  alto: 32.8
+  ancho: 10.8
+  profundidad: 10.8
 peso: 0.95
 iva: '0.21'
 plazoEnvio:
