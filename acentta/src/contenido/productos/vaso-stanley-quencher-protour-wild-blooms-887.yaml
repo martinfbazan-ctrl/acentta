@@ -11,18 +11,26 @@ variantes:
     stock: 1
     imagen: 0
 imagenes:
-  - alt: >-
+  - archivo: >-
+      /imagenes/productos/vaso-stanley-quencher-protour-wild-blooms-887/imagenes/0/archivo.webp
+    alt: >-
       Vaso Stanley Quencher ProTour Wild Blooms de 887 ml, con estampa de flores
       blancas y doradas sobre negro
     ancho: 1200
     alto: 1200
-  - alt: El vaso de perfil, con la manija negra y el aro dorado bajo la tapa
+  - archivo: >-
+      /imagenes/productos/vaso-stanley-quencher-protour-wild-blooms-887/imagenes/1/archivo.webp
+    alt: El vaso de perfil, con la manija negra y el aro dorado bajo la tapa
     ancho: 1200
     alto: 1200
-  - alt: El vaso con el sorbete levantado, listo para tomar
+  - archivo: >-
+      /imagenes/productos/vaso-stanley-quencher-protour-wild-blooms-887/imagenes/2/archivo.webp
+    alt: El vaso con el sorbete levantado, listo para tomar
     ancho: 1200
     alto: 1200
-  - alt: Detalle de la tapa Flip Straw abatible y del texturizado de la manija
+  - archivo: >-
+      /imagenes/productos/vaso-stanley-quencher-protour-wild-blooms-887/imagenes/3/archivo.webp
+    alt: Detalle de la tapa Flip Straw abatible y del texturizado de la manija
     ancho: 640
     alto: 640
 descripcion: >-

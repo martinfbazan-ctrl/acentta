@@ -374,6 +374,50 @@ ok(vercel.trailingSlash === false,
   }
 }
 
+/* ============================================================
+   9 · Ningún producto se quedó sin fotos
+   ------------------------------------------------------------
+   Existe por un despliegue roto en producción.
+
+   El panel guarda las fotos en una carpeta por producto:
+   `{producto}/imagenes/{n}/archivo.ext`. Un producto cuyas fotos
+   estuvieran en otro lado —cargadas a mano, movidas, renombradas—
+   el panel no las puede resolver, y **al guardar borra la clave que
+   no entiende**. El producto queda con las descripciones de las
+   fotos y sin ninguna foto.
+
+   El contrato del catálogo lo detecta, pero recién al construir: si
+   nadie corrió la auditoría antes de publicar, el que se entera es
+   Vercel, y el sitio queda sin desplegar. Esto lo detecta antes, sin
+   necesidad de construir nada.
+   ============================================================ */
+{
+  const dirProductos = path.join(RAIZ, 'src', 'contenido', 'productos');
+
+  for (const nombre of fs.readdirSync(dirProductos).filter((f) => f.endsWith('.yaml'))) {
+    const texto = fs.readFileSync(path.join(dirProductos, nombre), 'utf8');
+
+    const bloque = texto.match(/^imagenes:\n([\s\S]*?)(?=^\S)/m)?.[1] ?? '';
+    const entradas = bloque.split(/^\s{2}- /m).filter((t) => t.trim());
+
+    if (entradas.length === 0) {
+      fallos.push(`${nombre} no tiene ninguna foto declarada`);
+      continue;
+    }
+
+    entradas.forEach((entrada, i) => {
+      const tieneArchivo = /(^|\n)\s*archivo:\s*\S/.test(entrada);
+      const tieneRemoto = /(^|\n)\s*idRemoto:\s*\S/.test(entrada);
+      if (!tieneArchivo && !tieneRemoto) {
+        fallos.push(
+          `${nombre}: la foto ${i + 1} quedó sin archivo. Suele pasar al guardar desde el `
+          + 'panel un producto cuyas fotos no estaban en la carpeta que él usa: las borra',
+        );
+      }
+    });
+  }
+}
+
 /* ============================================================ */
 console.log('\n=== LISTO PARA PUBLICAR ===');
 console.log(`  ${TODAS.length} páginas revisadas`);
