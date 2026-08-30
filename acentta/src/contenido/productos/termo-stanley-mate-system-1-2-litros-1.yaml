@@ -1,8 +1,8 @@
 nombre: Termo Stanley Mate-System | 1.2 litros
 rubro: bazar
 categoria: vasos-y-botellas
-precio: 135000
-precioAnterior: 160000
+precio: 182000
+precioAnterior: 205000
 variantes:
   - tipo: color
     nombre: Verde
@@ -11,17 +11,17 @@ variantes:
 imagenes:
   - archivo: >-
       /imagenes/productos/termo-stanley-mate-system-1-2-litros-1/imagenes/0/archivo.jpg
-    alt: Termo Stanley Mate-System | 1.2 litros
+    alt: Termo Stanley Mate-System | 1.2 litros green
     ancho: 1000
     alto: 1000
   - archivo: >-
       /imagenes/productos/termo-stanley-mate-system-1-2-litros-1/imagenes/1/archivo.jpg
-    alt: Termo Stanley Mate-System | 1.2 litros
+    alt: Termo Stanley Mate-System | 1.2 litros green
     ancho: 1000
     alto: 1000
   - archivo: >-
       /imagenes/productos/termo-stanley-mate-system-1-2-litros-1/imagenes/2/archivo.jpg
-    alt: Termo Stanley Mate-System | 1.2 litros
+    alt: Termo Stanley Mate-System | 1.2 litros green
     ancho: 1000
     alto: 1000
 descripcion: >-
