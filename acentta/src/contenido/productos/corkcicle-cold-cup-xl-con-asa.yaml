@@ -1,0 +1,62 @@
+nombre: Corkcicle Cold Cup XL con asa
+rubro: bazar
+categoria: vasos-y-botellas
+precio: 99000
+precioAnterior: 120000
+variantes:
+  - tipo: color
+    nombre: Latte
+    muestra: '#CFC7BF'
+    stock: 1
+imagenes:
+  - archivo: /imagenes/productos/corkcicle-cold-cup-xl-con-asa/imagenes/0/archivo.webp
+    alt: Corkcicle cold cup 887 ml latte
+    ancho: 1000
+    alto: 1000
+  - archivo: /imagenes/productos/corkcicle-cold-cup-xl-con-asa/imagenes/1/archivo.webp
+    alt: Corkcicle cold cup 887 ml latte
+    ancho: 1000
+    alto: 1000
+  - archivo: /imagenes/productos/corkcicle-cold-cup-xl-con-asa/imagenes/2/archivo.webp
+    alt: Corkcicle cold cup 887 ml latte
+    ancho: 1000
+    alto: 1000
+  - archivo: /imagenes/productos/corkcicle-cold-cup-xl-con-asa/imagenes/3/archivo.webp
+    alt: Corkcicle cold cup 887 ml latte
+    ancho: 1000
+    alto: 1000
+descripcion: >-
+  Tu vaso favorito para beber sobre la marcha ahora viene en tamaño XL. El Cold
+  Cup XL es tu compañero ideal para esos días en los que decides tomar la ruta
+  larga. Con una capacidad de 30 onzas, un asa ergonómica y la misma tapa
+  central con pajita a prueba de derrames que ya conoces y adoras, este vaso
+  elegante —diseñado para caber en los portavasos— está hecho para aguantar el
+  ritmo y lucir genial mientras lo hace.
+especificaciones:
+  - clave: Tiempo de conservación
+    valor: 12 horas de frío
+  - clave: Practicidad
+    valor: Laterales planos y asa para un agarre fácil
+  - clave: Tecnología
+    valor: Triple aislamiento
+  - clave: Seguridad
+    valor: 'Pestaña de silicona para sorbete: permite angulos de bebida flexibles'
+  - clave: Libre de BPA
+    valor: Si
+  - clave: Compatible con portavasos
+    valor: Si
+  - clave: Apto para lavavajillas
+    valor: Si
+dimensiones:
+  alto: 30.5
+  ancho: 9.5
+  profundidad: 9.5
+peso: 0.63
+iva: '0.21'
+plazoEnvio:
+  min: 5
+  max: 10
+cantidadOpiniones: 0
+badges:
+  - nuevo
+crossSell: []
