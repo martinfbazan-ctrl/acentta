@@ -299,6 +299,81 @@ ok(vercel.trailingSlash === false,
   }
 }
 
+/* ============================================================
+   8 · Las medidas declaradas coinciden con el archivo
+   ------------------------------------------------------------
+   El panel pide ancho y alto en píxeles de cada foto. Esos números
+   NO recortan ni redimensionan nada: son lo que el navegador usa
+   para reservar el espacio antes de que la foto baje. Si están mal,
+   la página salta cuando cada imagen termina de cargar.
+
+   Es fácil equivocarlos porque no se notan: la foto se ve igual.
+   Lo que cambia es el salto, y un salto se percibe como que el sitio
+   está mal hecho sin que nadie sepa decir por qué.
+
+   Acá se leen del archivo de verdad y se comparan.
+   ============================================================ */
+{
+  /** Ancho y alto leyendo la cabecera. Sin dependencias: son tres formatos. */
+  const medir = (ruta) => {
+    const d = fs.readFileSync(ruta);
+    if (d.length > 24 && d.toString('ascii', 1, 4) === 'PNG') {
+      return { ancho: d.readUInt32BE(16), alto: d.readUInt32BE(20) };
+    }
+    if (d[0] === 0xFF && d[1] === 0xD8) {
+      let i = 2;
+      while (i < d.length - 9) {
+        if (d[i] !== 0xFF) { i++; continue; }
+        const m = d[i + 1];
+        if (m >= 0xC0 && m <= 0xC3) return { alto: d.readUInt16BE(i + 5), ancho: d.readUInt16BE(i + 7) };
+        if (m === 0xD8 || m === 0xD9 || (m >= 0xD0 && m <= 0xD7)) { i += 2; continue; }
+        i += 2 + d.readUInt16BE(i + 2);
+      }
+      return null;
+    }
+    if (d.toString('ascii', 0, 4) === 'RIFF') {
+      const tipo = d.toString('ascii', 12, 16);
+      if (tipo === 'VP8X') return { ancho: d.readUIntLE(24, 3) + 1, alto: d.readUIntLE(27, 3) + 1 };
+      if (tipo === 'VP8L') {
+        const b = d.readUInt32LE(21);
+        return { ancho: (b & 0x3FFF) + 1, alto: ((b >> 14) & 0x3FFF) + 1 };
+      }
+      return { ancho: d.readUInt16LE(26) & 0x3FFF, alto: d.readUInt16LE(28) & 0x3FFF };
+    }
+    return null;
+  };
+
+  const dirProductos = path.join(RAIZ, 'src', 'contenido', 'productos');
+  for (const nombre of fs.readdirSync(dirProductos).filter((f) => f.endsWith('.yaml'))) {
+    const texto = fs.readFileSync(path.join(dirProductos, nombre), 'utf8');
+
+    /* Se leen las ternas archivo/ancho/alto del YAML sin analizarlo
+       entero: alcanza con el orden en que las escribe el panel. */
+    for (const m of texto.matchAll(
+      /archivo:\s*(\S+)[\s\S]{0,400}?ancho:\s*(\d+)[\s\S]{0,80}?alto:\s*(\d+)/g,
+    )) {
+      const [, declarado, ancho, alto] = m;
+      if (!declarado.startsWith('/')) continue;
+
+      const archivo = path.join(RAIZ, 'public', declarado.replace(/^\//, ''));
+      if (!fs.existsSync(archivo)) {
+        fallos.push(`${nombre} apunta a una foto que no existe: ${declarado}`);
+        continue;
+      }
+
+      const real = medir(archivo);
+      if (!real) continue;
+
+      if (real.ancho !== Number(ancho) || real.alto !== Number(alto)) {
+        fallos.push(
+          `${nombre}: la foto ${path.basename(declarado)} mide ${real.ancho}×${real.alto} `
+          + `y está declarada ${ancho}×${alto}. Corregilo en el panel o la página salta al cargar`,
+        );
+      }
+    }
+  }
+}
+
 /* ============================================================ */
 console.log('\n=== LISTO PARA PUBLICAR ===');
 console.log(`  ${TODAS.length} páginas revisadas`);

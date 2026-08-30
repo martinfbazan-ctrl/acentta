@@ -706,7 +706,10 @@
   width: 100%;
   height: auto;
   aspect-ratio: var(--proporcion-producto);
-  object-fit: cover;
+  /* Igual que en la galería: la foto entra entera, no se recorta.
+     Un termo al que la tarjeta le corta la tapa se ve peor que uno
+     con un poco de aire a los costados. */
+  object-fit: contain;
   transition: transform var(--v-lento) var(--curva);
 }
 

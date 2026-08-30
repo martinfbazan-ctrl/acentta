@@ -105,13 +105,34 @@ const unaSola = imagenes.length === 1;
     position: relative;
     border-radius: var(--r-modal);
     overflow: hidden;
-    background: var(--gris-050);
+    /* Blanco y no gris: con `contain` el fondo del marco queda a la
+       vista alrededor de la foto, y casi todas las fotos de producto
+       vienen recortadas sobre blanco. Un gris claro detrás dibuja un
+       recuadro alrededor del producto que no está en la foto.
+
+       `--papel` y no `--blanco`: los dos son #FFFFFF, pero el primero
+       es el token de superficie y el segundo es para texto sobre
+       color. El día que las superficies dejen de ser blancas puras,
+       el que hay que cambiar es uno solo. */
+    background: var(--papel);
     border: 1px solid var(--gris-200);
   }
   .galeria__foto {
     width: 100%;
     aspect-ratio: var(--proporcion-producto);
-    object-fit: cover;
+    /* `contain` y no `cover`.
+     *
+     * [ERROR CORREGIDO] Con `cover` la foto se agranda hasta llenar el
+     * marco y lo que sobra se recorta. Eso era correcto cuando el
+     * catálogo eran fotos de ambiente: recortar un living no le saca
+     * nada al living. Con fotos de producto le corta la tapa al termo.
+     *
+     * Y no se arregla pidiendo fotos cuadradas: las de una misma marca
+     * ya vienen en cuatro tamaños distintos —800×950, 1200×1200,
+     * 1515×1515— y esperar que quien carga productos las uniforme
+     * antes de subirlas es delegarle un trabajo que el navegador hace
+     * gratis. Con `contain` entra entera venga como venga. */
+    object-fit: contain;
     display: block;
   }
 
@@ -160,11 +181,11 @@ const unaSola = imagenes.length === 1;
     border: 2px solid transparent;
     border-radius: var(--r-tarjeta);
     overflow: hidden;
-    background: var(--gris-050);
+    background: var(--papel);
     cursor: pointer;
     transition: border-color var(--v-rapido) var(--curva);
   }
-  .galeria__tira img { width: 100%; aspect-ratio: var(--proporcion-producto); object-fit: cover; display: block; }
+  .galeria__tira img { width: 100%; aspect-ratio: var(--proporcion-producto); object-fit: contain; display: block; }
   .galeria__tira:hover { border-color: var(--gris-500); }
   .galeria__tira[aria-current='true'] { border-color: var(--tinta); }
 
