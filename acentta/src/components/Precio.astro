@@ -4,7 +4,10 @@
  * El ahorro en pesos va antes que el porcentaje: en ticket medio el
  * monto pesa más que el porcentaje.
  */
-import { precio as fPrecio, cuota } from '@lib/formato';
+import {
+  precio as fPrecio, cuota,
+  precioSinImpuestos, MOSTRAR_PRECIO_SIN_IMPUESTOS, IVA_GENERAL,
+} from '@lib/formato';
 
 interface Props {
   precio: number;
@@ -13,6 +16,8 @@ interface Props {
   cuotas?: number;
   /** Para productos de conjunto: "$ 3.400 por unidad". */
   unidades?: number;
+  /** Alícuota de IVA del producto. La general es 21 %. */
+  iva?: number;
   tamano?: 'tarjeta' | 'ficha';
   class?: string;
 }
@@ -22,9 +27,20 @@ const {
   precioAnterior,
   cuotas = 6,
   unidades,
+  iva = IVA_GENERAL,
   tamano = 'tarjeta',
   class: clase,
 } = Astro.props;
+
+/* El renglón de transparencia fiscal, sólo en la ficha.
+ *
+ * En la tarjeta de la grilla no va: ahí compiten veinte precios y un
+ * segundo número debajo de cada uno convierte la grilla en una
+ * planilla. La obligación —cuando aplica— es informarlo donde se
+ * decide la compra, y eso es la ficha.
+ */
+const conNeto = MOSTRAR_PRECIO_SIN_IMPUESTOS && tamano === 'ficha' && valor > 0;
+const neto = conNeto ? precioSinImpuestos(valor, iva) : 0;
 
 const hayDescuento = precioAnterior !== undefined && precioAnterior > valor;
 const ahorro = hayDescuento ? precioAnterior - valor : 0;
@@ -54,5 +70,12 @@ const clases = ['precio', tamano === 'ficha' && 'precio--ficha', clase].filter(B
 
   {unidades && unidades > 1 && (
     <p class="precio__unitario">{fPrecio(Math.round(valor / unidades))} por unidad</p>
+  )}
+
+  {conNeto && (
+    /* Chico y gris a propósito: es un dato de cumplimiento, no un
+       argumento de venta. Puesto con el mismo peso que el precio
+       compite con él y confunde sobre cuánto se paga. */
+    <p class="precio__neto">Precio sin impuestos nacionales: {fPrecio(neto)}</p>
   )}
 </div>

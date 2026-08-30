@@ -165,6 +165,65 @@ const liviano = calcularEnvio('5000', 2), pesado = calcularEnvio('5000', 12);
 ok(liviano.costo === porNombre['Centro y Cuyo'].base, 'un paquete liviano no debería pagar extra por peso');
 ok(pesado.costo > liviano.costo, 'un paquete de 12 kg cuesta lo mismo que uno de 2');
 
+/* ============================================================
+   Transparencia fiscal · el precio sin impuestos
+   ------------------------------------------------------------
+   En Argentina los precios se publican CON IVA adentro, así que el
+   neto se obtiene dividiendo, no restando.
+
+       $ 135.000 / 1,21 = $ 111.570   ✔
+       $ 135.000 − 21 % = $ 106.650   �’
+
+   Los dos son números plausibles y sólo uno es correcto. El segundo
+   es el error clásico de este cálculo, y si se publica queda escrito
+   en la ficha con aire de dato verificado.
+
+   Los dos casos de prueba salen de la tienda oficial de Stanley, que
+   publica las dos cifras: sirven de verificación externa y no de una
+   cuenta hecha por nosotros para comprobar nuestra propia cuenta.
+   ============================================================ */
+{
+  /* Mismo mecanismo que arriba: se compila el archivo real. `formato.ts`
+     no depende de nada del proyecto, así que alcanza con esto. */
+  const compiladoFormato = await build({
+    entryPoints: [path.join(AQUI, '..', 'src', 'lib', 'formato.ts')],
+    bundle: true, format: 'esm', write: false, platform: 'neutral',
+  });
+  const tmpFormato = path.join(AQUI, '.formato.compilado.mjs');
+  fs.writeFileSync(tmpFormato, compiladoFormato.outputFiles[0].text);
+  const { precioSinImpuestos, IVA_GENERAL } = await import(`file://${tmpFormato}?${Date.now()}`);
+  fs.unlinkSync(tmpFormato);
+
+  ok(precioSinImpuestos(135000) === 111570,
+    `$135.000 sin IVA son $111.570 (dato de Stanley) y dio ${precioSinImpuestos(135000)}`);
+  ok(precioSinImpuestos(182000) === 150413,
+    `$182.000 sin IVA son $150.413 (dato de Stanley) y dio ${precioSinImpuestos(182000)}`);
+
+  /* El error de restar en vez de dividir. */
+  ok(precioSinImpuestos(135000) !== 106650,
+    '¡GRAVE! se está restando el 21 % en vez de sacar el IVA contenido');
+
+  /* Y la comprobación de ida y vuelta, que es la que de verdad
+     define «sin impuestos»: reponerle el IVA tiene que devolver el
+     precio publicado. */
+  for (const p of [135000, 182000, 42000, 124000, 999]) {
+    const neto = precioSinImpuestos(p);
+    ok(Math.abs(neto * (1 + IVA_GENERAL) - p) <= 1,
+      `reponerle el IVA a ${p} no devuelve el precio: da ${Math.round(neto * 1.21)}`);
+  }
+
+  /* La alícuota reducida no puede informar la general. */
+  ok(precioSinImpuestos(110500, 0.105) === 100000,
+    `al 10,5 % el neto de 110.500 es 100.000 y dio ${precioSinImpuestos(110500, 0.105)}`);
+  ok(precioSinImpuestos(135000, 0) === 135000, 'un producto exento no tiene IVA que sacar');
+
+  /* Nada raro tiene que producir un número raro publicado. */
+  ok(precioSinImpuestos(0) === 0, 'precio cero tendría que dar cero');
+  ok(precioSinImpuestos(NaN) === 0, 'un precio inválido no puede producir NaN en la página');
+  ok(Number.isFinite(precioSinImpuestos(135000, NaN)),
+    'una alícuota inválida no puede producir NaN en la página');
+}
+
 /* ============================================================ */
 console.log('\n=== ENVÍO · tabla de zonas ===');
 console.log(`  ${ZONAS.length} zonas · ${cubiertos.length} códigos postales cubiertos · ${REALES.length} ciudades verificadas`);

@@ -59,6 +59,7 @@ interface ProductoCrudo {
   especificaciones?: Especificacion[];
   dimensiones?: { alto?: number; ancho?: number; profundidad?: number };
   peso?: number;
+  iva?: number | string | null;
   plazoEnvio?: { min?: number; max?: number };
   rating?: number | null;
   cantidadOpiniones?: number;
@@ -135,6 +136,10 @@ function traducir(ruta: string, crudo: ProductoCrudo): Producto {
       profundidad: crudo.dimensiones?.profundidad ?? 0,
     },
     peso: crudo.peso ?? 0,
+    /* El panel guarda esto como texto porque es un desplegable.
+       Sin convertir, «0.21» viajaría como cadena y el cálculo daría
+       NaN — que se imprimiría como «$ NaN» en la ficha. */
+    iva: crudo.iva == null || crudo.iva === '' ? undefined : Number(crudo.iva),
     plazoEnvio: { min: crudo.plazoEnvio?.min ?? 5, max: crudo.plazoEnvio?.max ?? 10 },
     ...(crudo.rating ? { rating: crudo.rating } : {}),
     cantidadOpiniones: crudo.cantidadOpiniones ?? 0,

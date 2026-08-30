@@ -240,6 +240,18 @@ export default config({
           validation: { isRequired: true, min: 0.01 },
         }),
 
+        iva: fields.select({
+          label: 'IVA del producto',
+          description:
+            'Sólo se usa si el sitio muestra el precio sin impuestos. Casi todo va al 21 %.',
+          options: [
+            { label: '21 % (general)', value: '0.21' },
+            { label: '10,5 % (reducida)', value: '0.105' },
+            { label: 'Exento', value: '0' },
+          ],
+          defaultValue: '0.21',
+        }),
+
         plazoEnvio: fields.object(
           {
             min: fields.integer({ label: 'Mínimo (días hábiles)', defaultValue: 5 }),

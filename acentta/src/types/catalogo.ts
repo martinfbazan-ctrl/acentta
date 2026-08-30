@@ -140,6 +140,15 @@ export interface Producto {
   dimensiones: Dimensiones;
   /** En kilogramos. Define el costo de envío. */
   peso: number;
+  /**
+   * Alícuota de IVA de este producto, en tanto por uno: 0.21, 0.105.
+   *
+   * Ausente significa la general del 21 %, que es la de casi todo lo
+   * que vende acentta. Existe porque aplicarle 21 % a un producto que
+   * va al 10,5 % informaría un impuesto que no se cobró, y ese número
+   * queda publicado en la ficha con aire de dato verificado.
+   */
+  iva?: number;
   /** Días hábiles mínimo y máximo. Se muestra como fecha, no como rango de días. */
   plazoEnvio: { min: number; max: number };
 

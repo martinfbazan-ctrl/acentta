@@ -1,0 +1,87 @@
+nombre: Termo Stanley Mate-System | 1.2 litros
+rubro: bazar
+categoria: termos
+precio: 182000
+precioAnterior: 195000
+variantes:
+  - tipo: color
+    nombre: Verde Mate
+    muestra: '#688372'
+    stock: 1
+    imagen: 1
+imagenes:
+  - archivo: >-
+      /imagenes/productos/termo-stanley-mate-system-1-2-litros/imagenes/0/archivo.jpg
+    alt: Termo Stanley Mate-System | 1.2 litros black
+    ancho: 800
+    alto: 1000
+  - archivo: >-
+      /imagenes/productos/termo-stanley-mate-system-1-2-litros/imagenes/1/archivo.webp
+    alt: Termo Stanley Mate-System | 1.2 litros black
+    ancho: 800
+    alto: 1000
+  - archivo: >-
+      /imagenes/productos/termo-stanley-mate-system-1-2-litros/imagenes/2/archivo.png
+    alt: Termo Stanley Mate-System | 1.2 litros black
+    ancho: 800
+    alto: 1000
+  - archivo: >-
+      /imagenes/productos/termo-stanley-mate-system-1-2-litros/imagenes/3/archivo.webp
+    alt: Termo Stanley Mate-System | 1.2 litros black
+    ancho: 800
+    alto: 1000
+descripcion: >-
+  En Argentina, el mate es mucho más que una bebida: es parte de nuestra cultura
+  y de cada momento compartido. Con el Stanley Mate System Classic de 1,2
+  litros, podés disfrutarlo estés donde estés.
+
+
+  Su tapón de alta precisión permite cebar de manera cómoda, continua y
+  controlada, mientras que su tapa de acero inoxidable se convierte en mate,
+  brindando una experiencia práctica y funcional.
+
+
+  Gracias a su excelente capacidad térmica, mantiene el agua caliente o fría
+  durante horas, acompañándote durante toda la jornada.
+
+
+  Con la calidad, resistencia y durabilidad que caracterizan a Stanley, es una
+  opción ideal para quienes buscan comodidad, practicidad y un producto pensado
+  para el uso diario.
+
+
+  Stanley Mate System Classic 1,2 L: preparado para acompañarte en cada mate.
+especificaciones:
+  - clave: Tipo de boquilla
+    valor: Pico cebador
+  - clave: Garantía
+    valor: De por vida
+  - clave: Aislamiento al vacío de doble pared
+    valor: Si
+  - clave: Acero Inoxidable 18/8
+    valor: Si
+  - clave: A prueba de fugas
+    valor: Si
+  - clave: Apto lavavajillas
+    valor: Si
+  - clave: Libre de BPA
+    valor: Si
+  - clave: Peso
+    valor: 950 gr
+  - clave: Dimensiones
+    valor: 32,8 cm x 10.8 cm
+dimensiones:
+  alto: 328
+  ancho: 108
+  profundidad: 108
+peso: 0.95
+iva: '0.21'
+plazoEnvio:
+  min: 3
+  max: 10
+cantidadOpiniones: 0
+badges:
+  - nuevo
+crossSell:
+  - >-
+    https://acentta.vercel.app/producto/vaso-stanley-quencher-protour-wild-blooms-887
