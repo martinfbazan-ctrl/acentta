@@ -41,6 +41,9 @@ import type { TarifaExterna } from '@lib/cotizacion';
  * Lo que se le pide a un operador
  * ------------------------------------------------------------------ */
 
+/** Dónde termina el envío: en la casa, o en una sucursal del correo. */
+export type MetodoDeEntrega = 'domicilio' | 'sucursal';
+
 export interface PedidoDeTarifa {
   /** A dónde va. */
   provincia: string;
@@ -52,6 +55,21 @@ export interface PedidoDeTarifa {
   paquetes: string;
   /** Para el seguro, cuando el operador lo pide. */
   valorDeclarado?: number;
+  /**
+   * Cómo lo recibe el comprador. Por omisión, en su domicilio.
+   *
+   * Está en el contrato y no adentro de un adaptador porque no es un
+   * detalle de OCA: **para el correo son dos productos distintos con
+   * dos tarifas distintas**, no un descuento sobre el mismo envío.
+   * Antes el sitio lo trataba como un descuento fijo de $ 1.200
+   * aplicado por nosotros, y cuando OCA empezó a contestar, ese
+   * descuento dejó de aplicarse —el código lo saltea cuando hay
+   * tarifa del operador— sin que nadie lo notara: elegir «retiro en
+   * sucursal» costaba exactamente lo mismo que a domicilio y
+   * prometía los mismos días, mientras la página de envíos seguía
+   * anunciando $ 1.200 menos y un día antes.
+   */
+  entrega?: MetodoDeEntrega;
 }
 
 export interface DatosDeDespacho {
@@ -103,14 +121,20 @@ export interface Logistica {
   origen(): { cp: string; provincia: string; localidad: string };
 
   /**
-   * Lo que paga el comprador por un envío a domicilio.
+   * Lo que paga el comprador, según cómo lo reciba.
+   *
+   * Se llamaba `cotizarDomicilio` cuando sólo sabía hacer eso. El
+   * nombre viejo habría quedado mintiendo apenas empezó a cotizar
+   * también contra sucursal, y un nombre que miente es la forma más
+   * barata de que alguien —incluido yo dentro de seis meses— use la
+   * función para lo que no es.
    *
    * Devuelve `null` —y no una excepción— cuando el operador contesta
    * pero no tiene tarifa. Es una respuesta válida, no una falla, y
    * quien llama cae a la tabla propia. Las fallas de verdad sí
    * lanzan.
    */
-  cotizarDomicilio(pedido: PedidoDeTarifa): Promise<TarifaExterna | null>;
+  cotizar(pedido: PedidoDeTarifa): Promise<TarifaExterna | null>;
 
   /**
    * Da de alta el envío. Opcional: un operador puede servir para

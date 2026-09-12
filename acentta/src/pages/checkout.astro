@@ -18,6 +18,14 @@ import Base from '@layouts/Base.astro';
 import Logo from '@componentes/Logo.astro';
 import Campo from '@componentes/Campo.astro';
 import Boton from '@componentes/Boton.astro';
+import { CUOTAS_SIN_INTERES } from '@lib/formato';
+import { DESCUENTO_TRANSFERENCIA } from '@lib/cotizacion';
+import { haySucursalASucursal } from '@lib/oca';
+import { nombreDeLogistica } from '@lib/logistica';
+
+/* Sólo OCA sabe cotizar sucursal a sucursal, y sólo si esa operativa
+   está contratada. Envíopack, en este proyecto, no. */
+const haySucursal = nombreDeLogistica() === 'oca' && haySucursalASucursal();
 
 const pasos = [
   { n: 1, nombre: 'Tus datos' },
@@ -113,14 +121,28 @@ const pasos = [
               </span>
               <span class="metodo__precio tabular" data-precio-domicilio></span>
             </label>
-            <label class="metodo">
-              <input type="radio" name="metodo-envio" value="sucursal" />
-              <span class="metodo__cuerpo">
-                <span class="metodo__nombre">Retiro en sucursal del correo</span>
-                <span class="metodo__detalle">Lo retirás con DNI. Suele llegar un día antes.</span>
-              </span>
-              <span class="metodo__precio tabular" data-precio-sucursal></span>
-            </label>
+            <!-- El retiro en sucursal aparece sólo si OCA tiene dada
+                 de alta la operativa sucursal a sucursal, que es un
+                 producto aparte del que ya está contratado.
+
+                 Sin ella, elegir esta opción cobraba exactamente lo
+                 mismo que a domicilio y prometía los mismos días,
+                 mientras /envios anunciaba $ 1.200 menos y un día
+                 antes. Una opción que no cumple lo que ofrece cuesta
+                 más que no tenerla: la descubre el comprador cuando
+                 ya pagó. Se decide al construir el sitio, así que
+                 después de cargar la variable hay que volver a
+                 publicar. -->
+            {haySucursal && (
+              <label class="metodo">
+                <input type="radio" name="metodo-envio" value="sucursal" />
+                <span class="metodo__cuerpo">
+                  <span class="metodo__nombre">Retiro en sucursal del correo</span>
+                  <span class="metodo__detalle">Lo retiras con DNI en la sucursal de OCA que elijas.</span>
+                </span>
+                <span class="metodo__precio tabular" data-precio-sucursal></span>
+              </label>
+            )}
           </fieldset>
 
           <div class="paso__campos">
@@ -201,14 +223,14 @@ const pasos = [
               <input type="radio" name="metodo-pago" value="tarjeta" checked />
               <span class="metodo__cuerpo">
                 <span class="metodo__nombre">Tarjeta de crédito o débito</span>
-                <span class="metodo__detalle">Hasta 12 cuotas sin interés con bancos seleccionados.</span>
+                <span class="metodo__detalle">Hasta {CUOTAS_SIN_INTERES} cuotas sin interés con bancos seleccionados.</span>
               </span>
             </label>
             <label class="metodo">
               <input type="radio" name="metodo-pago" value="transferencia" />
               <span class="metodo__cuerpo">
                 <span class="metodo__nombre">Transferencia bancaria</span>
-                <span class="metodo__detalle">10 % de descuento. Te enviamos los datos por correo.</span>
+                <span class="metodo__detalle">{Math.round(DESCUENTO_TRANSFERENCIA * 100)} % de descuento. Te enviamos los datos por correo.</span>
               </span>
               <span class="metodo__precio metodo__precio--verde tabular" data-descuento-transferencia></span>
             </label>

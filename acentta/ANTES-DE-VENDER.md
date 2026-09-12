@@ -49,6 +49,45 @@ Y las otras dos:
 
 **El token del aviso.** `MOBBEX_WEBHOOK_TOKEN`, de al menos 32 caracteres al azar. Sin él —o con uno corto— la ruta de avisos rechaza todo y lo dice en el registro.
 
+> ⚠️ **Esta sección quedó desactualizada.** Describe Mobbex, que se apagó: hoy la pasarela activa es Mercado Pago. Las variables `MOBBEX_*` siguen existiendo para el día que vuelva, pero no son las que hay que cargar. Hay que reescribirla.
+
+### Las variables de OCA
+
+| Variable | Para qué | Sin ella |
+|---|---|---|
+| `OCA_CUIT` | cotizar | no cotiza: cae a la tabla propia |
+| `OCA_OPERATIVA` | cotizar | usa la de prueba, que no es tuya |
+| `OCA_MODO` | `prueba` o `produccion` | queda en prueba, con tarifas de laboratorio |
+| `OCA_USUARIO`, `OCA_CLAVE`, `OCA_CUENTA`, `OCA_CENTRO_COSTO` | despachar | cotiza pero no da de alta envíos |
+| `OCA_DESPACHO_REAL` | permiso aparte para dar de alta envíos de verdad | el despacho queda bloqueado aunque el modo sea producción |
+| `OCA_OPERATIVA_SUCURSAL` | cotizar sucursal a sucursal | **el retiro en sucursal no aparece en el checkout** |
+
+**`OCA_MODO` y `OCA_DESPACHO_REAL` están separadas a propósito.** Cotizar es una consulta de precio y no crea nada; dar de alta un envío genera una orden de retiro real que alguien tiene que ir a cancelar si estuvo mal. Con un solo interruptor había que aceptar las dos juntas — y como el entorno de prueba de OCA no conoce las operativas de tu cuenta, para ver tarifas reales hay que ir a producción sí o sí.
+
+### Cuál operativa va en cada variable
+
+OCA genera las ocho de una vez y las manda en una tabla, en números consecutivos. Dos van al sitio:
+
+| Producto de OCA | Variable | Qué significa |
+|---|---|---|
+| **Sucursal a Puerta** | `OCA_OPERATIVA` | llevamos el paquete a una sucursal, OCA entrega en el domicilio |
+| **Sucursal a Sucursal** | `OCA_OPERATIVA_SUCURSAL` | llevamos el paquete, el comprador lo retira |
+
+Las otras seis —Puerta a Puerta, Puerta a Sucursal y las cuatro de logística inversa— no se usan todavía. Las de logística inversa son las de **devoluciones**, y el sitio promete 30 días para devolver sin cargo: hoy esa devolución se coordina a mano.
+
+> ⚠️ **Los ocho números se parecen y ninguno dice qué es.** Son consecutivos, y la respuesta de OCA a una cotización devuelve un precio sin nombrar el servicio. Poner el de al lado no da error: da una tarifa distinta que parece igual de razonable.
+>
+> Ya pasó una vez. Se cargó el de Sucursal a Sucursal en `OCA_OPERATIVA` y todas las tarifas bajaron entre un 25 % y un 30 %. Parecía que OCA había abaratado; era el sitio cobrándole tarifa de retiro en sucursal a quien pedía entrega en su casa — unos $ 2.000 a $ 3.000 menos por envío, puestos por el vendedor. Ahora `npm run logistica:vivo` falla si la operativa cambió respecto de la que se usó para medir la tabla.
+
+Mientras `OCA_OPERATIVA_SUCURSAL` esté vacía, el sitio no ofrece el retiro en sucursal: mostrarlo cobrando la tarifa de entrega a domicilio sería peor que no mostrarlo.
+
+Para medir tarifas reales sin riesgo de despachar nada:
+
+```powershell
+$env:OCA_MODO = "produccion"
+npm.cmd run logistica:vivo
+```
+
 ---
 
 ## 2 · Lo que hay que arreglar antes, por riesgo

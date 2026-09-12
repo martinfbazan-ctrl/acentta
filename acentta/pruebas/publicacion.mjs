@@ -418,6 +418,54 @@ ok(vercel.trailingSlash === false,
   }
 }
 
+/* ============================================================
+   10 · Las cuotas no se escriben a mano
+   ------------------------------------------------------------
+   «Hasta 12 cuotas sin interés» estaba escrito, palabra por palabra,
+   en once archivos: ficha, tarjeta, carrito, mini-carrito, checkout,
+   pie, marquesina, ayuda, términos, barra móvil y sistema. Cambiar
+   la promoción a 6 significaba encontrar los once.
+
+   El que se olvida no rompe nada. Deja la portada prometiendo doce y
+   el checkout ofreciendo seis, y los dos números son plausibles: no
+   hay excepción, no hay pantalla en rojo, no hay nada en la consola.
+   Se entera el comprador, en el peor momento posible.
+
+   Esta prueba mira el sitio CONSTRUIDO y no el código fuente, que es
+   lo que la hace difícil de esquivar: no importa desde qué archivo,
+   componente o guion salió el texto. Si en el HTML publicado aparece
+   un número de cuotas distinto del declarado, falla.
+   ============================================================ */
+{
+  const formato = fs.readFileSync(path.join(RAIZ, 'src', 'lib', 'formato.ts'), 'utf8');
+  const declarado = Number(formato.match(/CUOTAS_SIN_INTERES\s*=\s*(\d+)/)?.[1]);
+
+  ok(Number.isInteger(declarado) && declarado > 0,
+    'no se pudo leer CUOTAS_SIN_INTERES de formato.ts; si se renombró, actualizá esta prueba');
+
+  if (Number.isInteger(declarado)) {
+    const vistos = new Map();
+
+    for (const pagina of TODAS) {
+      const html = fs.readFileSync(pagina, 'utf8');
+      for (const [, n] of html.matchAll(/(\d{1,2})\s*cuotas\s+sin\s+inter/gi)) {
+        if (Number(n) === declarado) continue;
+        const rel = path.relative(DIST, pagina);
+        if (!vistos.has(n)) vistos.set(n, new Set());
+        vistos.get(n).add(rel);
+      }
+    }
+
+    for (const [n, paginas] of vistos) {
+      const lista = [...paginas].slice(0, 4).join(', ');
+      const resto = paginas.size > 4 ? ` y ${paginas.size - 4} más` : '';
+      ok(false,
+        `se publican «${n} cuotas sin interés» y la constante dice ${declarado}: ${lista}${resto}. `
+        + 'Tiene que salir de CUOTAS_SIN_INTERES, no escribirse a mano');
+    }
+  }
+}
+
 /* ============================================================ */
 console.log('\n=== LISTO PARA PUBLICAR ===');
 console.log(`  ${TODAS.length} páginas revisadas`);

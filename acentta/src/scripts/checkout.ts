@@ -9,9 +9,11 @@
  */
 
 import { leer, resumen, leerCP, guardarCP, vaciar, subtotal } from '@lib/carrito';
-import { precio as fPrecio, cuota, rangoDeEntrega } from '@lib/formato';
+import { precio as fPrecio, cuota, rangoDeEntrega, CUOTAS_SIN_INTERES } from '@lib/formato';
 import { foto } from '@lib/imagenes';
 import { normalizarCP, calcularEnvio } from '@lib/envio';
+import { DESCUENTO_SUCURSAL, DESCUENTO_TRANSFERENCIA } from '@lib/cotizacion';
+import { PREPARACION } from '@tipos/catalogo';
 
 const contenedor = document.querySelector<HTMLElement>('.checkout');
 if (contenedor) {
@@ -261,14 +263,20 @@ if (contenedor) {
   const metodoPagoRadios = [...document.querySelectorAll<HTMLInputElement>('[name="metodo-pago"]')];
   const metodoEnvioRadios = [...document.querySelectorAll<HTMLInputElement>('[name="metodo-envio"]')];
 
+  /* Las dos constantes se importan de `cotizacion.ts` y no se copian.
+     Éste es el número que el servidor va a usar para cobrar: si acá
+     dice 10 % y allá 12 %, el resumen y el cobro no coinciden, y el
+     comprador lo descubre en la pantalla de Mercado Pago. */
   function descuentoTransferencia(): number {
     const elegido = metodoPagoRadios.find((r) => r.checked)?.value;
-    return elegido === 'transferencia' ? Math.round(subtotal() * 0.1) : 0;
+    return elegido === 'transferencia'
+      ? Math.round(subtotal() * DESCUENTO_TRANSFERENCIA)
+      : 0;
   }
 
   function ajusteSucursal(): number {
     const elegido = metodoEnvioRadios.find((r) => r.checked)?.value;
-    return elegido === 'sucursal' ? -1200 : 0;
+    return elegido === 'sucursal' ? -DESCUENTO_SUCURSAL : 0;
   }
 
   function pintarResumen() {
@@ -319,7 +327,8 @@ if (contenedor) {
 
     const nodoCuotas = document.querySelector<HTMLElement>('[data-ck-cuotas]');
     if (nodoCuotas) {
-      nodoCuotas.innerHTML = `o 12 cuotas sin interés de <b>${cuota(total, 12)}</b>`;
+      nodoCuotas.innerHTML =
+        `o ${CUOTAS_SIN_INTERES} cuotas sin interés de <b>${cuota(total)}</b>`;
     }
 
     /* [SE FUE] El selector de cuotas. Las cuotas se eligen en la
@@ -327,12 +336,17 @@ if (contenedor) {
        banco de esa tarjeta en particular. Elegirlas acá era adivinar
        y después volver a preguntarlas allá. */
 
-    /* Fecha de entrega */
+    /* Fecha de entrega.
+     *
+     * Preparación nuestra + tránsito del correo. El tránsito ya viene
+     * medido por el operador, así que no se le resta un día por elegir
+     * sucursal: cuando la cotización es de una operativa sucursal a
+     * sucursal, ese día ya está adentro de `diasExtra`. Restarlo acá
+     * lo contaba dos veces y prometía un día antes de lo posible. */
     const entrega = document.querySelector<HTMLElement>('[data-ck-entrega]')!;
     const extra = r.diasExtra ?? 0;
-    const sucursal = metodoEnvioRadios.find((x) => x.checked)?.value === 'sucursal';
     entrega.textContent = leerCP()
-      ? `Llega ${rangoDeEntrega(5 + extra - (sucursal ? 1 : 0), 10 + extra - (sucursal ? 1 : 0))}.`
+      ? `Llega ${rangoDeEntrega(PREPARACION.min + extra, PREPARACION.max + extra)}.`
       : 'La fecha exacta aparece al completar el código postal.';
 
     /* El selector de cuotas se rehace acá arriba con el total nuevo,
@@ -351,10 +365,20 @@ if (contenedor) {
     const dom = document.querySelector<HTMLElement>('[data-precio-domicilio]');
     const suc = document.querySelector<HTMLElement>('[data-precio-sucursal]');
     if (dom) dom.textContent = r.envioGratis ? 'Gratis' : fPrecio(r.envio);
-    if (suc) suc.textContent = r.envioGratis ? 'Gratis' : fPrecio(Math.max(0, r.envio - 1200));
+    /* `suc` puede no existir: la opción de retiro en sucursal sólo se
+       imprime si la operativa está contratada. Es un estimado —el
+       precio real lo devuelve el servidor al cotizar— y por eso usa
+       el mismo descuento que la tabla propia. */
+    if (suc) {
+      suc.textContent = r.envioGratis
+        ? 'Gratis'
+        : fPrecio(Math.max(0, r.envio - DESCUENTO_SUCURSAL));
+    }
 
     const desc = document.querySelector<HTMLElement>('[data-descuento-transferencia]');
-    if (desc) desc.textContent = `− ${fPrecio(Math.round(subtotal() * 0.1))}`;
+    if (desc) {
+      desc.textContent = `− ${fPrecio(Math.round(subtotal() * DESCUENTO_TRANSFERENCIA))}`;
+    }
   }
 
   /* ============================================================
@@ -412,8 +436,8 @@ if (contenedor) {
     if (pasoActual >= 3) {
       const porTarjeta = metodoPagoRadios.find((r) => r.checked)?.value === 'tarjeta';
       pago = porTarjeta
-        ? 'Tarjeta · hasta 12 cuotas sin interés'
-        : 'Transferencia bancaria · 10 % de descuento';
+        ? `Tarjeta · hasta ${CUOTAS_SIN_INTERES} cuotas sin interés`
+        : `Transferencia bancaria · ${Math.round(DESCUENTO_TRANSFERENCIA * 100)} % de descuento`;
     }
     const hayPago = fila('data-ck-fila-pago', 'data-ck-metodo-pago', pago);
 

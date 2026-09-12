@@ -1,9 +1,16 @@
 ---
 import Documento from '@layouts/Documento.astro';
 import { ZONAS } from '@lib/envio';
-import { DESCUENTO_SUCURSAL } from '@lib/cotizacion';
+import { haySucursalASucursal } from '@lib/oca';
+import { nombreDeLogistica } from '@lib/logistica';
 import { precio } from '@lib/formato';
-import { UMBRAL_ENVIO_GRATIS } from '@tipos/catalogo';
+import { UMBRAL_ENVIO_GRATIS, PREPARACION } from '@tipos/catalogo';
+
+/* La misma condición que en el checkout: si la operativa de sucursal
+   a sucursal no está contratada, esta página no la promete. Prometer
+   acá lo que el checkout no ofrece es la forma más barata de perder
+   una venta. */
+const haySucursal = nombreDeLogistica() === 'oca' && haySucursalASucursal();
 ---
 
 <Documento
@@ -65,16 +72,26 @@ import { UMBRAL_ENVIO_GRATIS } from '@tipos/catalogo';
       ))}
     </tbody>
   </table>
-  <p>
-    El <strong>retiro en sucursal del correo</strong> descuenta {precio(DESCUENTO_SUCURSAL)}
-    y suele llegar un día antes que la entrega a domicilio.
-  </p>
+  {haySucursal && (
+    <p>
+      El <strong>retiro en sucursal de OCA</strong> sale menos que la entrega a domicilio
+      porque el correo no hace el reparto final. El precio exacto aparece al elegirlo en el
+      checkout: lo cotiza OCA, no lo estimamos nosotros.
+    </p>
+  )}
 
   <h2 id="plazos">Plazos reales</h2>
   <p>
     Los plazos que mostramos son los que efectivamente tarda el pedido, no los que nos
-    gustaría que tardara. Se cuentan en días hábiles desde que el pago se acredita, e
-    incluyen el tiempo de preparación.
+    gustaría que tardara. Se cuentan en días hábiles desde que el pago se acredita, y son
+    la suma de dos cosas: <strong>{PREPARACION.min} a {PREPARACION.max} días hábiles</strong>
+    que tardamos en empaquetarlo y llevarlo al correo, más lo que tarda el correo en llegar
+    a tu ciudad — entre {ZONAS[0]!.diasExtra} día y {ZONAS[ZONAS.length - 1]!.diasExtra} días
+    hábiles según la zona.
+  </p>
+  <p>
+    Los sábados y domingos no cuentan. Un pedido pago un viernes a la tarde empieza a
+    contar el lunes.
   </p>
   <p>
     En la ficha de cada producto no vas a ver "7 a 14 días hábiles" sino

@@ -337,7 +337,7 @@ const OCA = await cargar('src/lib/oca.ts', 'oca');
         + `<Precio>${texto}</Precio><Total>${texto}</Total>`
         + `<PlazoEntrega>3</PlazoEntrega></Table></NewDataSet>`,
     });
-    try { return await OCA.cotizarDomicilio({ provincia: 'Córdoba', cp: '5000', peso: 0.6, paquetes: '27x16x11' }); }
+    try { return await OCA.cotizar({ provincia: 'Córdoba', cp: '5000', peso: 0.6, paquetes: '27x16x11' }); }
     finally { globalThis.fetch = fetchOriginal; }
   };
 
@@ -638,7 +638,15 @@ if (VIVO) {
       console.log('  Credenciales: las tuyas');
     }
     console.log(`  Origen declarado: CP ${OCA.origen().cp} · ${OCA.origen().provincia}`);
-    console.log(`  Operativa: ${process.env.OCA_OPERATIVA || '94584'} (sucursal a puerta)`);
+    /* [ERROR CORREGIDO] Acá decía `(sucursal a puerta)`, escrito a
+       mano al lado del número.
+
+       Es la peor clase de rótulo: no lo lee de ningún lado, así que
+       dice «sucursal a puerta» pase lo que pase. Cargá la operativa
+       equivocada y esta línea te la confirma como correcta. No hay
+       forma de saber desde acá qué producto es cada número —OCA no
+       lo devuelve en la tarifa— y por eso ahora no se inventa. */
+    console.log(`  Operativa: ${process.env.OCA_OPERATIVA || '94584'}`);
     console.log(`  Producto: ${p.nombre}`);
     console.log(`  Paquete ${caja} cm · ${peso} kg · ${OCA.volumenEnMetrosCubicos(caja)} m³\n`);
 
@@ -663,20 +671,56 @@ if (VIVO) {
     /* La tabla propia, para poder comparar acá mismo. Sin esto la
        corrida da una lista de precios y la comparación queda en la
        cabeza de quien la lee, que es donde se pierde. */
-    let calcularEnvio = null, UMBRAL = null;
+    let calcularEnvio = null, ZONAS = null, UMBRAL = null;
     try {
-      ({ calcularEnvio } = await cargar('src/lib/envio.ts', 'envio-vivo'));
+      ({ calcularEnvio, ZONAS } = await cargar('src/lib/envio.ts', 'envio-vivo'));
       ({ UMBRAL_ENVIO_GRATIS: UMBRAL } = await cargar('src/types/catalogo.ts', 'catalogo-umbral'));
     } catch { /* si no compila, la corrida sigue: los precios de OCA valen igual */ }
+
+    /* ¿Estamos midiendo el mismo producto que la última vez?
+       ------------------------------------------------------------
+       Ésta es la comprobación que faltaba, y la escribo después de
+       que casi me come.
+
+       Una corrida mostró todas las tarifas entre un 25 % y un 30 %
+       más baratas que la medición anterior. Leído de corrido, eso
+       parece «OCA bajó los precios» y la reacción natural es bajar
+       la tabla propia para acompañar. Pero lo que había cambiado no
+       era la tarifa: era OCA_OPERATIVA. Otro número, otro producto,
+       otro tarifario.
+
+       Bajar la tabla con esos números habría dejado el sitio
+       cobrando tarifa de retiro en sucursal a todo el mundo,
+       incluidos los que piden entrega en su casa. La diferencia la
+       pone el vendedor, en cada venta, y no aparece en ninguna
+       pantalla.
+
+       Dos precios sólo se pueden comparar si salieron del mismo
+       producto. Si la operativa cambió, no hay comparación: hay dos
+       mediciones sueltas. */
+    const opActual = String(process.env.OCA_OPERATIVA || '94584');
+    const opMedida = ZONAS?.find((z) => z.medido)?.medido?.operativa;
+    const mismaOperativa = !opMedida || opMedida === opActual;
+
+    if (!mismaOperativa) {
+      console.log(`  ⚠ ATENCIÓN: la tabla se midió con la operativa ${opMedida} y estás corriendo con ${opActual}.`);
+      console.log('    Son dos productos distintos de OCA, con tarifarios distintos.');
+      console.log('    La columna «diferencia» de abajo NO dice si las tarifas cambiaron:');
+      console.log('    compara dos servicios que no son el mismo. No ajustes la tabla con');
+      console.log('    estos números hasta saber qué es cada operativa.\n');
+      fallos.push(`la operativa cambió de ${opMedida} a ${opActual}: los precios de esta corrida no son comparables con los de la tabla`);
+    }
 
     console.log(`  ${'DESTINO'.padEnd(16)} ${'OCA'.padStart(9)}  ${'TU TABLA'.padStart(9)}  ${'DIFERENCIA'.padStart(11)}  ZONA`);
 
     let algunaCotizo = false;
     let masCaro = 0, masBarato = Infinity;
     const pierde = [];
+    /** Lo que cotizó OCA por cada código postal, para releerlo abajo. */
+    const medidos = new Map();
     for (const [nombre, provincia, cp] of destinos) {
       try {
-        const t = await OCA.cotizarDomicilio({
+        const t = await OCA.cotizar({
           provincia, cp, peso, paquetes: caja, valorDeclarado: p.precio,
         });
         if (!t) { console.log(`  ${nombre.padEnd(16)} sin cotización`); continue; }
@@ -685,6 +729,7 @@ if (VIVO) {
         const real = Math.round(t.costo);
         if (real > masCaro) masCaro = real;
         if (real < masBarato) masBarato = real;
+        medidos.set(cp, real);
         const propio = calcularEnvio?.(cp, peso);
 
         if (!propio?.ok) {
@@ -706,13 +751,75 @@ if (VIVO) {
       }
     }
 
+    /* ── Sucursal a sucursal ──
+       Es una operativa aparte que OCA da de alta por separado, así
+       que lo primero que hay que saber es si existe. Mientras no
+       exista, el sitio no ofrece la opción: mostrarla cobrando la
+       tarifa de entrega a domicilio sería peor que no mostrarla. */
+    console.log('\n  ─── SUCURSAL A SUCURSAL ───');
+    if (!OCA.haySucursalASucursal()) {
+      console.log('  No hay operativa cargada en OCA_OPERATIVA_SUCURSAL.');
+      console.log(`  La que está en uso para TODO es OCA_OPERATIVA = ${process.env.OCA_OPERATIVA || '(la de fábrica)'}.`);
+      console.log('');
+      console.log('  Si OCA te dio un número nuevo para retiro en sucursal, va en la otra');
+      console.log('  variable — no en OCA_OPERATIVA:');
+      console.log('');
+      console.log('     $env:OCA_OPERATIVA_SUCURSAL = "el-numero-que-te-den"');
+      console.log('');
+      console.log('  Puesto en OCA_OPERATIVA, el sitio cobraría tarifa de retiro en sucursal');
+      console.log('  a quien pidió entrega en su casa, y despacharía con el producto');
+      console.log('  equivocado. Los dos números conviven: cada uno en su variable.');
+      console.log('');
+      console.log('  Hasta entonces el retiro en sucursal cotiza con la tabla propia.');
+    } else {
+      console.log(`  Operativa: ${process.env.OCA_OPERATIVA_SUCURSAL}\n`);
+      for (const [nombre, provincia, cp] of destinos.slice(0, 4)) {
+        try {
+          const [dom, suc] = await Promise.all([
+            OCA.cotizar({ provincia, cp, peso, paquetes: caja, valorDeclarado: p.precio }),
+            OCA.cotizar({ provincia, cp, peso, paquetes: caja, valorDeclarado: p.precio, entrega: 'sucursal' }),
+          ]);
+          if (!dom || !suc) { console.log(`  ${nombre.padEnd(16)} sin cotización`); continue; }
+          const ahorro = Math.round(dom.costo - suc.costo);
+          console.log(`  ${nombre.padEnd(16)} domicilio $${String(Math.round(dom.costo)).padStart(7)}  ·  sucursal $${String(Math.round(suc.costo)).padStart(7)}  ·  ahorra $${ahorro}  (${suc.diasExtra}d)`);
+          /* Si la sucursal sale IGUAL o más cara, la operativa
+             cargada probablemente no es la que se cree. Vale más
+             decirlo que dejar que se publique una opción que no
+             ahorra nada. */
+          if (ahorro <= 0) {
+            fallos.push(`sucursal a sucursal no sale más barato en ${nombre} (domicilio $${Math.round(dom.costo)}, sucursal $${Math.round(suc.costo)}): revisá que OCA_OPERATIVA_SUCURSAL sea la operativa correcta`);
+          }
+        } catch (e) {
+          console.log(`  ${nombre.padEnd(16)} ✗ ${e.message.slice(0, 120)}`);
+        }
+      }
+    }
+
     if (pierde.length) {
       console.log(`\n  ✗ La tabla cobra de menos en ${pierde.length} destino(s):`);
       for (const x of pierde) console.log(`      ${x.nombre} (${x.zona}): $${-x.dif} por envío, de tu bolsillo`);
       console.log('    Se usa sólo cuando OCA no contesta, así que no rompe nada visible.');
       console.log('    Ajustá el `base` de esas zonas en src/lib/envio.ts y su campo `medido`.');
-    } else if (algunaCotizo && calcularEnvio) {
+    } else if (algunaCotizo && calcularEnvio && mismaOperativa) {
       console.log('\n  ✓ La tabla propia cubre el costo real en todos los destinos medidos.');
+
+      /* Cobrar de más también es un problema, y es el que nadie
+         reclama: el comprador no escribe para avisar que el envío le
+         pareció caro, simplemente no compra. El piso son las mismas
+         tarifas de OCA; el techo, un margen razonable encima. */
+      const caros = [];
+      for (const [nombre, , cp] of destinos) {
+        const propio = calcularEnvio(cp, peso);
+        const real = medidos.get(cp);
+        if (!propio?.ok || !real) continue;
+        const exceso = Math.round((propio.costo / real - 1) * 100);
+        if (exceso > 25) caros.push(`${nombre}: cobrás $${propio.costo} y sale $${real} (${exceso} % más)`);
+      }
+      if (caros.length) {
+        console.log(`\n  ⚠ La tabla cobra bastante por encima del costo en ${caros.length} destino(s):`);
+        for (const c of caros) console.log(`      ${c}`);
+        console.log('    Se usa sólo cuando OCA no contesta, pero ese día el comprador paga de más.');
+      }
     }
 
     /* El umbral de envío gratis es la decisión que estos números

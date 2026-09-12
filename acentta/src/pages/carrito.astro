@@ -17,6 +17,7 @@ import Migas from '@componentes/Migas.astro';
 import TarjetaProducto from '@componentes/TarjetaProducto.astro';
 import Boton from '@componentes/Boton.astro';
 import { masVendidos } from '@lib/catalogo';
+import { CUOTAS_SIN_INTERES } from '@lib/formato';
 
 const sugeridos = masVendidos(4);
 ---
@@ -153,7 +154,7 @@ const sugeridos = masVendidos(4);
         </li>
         <li>
           <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true" fill="currentColor"><path d="M6.2 11.4 3.3 8.5l-1.1 1.1 4 4 7.6-7.6-1.1-1.1z"/></svg>
-          Hasta 12 cuotas sin interés
+          Hasta {CUOTAS_SIN_INTERES} cuotas sin interés
         </li>
         <li>
           <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true" fill="currentColor"><path d="M6.2 11.4 3.3 8.5l-1.1 1.1 4 4 7.6-7.6-1.1-1.1z"/></svg>

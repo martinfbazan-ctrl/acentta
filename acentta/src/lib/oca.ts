@@ -36,7 +36,9 @@
 
 import { variable } from '@lib/entorno';
 import type { TarifaExterna } from '@lib/cotizacion';
-import type { Despacho, DatosDeDespacho, Logistica, PedidoDeTarifa } from '@lib/logistica';
+import type {
+  Despacho, DatosDeDespacho, Logistica, PedidoDeTarifa, MetodoDeEntrega,
+} from '@lib/logistica';
 
 /* ------------------------------------------------------------------ *
  * Entornos
@@ -89,16 +91,47 @@ const cuit = () => variable('OCA_CUIT').trim();
 const cuenta = () => variable('OCA_CUENTA').trim();
 
 /**
- * La operativa contratada.
+ * La operativa contratada, según cómo reciba el comprador.
  *
- * OCA publica las de prueba: puerta a puerta 64665, puerta a
- * sucursal 62342, **sucursal a puerta 94584**, sucursal a sucursal
- * 78254. La nuestra es la tercera: dejamos el paquete en una
- * sucursal de Córdoba y OCA entrega en el domicilio.
+ * **Una operativa es un producto, no un parámetro.** Cada
+ * combinación de origen y destino es una distinta, con su tarifario
+ * propio. OCA le genera a cada cuenta las ocho de una vez y entrega
+ * la lista junta, en números consecutivos:
  *
- * En producción son otras, propias de cada cuenta.
+ *     Puerta a Puerta            nos colectan, entregan a domicilio
+ *     Puerta a Sucursal          nos colectan, retira el comprador
+ *     Sucursal a Puerta          llevamos, entregan a domicilio  ← la nuestra
+ *     Sucursal a Sucursal        llevamos, retira el comprador
+ *     Log. Inv. ×4               devoluciones
+ *
+ * Que sean consecutivos es la trampa. Los ocho números se parecen
+ * entre sí, ninguno dice qué es, y **la respuesta de OCA a una
+ * cotización tampoco lo dice**: contesta un precio, sin nombrar el
+ * servicio. Poner el de al lado no da error, da una tarifa distinta
+ * que parece igual de razonable.
+ *
+ * Ya pasó: se cargó el de Sucursal a Sucursal en esta variable y
+ * todas las tarifas bajaron entre un 25 % y un 30 %. Leído solo,
+ * parecía que OCA había abaratado. Era el sitio cobrándole tarifa de
+ * retiro en sucursal a quien pedía entrega en su casa.
+ *
+ * Los números no se escriben acá: viven en variables de entorno, uno
+ * por modalidad. Mientras `OCA_OPERATIVA_SUCURSAL` esté vacía,
+ * `cotizar()` no ofrece el retiro en sucursal — es preferible que la
+ * opción no aparezca a que aparezca cobrando lo que no es.
+ *
+ * Las de prueba que OCA publica en su documentación: puerta a puerta
+ * 64665, puerta a sucursal 62342, sucursal a puerta 94584, sucursal
+ * a sucursal 78254. Ésas sí van escritas porque son públicas y de su
+ * cuenta de demostración, no de la nuestra.
  */
 const operativa = () => variable('OCA_OPERATIVA').trim() || '94584';
+const operativaSucursal = () => variable('OCA_OPERATIVA_SUCURSAL').trim();
+
+/** ¿Se puede cotizar sucursal a sucursal, o falta contratarla? */
+export function haySucursalASucursal(): boolean {
+  return operativaSucursal().length > 0;
+}
 
 /** El centro de costo, que sale de `GetCentroCostoPorOperativa`. */
 const centroDeCosto = () => variable('OCA_CENTRO_COSTO').trim() || '0';
@@ -281,12 +314,30 @@ function aNumero(v: string | undefined): number {
  * Cotizar
  * ------------------------------------------------------------------ */
 
-export async function cotizarDomicilio(pedido: PedidoDeTarifa): Promise<TarifaExterna | null> {
+/**
+ * Cuál operativa corresponde, y `null` si esa modalidad no está
+ * contratada.
+ *
+ * Devolver `null` en vez de caer a la de domicilio es deliberado. Si
+ * cayera, el comprador que elige «retiro en sucursal» vería el precio
+ * de la entrega a domicilio con el rótulo de sucursal: un número
+ * correcto en la pantalla equivocada, que es la clase de error que no
+ * se descubre nunca desde adentro.
+ */
+function operativaPara(entrega: MetodoDeEntrega | undefined): string | null {
+  if (entrega === 'sucursal') return operativaSucursal() || null;
+  return operativa();
+}
+
+export async function cotizar(pedido: PedidoDeTarifa): Promise<TarifaExterna | null> {
   if (!cuit()) return null;
+
+  const op = operativaPara(pedido.entrega);
+  if (!op) return null;
 
   const xml = await llamar('Tarifar_Envio_Corporativo', {
     Cuit: cuit(),
-    Operativa: operativa(),
+    Operativa: op,
     PesoTotal: pedido.peso.toFixed(2),
     VolumenTotal: volumenEnMetrosCubicos(pedido.paquetes).toFixed(6),
     CodigoPostalOrigen: origen().cp,
@@ -308,10 +359,14 @@ export async function cotizarDomicilio(pedido: PedidoDeTarifa): Promise<TarifaEx
 
   return {
     costo,
+    /* Los días vienen del correo y ya contemplan la modalidad: en
+       sucursal a sucursal suele ser uno menos porque no hay reparto
+       final. Por eso nadie más le resta un día: estaría contándolo
+       dos veces. */
     diasExtra: Number.isFinite(dias) && dias > 0 ? Math.ceil(dias) : 3,
     correo: 'OCA',
     correoId: 'oca',
-    servicio: resultado.idtiposervicio ?? operativa(),
+    servicio: resultado.idtiposervicio ?? op,
   };
 }
 
@@ -622,7 +677,7 @@ export const oca: Logistica = {
   nombre: 'oca',
   hayCredenciales,
   origen,
-  cotizarDomicilio,
+  cotizar,
   despachar,
   urlDeEtiqueta,
 };

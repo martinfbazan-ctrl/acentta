@@ -5,6 +5,8 @@
  */
 
 import { precio as fPrecio, rangoDeEntrega } from '@lib/formato';
+import { PREPARACION } from '@tipos/catalogo';
+import { URL_RASTREO_OCA } from '@lib/pedido';
 
 const $ = <T extends HTMLElement>(s: string) => document.querySelector<T>(s);
 
@@ -23,6 +25,8 @@ interface Respuesta {
   ciudad: string;
   provincia: string;
   seguimiento: string | null;
+  /** Qué correo lo lleva. `null` mientras la tarifa salió de la tabla. */
+  correo?: string | null;
   verificado?: boolean;
   entrega?: { calle: string; numero: string; piso: string | null; ciudad: string; provincia: string; cp: string; metodo: string };
   items: { nombre: string; variante: string; cantidad: number; precio: number }[];
@@ -38,7 +42,7 @@ const QUE_SIGNIFICA: Record<string, string> = {
 
 function tarjeta(p: Respuesta): string {
   const extra = p.diasExtra ?? 0;
-  const llega = rangoDeEntrega(5 + extra, 10 + extra, new Date(p.creado));
+  const llega = rangoDeEntrega(PREPARACION.min + extra, PREPARACION.max + extra, new Date(p.creado));
 
   const dir = p.entrega
     ? [`${p.entrega.calle} ${p.entrega.numero}`, p.entrega.piso, `${p.entrega.ciudad}, ${p.entrega.provincia}`, `CP ${p.entrega.cp}`]
@@ -60,7 +64,11 @@ function tarjeta(p: Respuesta): string {
 
     ${p.seguimiento
       ? `<p class="pedido-visto__seguimiento">
-           <b>Ya salió.</b> Número de seguimiento: <b>${esc(p.seguimiento)}</b>
+           <b>Ya salió.</b> Seguimiento de ${esc(p.correo || 'el correo')}:
+           <b>${esc(p.seguimiento)}</b>
+           ${p.correo === 'OCA'
+             ? ` · <a href="${URL_RASTREO_OCA}" target="_blank" rel="noopener noreferrer">rastrear en OCA</a>`
+             : ''}
          </p>`
       : p.estado === 'aprobado'
         ? `<p class="pedido-visto__linea">Todavía no salió del depósito. Cuando salga, acá va a aparecer el número de seguimiento.</p>`

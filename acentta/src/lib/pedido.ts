@@ -11,6 +11,23 @@
  * está mi pedido?" que nadie quiere escribir ni responder.
  */
 
+/**
+ * Dónde rastrea el comprador su envío de OCA.
+ *
+ * Vive acá y no en `oca.ts` a propósito: `oca.ts` es código de
+ * servidor —lee credenciales, llama a la API— y los guiones del
+ * navegador que muestran el seguimiento no pueden importarlo sin
+ * arrastrar todo eso al paquete que descarga el visitante.
+ *
+ * Es la página de búsqueda, no una dirección con el número adentro:
+ * **OCA rastrea con un formulario**. Armar algo como
+ * `.../Seguimiento?numero=123` sería inventar una dirección que
+ * devuelve 404, y le tocaría descubrirlo al comprador justo en el
+ * momento en que está ansioso por saber dónde está su pedido. Por
+ * eso el número se muestra al lado, listo para copiar.
+ */
+export const URL_RASTREO_OCA = 'https://www.oca.com.ar/Seguimiento/BuscarEnvio/paquetes';
+
 export type EstadoPedido =
   | 'confirmado'
   | 'preparando'
@@ -75,6 +92,17 @@ export interface PedidoGuardado {
   zona: string;
   email: string;
   diasExtra: number;
+  /**
+   * El número que le dio el correo, cuando el pedido ya salió.
+   *
+   * Los dos son opcionales porque en el momento de comprar no
+   * existen: se conocen recién al despachar, uno o dos días después.
+   * Un campo obligatorio los habría obligado a nacer vacíos, y un
+   * seguimiento en blanco se lee como «se perdió el dato».
+   */
+  seguimiento?: string | null;
+  /** Qué correo lo lleva: «OCA». Sin esto, el número no sirve. */
+  correo?: string | null;
   items: {
     slug: string;
     nombre: string;

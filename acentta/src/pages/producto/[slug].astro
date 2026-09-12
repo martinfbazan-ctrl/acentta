@@ -34,7 +34,7 @@ import {
   NOMBRE_CATEGORIA, datosParaCarrito,
 } from '@lib/catalogo';
 import { opinionesDe } from '../../data/opiniones-productos';
-import { precio as fPrecio, rangoDeEntrega } from '@lib/formato';
+import { precio as fPrecio, rangoDeEntrega, CUOTAS_SIN_INTERES } from '@lib/formato';
 import { foto } from '@lib/imagenes';
 
 export function getStaticPaths() {
@@ -129,7 +129,7 @@ const esquema = {
         <Precio
           precio={p.precio}
           precioAnterior={p.precioAnterior}
-          cuotas={p.precio >= 30000 ? 12 : 6}
+          cuotas={CUOTAS_SIN_INTERES}
           iva={p.iva}
           tamano="ficha"
           class="ficha__precio"
@@ -177,7 +177,7 @@ const esquema = {
             <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6">
               <rect x="2.5" y="5.5" width="19" height="13" rx="2" /><path d="M2.5 10h19" />
             </svg>
-            <span>Hasta 12 cuotas sin interés. Visa, Mastercard, Amex, Cabal y Mercado Pago.</span>
+            <span>Hasta {CUOTAS_SIN_INTERES} cuotas sin interés. Visa, Mastercard, Amex, Cabal y Mercado Pago.</span>
           </li>
           <li>
             <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6">
@@ -249,7 +249,7 @@ const esquema = {
     <div class="barra-movil" data-barra-movil hidden>
       <div class="barra-movil__datos">
         <p class="barra-movil__precio tabular">{fPrecio(p.precio)}</p>
-        <p class="barra-movil__cuotas">{p.precio >= 30000 ? 12 : 6} cuotas sin interés</p>
+        <p class="barra-movil__cuotas">{CUOTAS_SIN_INTERES} cuotas sin interés</p>
       </div>
       <Boton data-agregar data-producto={datosCarrito}>Agregar</Boton>
     </div>

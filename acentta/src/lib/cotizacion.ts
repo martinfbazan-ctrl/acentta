@@ -268,10 +268,14 @@ export function cotizar(
 
   if (!envioGratis) {
     envio = usaOperador ? Math.round(tarifa!.costo) : calculo.costo!;
-    /* El descuento por retirar en sucursal es nuestro y se aplica a
-       cualquiera de las dos fuentes. Cuando el operador ya cotizó
-       contra una sucursal, la diferencia viene incluida en su número
-       y este descuento no corresponde. */
+    /* El descuento por retirar en sucursal es una estimación NUESTRA
+       y sólo se aplica sobre la tabla propia.
+
+       Cuando la tarifa viene del operador, ya está cotizada contra la
+       operativa que corresponde —sucursal a sucursal es un producto
+       distinto, con su propio tarifario— y restarle además estos
+       $ 1.200 sería descontar dos veces sobre un número que ya
+       contempla la modalidad. */
     if (metodoEnvio === 'sucursal' && !usaOperador) {
       envio = Math.max(0, envio - DESCUENTO_SUCURSAL);
     }

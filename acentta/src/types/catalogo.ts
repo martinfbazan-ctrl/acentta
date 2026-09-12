@@ -201,6 +201,29 @@ export interface Producto {
 export const UMBRAL_ENVIO_GRATIS = 100_000; // ARS
 export const STOCK_BAJO = 5;               // umbral de "últimas unidades"
 
+/**
+ * Días hábiles de PREPARACIÓN, antes de entregarle el paquete al correo.
+ *
+ * Es lo que tardamos nosotros en empaquetar y llevarlo a la sucursal
+ * de OCA. **No incluye el tránsito**: ése lo pone el operador y llega
+ * como `diasExtra` de la cotización. La fecha que ve el comprador es
+ * la suma de los dos.
+ *
+ * [ERROR CORREGIDO] Era `5 a 10`, heredado de cuando el catálogo era
+ * dropshipping y había que esperar al proveedor. Con stock propio en
+ * Córdoba eso significaba prometerle a Salta 9 a 14 días hábiles
+ * —casi tres semanas— para algo que OCA entrega en 4 y que se
+ * despacha al día siguiente.
+ *
+ * El daño de ese número no se ve en ninguna métrica: nadie escribe
+ * para avisar que no compró porque la fecha le pareció lejos.
+ *
+ * Además estaba escrito a mano —`5 + extra`, `10 + extra`— en cinco
+ * guiones distintos, así que cambiarlo en el catálogo no alcanzaba:
+ * la ficha decía una cosa y la confirmación del pedido otra.
+ */
+export const PREPARACION = { min: 1, max: 2 } as const;
+
 /** Stock total sumando todas las variantes. */
 export function stockTotal(p: Producto): number {
   return p.variantes.reduce((suma, v) => suma + v.stock, 0);

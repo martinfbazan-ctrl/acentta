@@ -25,8 +25,9 @@
  * No era un error de números sino de FORMA, y por eso no se veía:
  * la tabla contestaba rápido, con zonas plausibles y precios de
  * aspecto razonable. Sólo aparece al comparar contra lo que cobra
- * el correo de verdad. Medido el 12/9/2026 con OCA, saliendo de
- * CP 5000, con un paquete de 27x16x11 cm y 0,6 kg:
+ * el correo de verdad. Medido con OCA, operativa 471351 —sucursal a
+ * puerta—, saliendo de CP 5000, con un paquete de 27x16x11 cm y
+ * 0,6 kg:
  *
  *     Destino            OCA cobra    la tabla cobraba
  *     Córdoba capital    $  7.851     $  8.100
@@ -46,10 +47,26 @@
  * Entre cobrar unos pesos de más y regalar $ 6.288 en cada envío,
  * el error barato es el primero.
  *
- * Cada zona dice si su precio está MEDIDO o INTERPOLADO. Para
- * medir las que faltan: `npm run logistica:vivo` con
- * `OCA_MODO = "produccion"`, que sólo consulta precios y no da de
- * alta ningún envío.
+ * Las cuatro zonas están medidas. Para volver a medirlas:
+ * `npm run logistica:vivo` con `OCA_MODO = "produccion"`, que sólo
+ * consulta precios y no da de alta ningún envío.
+ *
+ * LA OPERATIVA ES PARTE DE LA MEDICIÓN
+ *
+ * Cada zona guarda con qué operativa se midió, y no es burocracia.
+ * OCA vende ocho productos con números consecutivos —sucursal a
+ * puerta, sucursal a sucursal y seis más—, y su respuesta a una
+ * cotización devuelve un precio sin nombrar el servicio. Con el
+ * número de al lado cargado por error, todas las tarifas bajaron un
+ * 25 % y parecía que OCA había abaratado. Un precio sin su operativa
+ * al lado no se puede comparar con nada.
+ *
+ * POR QUÉ SON CUATRO ZONAS Y NO SEIS
+ *
+ * Porque son cuatro los precios que cobra OCA desde Córdoba. Las
+ * zonas de más salían de suponer que la distancia se paga, y no se
+ * paga: Salta y Tucumán cuestan lo mismo que CABA. Una zona que
+ * existe sólo en nuestra cabeza cobra de más a gente real.
  */
 
 export interface Zona {
@@ -69,8 +86,17 @@ export interface Zona {
    * verificar que `base` nunca queda por debajo del costo real, y
    * para que dentro de seis meses se sepa cuál de estos números es
    * un dato y cuál una estimación.
+   *
+   * **`operativa` no es un dato de archivo.** Una tarifa de OCA sólo
+   * significa algo junto al producto que la produjo: la misma caja
+   * al mismo destino sale distinto en sucursal a puerta que en
+   * sucursal a sucursal, y la respuesta de OCA no dice cuál de las
+   * dos contestó. Sin este campo, comparar una medición nueva contra
+   * una vieja puede estar comparando dos productos distintos y
+   * concluir «bajaron las tarifas» cuando lo que cambió fue el
+   * servicio.
    */
-  medido?: { costo: number; destino: string; fecha: string };
+  medido?: { costo: number; destino: string; fecha: string; operativa: string };
 }
 
 /**
@@ -89,55 +115,69 @@ export const ZONAS: Zona[] = [
     base: 8800,
     porKiloExtra: 620,
     diasExtra: 1,
-    medido: { costo: 7851, destino: 'CP 5000 · Córdoba', fecha: '2026-09-12' },
+    medido: { costo: 7851, destino: 'CP 5000 · Córdoba', fecha: '2026-09-13', operativa: '471351' },
   },
   {
     nombre: 'Provincia de Córdoba',
     /* Río Cuarto (5800), Villa María (5900), Cruz del Eje (5280).
-       INTERPOLADA: está entre el precio de la capital y el nacional
-       porque geográficamente lo está, no porque se haya medido.
+
        San Francisco y Morteros quedan afuera a propósito: ese bloque
        de códigos comparte numeración con Santa Fe y prefiero que un
        par de pueblos cordobeses paguen tarifa nacional a que medio
        Santa Fe pague tarifa provincial. */
     rangos: [[5200, 5299], [5800, 5999]],
-    base: 9900,
+    base: 11300,
     porKiloExtra: 700,
     diasExtra: 2,
+    medido: { costo: 10027, destino: 'CP 5800 · Río Cuarto y CP 5900 · Villa María', fecha: '2026-09-13', operativa: '471351' },
   },
   {
-    nombre: 'Centro, Cuyo y Litoral',
-    /* CABA, Buenos Aires, Santa Fe, Entre Ríos, La Pampa, La Rioja,
-       San Juan, Mendoza y San Luis.
+    nombre: 'Resto del país',
+    /* Todo lo que no es Córdoba ni Patagonia: CABA, Buenos Aires,
+       Santa Fe, Entre Ríos, Corrientes, Misiones, Chaco, Formosa,
+       Santiago del Estero, Tucumán, Catamarca, Salta, Jujuy,
+       La Rioja, San Juan, Mendoza, San Luis y La Pampa.
 
-       Van juntas porque OCA las cobra igual: CABA y Rosario dieron
-       exactamente el mismo importe, lo que muestra que su tarifario
-       trabaja con zonas anchas y no con distancia. Separarlas sería
-       inventar una precisión que el correo no tiene. */
-    rangos: [[1000, 2999], [5300, 5799], [6000, 8299]],
+       [ERROR CORREGIDO] Acá había DOS zonas: «Centro, Cuyo y
+       Litoral» a $ 11.800 y «Norte» a $ 12.600. La segunda salía de
+       suponer que el norte, por lejos, tenía que salir más caro.
+
+       No sale más caro. Medido el 13/9/2026 desde Córdoba, con la
+       misma caja:
+
+           CABA      $ 10.488      Salta     $ 10.488
+           Rosario   $ 10.488      Tucumán   $ 10.488
+           Mendoza   $ 10.488
+
+       Cinco destinos, cinco veces el mismo número. El tarifario de
+       OCA desde Córdoba trabaja con una sola zona ancha para todo
+       esto, y la distancia no entra en la cuenta. La zona «Norte»
+       cobraba $ 2.112 de más por una intuición geográfica.
+
+       Nadie iba a reclamar ese sobreprecio: el comprador de Salta no
+       escribe para avisar que el envío le pareció caro, simplemente
+       no compra. Por eso la corrida en vivo ahora avisa cuando la
+       tabla se despega más de un 25 % del costo real, no sólo cuando
+       queda por debajo. */
+    rangos: [[1000, 4999], [5300, 5799], [6000, 8299]],
     base: 11800,
     porKiloExtra: 820,
-    diasExtra: 3,
-    medido: { costo: 10488, destino: 'CP 1425 · CABA y CP 2000 · Rosario', fecha: '2026-09-12' },
-  },
-  {
-    nombre: 'Norte',
-    /* Santa Fe norte, Chaco, Formosa, Corrientes, Misiones, Santiago
-       del Estero, Tucumán, Catamarca, Salta y Jujuy.
-       INTERPOLADA: por encima del nacional y por debajo de la
-       Patagonia. Medir Salta (4400) confirmaría o corregiría. */
-    rangos: [[3000, 4999]],
-    base: 12600,
-    porKiloExtra: 880,
-    diasExtra: 4,
+    /* El máximo medido, no el promedio. CABA y Tucumán dieron 2
+       días, Rosario 3, Mendoza 4 y Salta 5. Esta tabla es la red de
+       seguridad: se usa cuando OCA no contesta y no hay forma de
+       saber cuál de los cinco es. Prometer el peor y llegar antes es
+       el error barato. */
+    diasExtra: 5,
+    medido: { costo: 10488, destino: 'CABA, Rosario, Mendoza, Salta y Tucumán', fecha: '2026-09-13', operativa: '471351' },
   },
   {
     nombre: 'Patagonia',
     rangos: [[8300, 9999]],
     base: 13900,
     porKiloExtra: 970,
-    diasExtra: 5,
-    medido: { costo: 12336, destino: 'CP 8400 · Bariloche', fecha: '2026-09-12' },
+    /* Bariloche dio 5 días y Ushuaia 9. Mismo criterio: el peor. */
+    diasExtra: 9,
+    medido: { costo: 12336, destino: 'CP 8400 · Bariloche y CP 9410 · Ushuaia', fecha: '2026-09-13', operativa: '471351' },
   },
 ];
 

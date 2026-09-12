@@ -31,6 +31,7 @@
  */
 
 import { parse } from 'yaml';
+import { PREPARACION } from '@tipos/catalogo';
 import type { Producto, Variante, Imagen, Especificacion } from '@tipos/catalogo';
 
 /** Lo que devuelve el panel. Deliberadamente laxo: la validación viene después. */
@@ -140,7 +141,12 @@ function traducir(ruta: string, crudo: ProductoCrudo): Producto {
        Sin convertir, «0.21» viajaría como cadena y el cálculo daría
        NaN — que se imprimiría como «$ NaN» en la ficha. */
     iva: crudo.iva == null || crudo.iva === '' ? undefined : Number(crudo.iva),
-    plazoEnvio: { min: crudo.plazoEnvio?.min ?? 5, max: crudo.plazoEnvio?.max ?? 10 },
+    /* Sólo la PREPARACIÓN. El tránsito lo agrega la cotización del
+       correo: sumarlo también acá lo contaría dos veces. */
+    plazoEnvio: {
+      min: crudo.plazoEnvio?.min ?? PREPARACION.min,
+      max: crudo.plazoEnvio?.max ?? PREPARACION.max,
+    },
     ...(crudo.rating ? { rating: crudo.rating } : {}),
     cantidadOpiniones: crudo.cantidadOpiniones ?? 0,
     opiniones: [],

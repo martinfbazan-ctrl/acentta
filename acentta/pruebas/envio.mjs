@@ -130,7 +130,7 @@ for (const [a, b] of huecos) {
    ============================================================ */
 const CORDOBA = 'Córdoba capital y alrededores';
 const PROVINCIA = 'Provincia de Córdoba';
-const CENTRO = 'Centro, Cuyo y Litoral';
+const RESTO = 'Resto del país';
 
 const REALES = [
   [5000, CORDOBA, 'Córdoba capital · primer código de la zona'],
@@ -139,20 +139,24 @@ const REALES = [
   [5800, PROVINCIA, 'Río Cuarto'],
   [5900, PROVINCIA, 'Villa María'],
   [5280, PROVINCIA, 'Cruz del Eje'],
-  [1425, CENTRO, 'Palermo, CABA'],
-  [1000, CENTRO, 'primer código del país'],
-  [1602, CENTRO, 'Florida, Vicente López'],
-  [1900, CENTRO, 'La Plata'],
-  [2000, CENTRO, 'Rosario'],
-  [5500, CENTRO, 'Mendoza'],
-  [5400, CENTRO, 'San Juan'],
-  [5300, CENTRO, 'La Rioja'],
-  [7000, CENTRO, 'Tandil'],
-  [8000, CENTRO, 'Bahía Blanca'],
-  [8299, CENTRO, 'último antes de la Patagonia'],
-  [3100, 'Norte', 'Paraná'],
-  [4000, 'Norte', 'San Miguel de Tucumán'],
-  [4400, 'Norte', 'Salta'],
+  [1425, RESTO, 'Palermo, CABA'],
+  [1000, RESTO, 'primer código del país'],
+  [1602, RESTO, 'Florida, Vicente López'],
+  [1900, RESTO, 'La Plata'],
+  [2000, RESTO, 'Rosario'],
+  [5500, RESTO, 'Mendoza'],
+  [5400, RESTO, 'San Juan'],
+  [5300, RESTO, 'La Rioja'],
+  [7000, RESTO, 'Tandil'],
+  [8000, RESTO, 'Bahía Blanca'],
+  [8299, RESTO, 'último antes de la Patagonia'],
+  /* El norte entra en la misma zona que CABA, y no por descuido:
+     OCA cobra lo mismo. Estos tres están acá justamente para que
+     nadie vuelva a separarlos «porque están más lejos». */
+  [3100, RESTO, 'Paraná'],
+  [4000, RESTO, 'San Miguel de Tucumán · medido, sale igual que CABA'],
+  [4400, RESTO, 'Salta · medido, sale igual que CABA'],
+  [4600, RESTO, 'San Salvador de Jujuy · lo más al norte del país'],
   [8300, 'Patagonia', 'Neuquén'],
   [9410, 'Patagonia', 'Ushuaia'],
 ];
@@ -181,7 +185,7 @@ for (const z of ZONAS) {
    Patagonia, y la tabla lo cumplía perfecto — porque las dos estaban
    equivocadas de la misma manera. Una prueba escrita desde la misma
    suposición que el código no puede encontrar nada. */
-const orden = [CORDOBA, PROVINCIA, CENTRO, 'Norte', 'Patagonia'];
+const orden = [CORDOBA, PROVINCIA, RESTO, 'Patagonia'];
 const porNombre = Object.fromEntries(ZONAS.map((z) => [z.nombre, z]));
 
 ok(orden.length === ZONAS.length,
@@ -391,6 +395,16 @@ for (const z of ZONAS) {
   const rangos = z.rangos.map(([a, b]) => `${a}-${b}`).join(', ');
   const real = z.medido ? `$ ${z.medido.costo}` : '· estimada';
   console.log(`  ${z.nombre.padEnd(30)} ${rangos.padEnd(28)} ${('$ ' + z.base).padStart(9)}  ${real.padStart(9)}  +${z.diasExtra}`);
+}
+const operativas = [...new Set(ZONAS.filter((z) => z.medido).map((z) => z.medido.operativa))];
+if (operativas.length) {
+  console.log(`\n  Las mediciones salen de la operativa ${operativas.join(' y ')} de OCA.`);
+  /* Una sola tabla no puede mezclar productos: si dos zonas se
+     midieron con operativas distintas, sus precios no son
+     comparables entre sí y el orden por distancia deja de significar
+     nada. */
+  ok(operativas.length === 1,
+    `la tabla mezcla mediciones de operativas distintas (${operativas.join(', ')}): son productos de OCA con tarifarios distintos y no se pueden comparar entre sí`);
 }
 if (sinMedir.length) {
   console.log(`\n  ${sinMedir.length} zona(s) con precio estimado y no medido: ${sinMedir.join(', ')}.`);

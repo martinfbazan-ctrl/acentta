@@ -19,6 +19,7 @@ import Precio from '@componentes/Precio.astro';
 import Rating from '@componentes/Rating.astro';
 import Boton from '@componentes/Boton.astro';
 import { foto, srcset, TAMANOS_GRILLA } from '@lib/imagenes';
+import { CUOTAS_SIN_INTERES } from '@lib/formato';
 import { badgeDeEstado, estaAgotado, tieneDescuento, ahorroEnPorcentaje, atributosDeFiltro, datosParaCarrito } from '@lib/catalogo';
 import { UMBRAL_ENVIO_GRATIS, type Producto } from '@tipos/catalogo';
 
@@ -108,7 +109,7 @@ const clases = [
     <Precio
       precio={p.precio}
       precioAnterior={p.precioAnterior}
-      cuotas={p.precio >= 30000 ? 6 : 3}
+      cuotas={CUOTAS_SIN_INTERES}
       class="ficha-prod__precio"
     />
 

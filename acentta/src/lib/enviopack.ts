@@ -649,8 +649,14 @@ export const enviopack: Logistica = {
     provincia: variable('ENVIOPACK_PROVINCIA_ORIGEN').trim() || 'CABA',
     localidad: variable('ENVIOPACK_LOCALIDAD_ORIGEN').trim() || 'CABA',
   }),
-  cotizarDomicilio: (p) => cotizarDomicilio({
-    provincia: p.provincia, cp: p.cp, peso: p.peso, paquetes: p.paquetes,
-  }),
+  /* Envíopack sólo cotiza a domicilio en este adaptador. Cuando le
+     piden sucursal devuelve `null` en vez de contestar con el precio
+     de domicilio: la respuesta honesta a «no sé» es no saber, y quien
+     llama ya sabe caer a la tabla propia. */
+  cotizar: (p) => (p.entrega === 'sucursal'
+    ? Promise.resolve(null)
+    : cotizarDomicilio({
+        provincia: p.provincia, cp: p.cp, peso: p.peso, paquetes: p.paquetes,
+      })),
   urlDeEtiqueta,
 };

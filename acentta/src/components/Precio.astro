@@ -5,7 +5,7 @@
  * monto pesa más que el porcentaje.
  */
 import {
-  precio as fPrecio, cuota,
+  precio as fPrecio, cuota, CUOTAS_SIN_INTERES,
   precioSinImpuestos, MOSTRAR_PRECIO_SIN_IMPUESTOS, IVA_GENERAL,
 } from '@lib/formato';
 
@@ -25,7 +25,7 @@ interface Props {
 const {
   precio: valor,
   precioAnterior,
-  cuotas = 6,
+  cuotas = CUOTAS_SIN_INTERES,
   unidades,
   iva = IVA_GENERAL,
   tamano = 'tarjeta',

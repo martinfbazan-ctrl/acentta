@@ -5,7 +5,8 @@
  * el buscador puede leer las respuestas aunque estén plegadas.
  */
 import Documento from '@layouts/Documento.astro';
-import { precio } from '@lib/formato';
+import { precio, CUOTAS_SIN_INTERES } from '@lib/formato';
+import { DESCUENTO_TRANSFERENCIA } from '@lib/cotizacion';
 import { UMBRAL_ENVIO_GRATIS } from '@tipos/catalogo';
 
 const grupos = [
@@ -19,11 +20,11 @@ const grupos = [
       },
       {
         p: '¿Puedo pagar en cuotas?',
-        r: 'Sí, hasta 12 cuotas sin interés con bancos seleccionados. El monto de cada cuota se muestra debajo del precio, en la ficha y en el carrito, calculado sobre el total real que vas a pagar.',
+        r: `Sí, hasta ${CUOTAS_SIN_INTERES} cuotas sin interés con bancos seleccionados. El monto de cada cuota se muestra debajo del precio, en la ficha y en el carrito, calculado sobre el total real que vas a pagar.`,
       },
       {
         p: '¿Qué medios de pago aceptan?',
-        r: 'Visa, Mastercard, American Express, Cabal, Mercado Pago y transferencia bancaria. La transferencia tiene 10 % de descuento.',
+        r: `Visa, Mastercard, American Express, Cabal, Mercado Pago y transferencia bancaria. La transferencia tiene ${Math.round(DESCUENTO_TRANSFERENCIA * 100)} % de descuento.`,
       },
       {
         p: '¿El carrito se guarda si cierro la página?',

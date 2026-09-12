@@ -7,6 +7,7 @@
  * exigibles por ley en Argentina (Resolución 424/2020).
  */
 import Logo from '@componentes/Logo.astro';
+import { CUOTAS_SIN_INTERES } from '@lib/formato';
 
 const comprar = [
   { nombre: 'Iluminación', href: '/categoria/iluminacion' },
@@ -121,7 +122,7 @@ const medios = [
           </li>
         ))}
       </ul>
-      <p class="pie__nota">Hasta 12 cuotas sin interés con bancos seleccionados.</p>
+      <p class="pie__nota">Hasta {CUOTAS_SIN_INTERES} cuotas sin interés con bancos seleccionados.</p>
     </div>
 
     <div class="pie__legal">

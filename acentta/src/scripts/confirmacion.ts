@@ -27,6 +27,7 @@ import { leerPedido } from '@lib/pedido';
 import { foto } from '@lib/imagenes';
 import { vaciar } from '@lib/carrito';
 import { precio as fPrecio, rangoDeEntrega } from '@lib/formato';
+import { PREPARACION } from '@tipos/catalogo';
 
 const $ = <T extends HTMLElement>(s: string) => document.querySelector<T>(s);
 const texto = (s: string, v: string) => { const n = $(s); if (n) n.textContent = v; };
@@ -132,7 +133,7 @@ async function mostrarPedidoReal(numero: string): Promise<boolean> {
   }
 
   const extra = datos.diasExtra ?? 0;
-  texto('[data-fecha-entrega]', ' ' + rangoDeEntrega(5 + extra, 10 + extra, new Date(datos.creado)));
+  texto('[data-fecha-entrega]', ' ' + rangoDeEntrega(PREPARACION.min + extra, PREPARACION.max + extra, new Date(datos.creado)));
 
   const resumen = $('[data-resumen-pedido]');
   if (resumen) resumen.hidden = false;
@@ -209,7 +210,7 @@ if (numeroEnLaUrl) {
     habilitarCopiar(pedido.numero);
 
     const extra = pedido.diasExtra ?? 0;
-    texto('[data-fecha-entrega]', ' ' + rangoDeEntrega(5 + extra, 10 + extra, new Date(pedido.fecha)));
+    texto('[data-fecha-entrega]', ' ' + rangoDeEntrega(PREPARACION.min + extra, PREPARACION.max + extra, new Date(pedido.fecha)));
 
     const resumen = $('[data-resumen-pedido]');
     if (resumen) resumen.hidden = false;

@@ -16,7 +16,7 @@ import EstadoVacio from '@componentes/EstadoVacio.astro';
 import { rangoDeEntrega } from '@lib/formato';
 import TarjetaProducto from '@componentes/TarjetaProducto.astro';
 import { todos, tieneDescuento, esUltimasUnidades, estaAgotado } from '@lib/catalogo';
-import { UMBRAL_ENVIO_GRATIS, type Producto } from '@tipos/catalogo';
+import { UMBRAL_ENVIO_GRATIS, PREPARACION, type Producto } from '@tipos/catalogo';
 
 const colores = [
   { token: '--arena',          valor: '#F9F5EF', uso: 'Fondo general del sitio',                 contraste: 'superficie', decorativo: true },
@@ -48,7 +48,9 @@ const tipografia = [
 ];
 
 const espaciado = [1, 2, 3, 4, 5, 6, 8, 10, 12, 16, 20, 24];
-const entrega = rangoDeEntrega(5, 9);
+/* Un ejemplo de fecha para la muestra: preparación más tres días de
+   tránsito, que es un destino de media distancia. */
+const entrega = rangoDeEntrega(PREPARACION.min + 3, PREPARACION.max + 3);
 
 /* Casos borde de la tarjeta, tomados del catálogo real: no son
    maquetas hechas para la documentación, son los productos que
@@ -401,16 +403,16 @@ const bordes = [
           <span class="t-meta">Sin descuento</span>
         </div>
         <div class="muestra muestra--caja">
-          <Precio precio={129900} precioAnterior={324750} cuotas={12} />
+          <Precio precio={129900} precioAnterior={324750} />
           <span class="t-meta">60 % y cinco dígitos</span>
         </div>
         <div class="muestra muestra--caja">
-          <Precio precio={13600} unidades={4} cuotas={3} />
+          <Precio precio={13600} unidades={4} />
           <span class="t-meta">Conjunto, con precio por unidad</span>
         </div>
       </div>
       <div class="muestra muestra--caja" style="margin-top:16px;max-width:340px">
-        <Precio precio={45900} precioAnterior={72000} tamano="ficha" cuotas={12} />
+        <Precio precio={45900} precioAnterior={72000} tamano="ficha" />
         <span class="t-meta">Tamaño ficha</span>
       </div>
     </section>

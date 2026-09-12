@@ -3,6 +3,7 @@
 import { leerPedido, estadoActual, fechaDePaso, PASOS, ESTADOS, type EstadoPedido, type PedidoGuardado } from '@lib/pedido';
 import { precio as fPrecio, fechaLarga, rangoDeEntrega } from '@lib/formato';
 import { foto } from '@lib/imagenes';
+import { PREPARACION } from '@tipos/catalogo';
 
 const forma = document.querySelector<HTMLFormElement>('[data-seguimiento-forma]');
 
@@ -25,7 +26,32 @@ if (forma) {
 
     const extra = pedido.diasExtra ?? 0;
     document.querySelector<HTMLElement>('[data-sg-entrega]')!.textContent =
-      rangoDeEntrega(5 + extra, 10 + extra, new Date(pedido.fecha));
+      rangoDeEntrega(PREPARACION.min + extra, PREPARACION.max + extra, new Date(pedido.fecha));
+
+    /* El número del correo. Sólo se muestra si existe: un recuadro
+       rotulado «Seguimiento» con un guion adentro es peor que no
+       mostrarlo, porque hace pensar que el dato se perdió. */
+    const rastreo = document.querySelector<HTMLElement>('[data-sg-rastreo]');
+    if (rastreo) {
+      const hay = Boolean(pedido.seguimiento);
+      rastreo.hidden = !hay;
+      if (hay) {
+        const correo = pedido.correo || 'el correo';
+        document.querySelector<HTMLElement>('[data-sg-correo-rotulo]')!.textContent =
+          `Número de seguimiento de ${correo}`;
+        document.querySelector<HTMLElement>('[data-sg-rastreo-numero]')!.textContent =
+          pedido.seguimiento!;
+        const enlace = document.querySelector<HTMLAnchorElement>('[data-sg-rastreo-enlace]');
+        /* OCA rastrea con un formulario, no con una dirección que
+           lleve el número adentro, así que el enlace va a la página
+           y el número queda a la vista para copiar. Inventar una
+           dirección con el número pegado daría un 404 al comprador
+           justo cuando está ansioso por saber dónde está su pedido. */
+        if (enlace) {
+          enlace.querySelector('.boton__texto')!.textContent = `Rastrear en ${correo}`;
+        }
+      }
+    }
 
     /* Línea de estados */
     const indice = estadoActual(pedido, forzado);
@@ -56,11 +82,51 @@ if (forma) {
       </article>`).join('');
   }
 
+  /**
+   * Le pregunta al servidor lo que el navegador no puede saber.
+   *
+   * [ERROR CORREGIDO] Esta página leía SÓLO el pedido guardado en el
+   * navegador, que se escribió en el momento de comprar. El número de
+   * seguimiento no existe en ese momento: aparece uno o dos días
+   * después, cuando se despacha y se carga en /pedidos.
+   *
+   * O sea que el circuito estaba cortado justo en el medio. El
+   * vendedor pegaba el número, se guardaba bien, y el comprador
+   * entraba a «seguimiento de pedido» y no lo veía nunca — mientras
+   * el estado avanzaba solo, derivado del reloj, dando la impresión
+   * de que la página estaba viva y al día.
+   *
+   * Nada falla, nada aparece en la consola. Sólo llega el mail de
+   * «¿dónde está mi pedido?» que esta página existe para evitar.
+   *
+   * Se pinta primero con lo guardado y se refresca después: si el
+   * servidor tarda o no contesta, la persona ya está viendo su
+   * pedido en vez de un cargador.
+   */
+  async function refrescar(numero: string, previo: PedidoGuardado) {
+    try {
+      const r = await fetch(`/api/pedido?numero=${encodeURIComponent(numero)}`, {
+        signal: AbortSignal.timeout(10000),
+      });
+      if (!r.ok) return;
+      const d = (await r.json()) as { seguimiento?: string | null; correo?: string | null };
+      /* Sólo se completa lo que el servidor sabe y el navegador no.
+         El resto del pedido ya está en pantalla y volver a pintarlo
+         con datos parciales lo borraría. */
+      if (!d.seguimiento) return;
+      pintar({ ...previo, seguimiento: d.seguimiento, correo: d.correo ?? null });
+    } catch {
+      /* Sin conexión el seguimiento sigue mostrando lo de siempre.
+         Es exactamente lo que había antes de este agregado. */
+    }
+  }
+
   /* Si compró en este navegador, se muestra sin pedir nada. */
   const guardado = leerPedido();
   if (guardado) {
     entrada.value = guardado.numero;
     pintar(guardado);
+    void refrescar(guardado.numero, guardado);
   }
 
   forma.addEventListener('submit', (e) => {
@@ -70,6 +136,7 @@ if (forma) {
 
     if (pedido && pedido.numero.toUpperCase() === buscado) {
       pintar(pedido);
+      void refrescar(pedido.numero, pedido);
     } else {
       resultado.hidden = true;
       vacio.hidden = true;

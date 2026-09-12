@@ -7,7 +7,7 @@ import {
   subtotal, resumen, guardarCP, leerCP,
   type ItemCarrito,
 } from '@lib/carrito';
-import { precio as fPrecio, cuota, estadoEnvioGratis } from '@lib/formato';
+import { precio as fPrecio, cuota, estadoEnvioGratis, CUOTAS_SIN_INTERES } from '@lib/formato';
 import { foto } from '@lib/imagenes';
 import { normalizarCP } from '@lib/envio';
 import { UMBRAL_ENVIO_GRATIS } from '@tipos/catalogo';
@@ -107,7 +107,7 @@ if (carro) {
     /* Cuotas sobre el total, no sobre el subtotal: la cuota que
        importa es la que se va a pagar. */
     document.querySelector<HTMLElement>('[data-carro-cuotas]')!.innerHTML =
-      `12 cuotas sin interés de <b>${cuota(r.total, 12)}</b>`;
+      `${CUOTAS_SIN_INTERES} cuotas sin interés de <b>${cuota(r.total)}</b>`;
 
     /* Barra de envío gratis */
     const estado = estadoEnvioGratis(sub, UMBRAL_ENVIO_GRATIS);

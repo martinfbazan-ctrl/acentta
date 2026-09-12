@@ -12,7 +12,7 @@ import Pie from '@componentes/Pie.astro';
 import Migas from '@componentes/Migas.astro';
 import Campo from '@componentes/Campo.astro';
 import Boton from '@componentes/Boton.astro';
-import { PASOS } from '@lib/pedido';
+import { PASOS, URL_RASTREO_OCA } from '@lib/pedido';
 ---
 
 <Base
@@ -62,6 +62,27 @@ import { PASOS } from '@lib/pedido';
           <p class="pedido-cabeza__dato" data-sg-entrega>—</p>
         </div>
       </header>
+
+      <!-- El número del correo, cuando el pedido ya salió.
+           Aparece sólo si existe: un recuadro vacío con el rótulo
+           «Seguimiento» hace que la persona crea que se perdió el
+           dato, y escriba para preguntarlo. Se completa desde el
+           guion. -->
+      <div class="rastreo" data-sg-rastreo hidden>
+        <div>
+          <p class="rastreo__rotulo" data-sg-correo-rotulo>Número de seguimiento del correo</p>
+          <p class="rastreo__numero tabular" data-sg-rastreo-numero>—</p>
+        </div>
+        <a
+          class="boton boton--secundario rastreo__enlace"
+          data-sg-rastreo-enlace
+          href={URL_RASTREO_OCA}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <span class="boton__texto">Rastrear en el correo</span>
+        </a>
+      </div>
 
       <!-- Línea de estados -->
       <ol class="linea" data-sg-linea>
@@ -178,6 +199,36 @@ import { PASOS } from '@lib/pedido';
 
   /* ---- Línea de estados ---- */
   .linea { display: flex; flex-direction: column; margin-bottom: var(--e-12); }
+  .rastreo {
+    display: grid;
+    /* `minmax(0, 1fr)` y no `1fr`: una columna auto no se achica por
+       debajo de su contenido, y un número de seguimiento largo la
+       estira más que la pantalla. Es el mismo error que cortó el
+       carrito en Android. */
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--e-4);
+    align-items: center;
+    padding: var(--e-5);
+    margin-bottom: var(--e-6);
+    background: var(--papel);
+    border: 1px solid var(--gris-200);
+    border-radius: var(--r-tarjeta);
+  }
+  .rastreo__rotulo { font-size: var(--t-meta); color: var(--gris-texto); }
+  .rastreo__numero {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--tinta);
+    /* Un número largo parte donde haga falta en vez de desbordar. */
+    overflow-wrap: anywhere;
+  }
+  .rastreo__enlace { white-space: nowrap; }
+
+  @media (max-width: 520px) {
+    .rastreo { grid-template-columns: minmax(0, 1fr); }
+    .rastreo__enlace { justify-self: stretch; }
+  }
+
   .linea__paso { display: flex; gap: var(--e-4); position: relative; padding-bottom: var(--e-6); }
   .linea__paso:last-child { padding-bottom: 0; }
 

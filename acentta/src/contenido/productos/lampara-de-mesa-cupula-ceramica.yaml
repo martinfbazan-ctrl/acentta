@@ -50,8 +50,8 @@ dimensiones:
 peso: 2.6
 iva: '0.21'
 plazoEnvio:
-  min: 4
-  max: 8
+  min: 1
+  max: 2
 rating: 4.5
 cantidadOpiniones: 64
 badges:

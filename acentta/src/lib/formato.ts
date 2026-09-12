@@ -89,11 +89,29 @@ export function decimal(valor: number, digitos = 1): string {
 }
 
 /**
+ * Cuántas cuotas sin interés se ofrecen con tarjeta de crédito.
+ *
+ * Un solo lugar, y no es prolijidad: este número estaba escrito a
+ * mano en once archivos —ficha, tarjeta, carrito, checkout, pie,
+ * marquesina, ayuda, términos, barra móvil…— y bastaba olvidarse de
+ * uno para que el sitio prometiera doce en la portada y cobrara seis
+ * en el checkout. Nada de eso da error: son dos números plausibles
+ * en dos pantallas distintas, y el que se entera es el comprador.
+ *
+ * Hay una verificación en `pruebas/publicacion.mjs` que falla si
+ * aparece «N cuotas» escrito a mano en cualquier archivo.
+ *
+ * El valor real lo definen el banco y la promoción vigente, así que
+ * los textos dicen «hasta N» y no «N».
+ */
+export const CUOTAS_SIN_INTERES = 6;
+
+/**
  * Cuotas sin interés.
  * En Latam la decisión de compra muchas veces no es el precio: es la cuota.
  * Por eso el monto de la cuota se muestra con el mismo peso visual que el total.
  */
-export function cuota(total: number, cantidad: number): string {
+export function cuota(total: number, cantidad: number = CUOTAS_SIN_INTERES): string {
   return precio(Math.round(total / cantidad));
 }
 

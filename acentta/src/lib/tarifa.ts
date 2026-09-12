@@ -81,12 +81,18 @@ export async function cotizarConCorreo(
   if (!operador.hayCredenciales() || !envio.provincia) return conTabla;
 
   try {
-    const tarifa = await operador.cotizarDomicilio({
+    const tarifa = await operador.cotizar({
       provincia: envio.provincia,
       cp: envio.cp,
       localidad: envio.ciudad,
       peso: conTabla.peso,
       paquetes: conTabla.paquetes,
+      /* Cómo lo recibe decide QUÉ tarifa se pide, no cuánto se le
+         descuenta a la de domicilio. Para el correo son dos productos
+         distintos. Si esa modalidad no está contratada, el operador
+         devuelve `null` y cae a la tabla propia como cualquier otra
+         falta de respuesta. */
+      entrega: metodoEnvio,
       /* Para el seguro, cuando la operativa lo incluye: se declara lo
          que realmente vale la mercadería. Declarar de menos abarata
          el seguro y deja el envío mal cubierto justo cuando importa. */

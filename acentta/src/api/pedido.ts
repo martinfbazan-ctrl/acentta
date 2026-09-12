@@ -89,6 +89,12 @@ export const GET: APIRoute = async ({ url }) => {
     ciudad: pedido.entrega.ciudad,
     provincia: pedido.entrega.provincia,
     seguimiento: pedido.seguimiento ?? null,
+    /* Qué correo lo lleva. Sale de la cotización, así que sólo existe
+       cuando el operador contestó de verdad: si la tarifa salió de la
+       tabla propia, todavía no está decidido quién lo transporta y
+       decirlo sería inventarlo. El seguimiento sin saber de qué correo
+       es no sirve para nada — hay que saber en qué sitio pegarlo. */
+    correo: pedido.cotizacion.correo ?? null,
     items: pedido.cotizacion.lineas.map((l) => ({
       nombre: l.nombre, variante: l.variante, cantidad: l.cantidad,
       precio: l.precio, imagen: l.imagen, slug: l.slug,
