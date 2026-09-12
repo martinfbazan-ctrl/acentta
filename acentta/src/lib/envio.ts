@@ -61,12 +61,26 @@
  * 25 % y parecía que OCA había abaratado. Un precio sin su operativa
  * al lado no se puede comparar con nada.
  *
- * POR QUÉ SON CUATRO ZONAS Y NO SEIS
+ * EL PRECIO SE AGRUPA POR TARIFARIO; EL PLAZO, POR DISTANCIA
  *
- * Porque son cuatro los precios que cobra OCA desde Córdoba. Las
- * zonas de más salían de suponer que la distancia se paga, y no se
- * paga: Salta y Tucumán cuestan lo mismo que CABA. Una zona que
- * existe sólo en nuestra cabeza cobra de más a gente real.
+ * OCA cobra cuatro precios desde Córdoba, pero tarda más de cuatro
+ * tiempos distintos. Son dos agrupaciones que no coinciden, y
+ * tratarlas como una sola cuesta plata en un sentido o ventas en el
+ * otro: seis zonas de precio le cobraban $ 2.112 de más a Salta;
+ * fusionarlas en una le prometía a CABA 5 días cuando OCA entrega
+ * en 2.
+ *
+ * Por eso hay dos zonas con la misma `base` y distinto `diasExtra`.
+ * No es una inconsistencia: es lo que mide el correo.
+ *
+ * ESTA TABLA NO ES SÓLO UN RESPALDO
+ *
+ * La calculadora de envío de la ficha de producto la usa SIEMPRE:
+ * corre en el navegador y no puede llamar a OCA. La consulta al
+ * correo pasa recién en el checkout, del lado del servidor. Así que
+ * estos números son los que ve todo visitante en la pantalla donde
+ * decide comprar — no sólo los que ve alguien el día que OCA está
+ * caído.
  */
 
 export interface Zona {
@@ -131,44 +145,64 @@ export const ZONAS: Zona[] = [
     diasExtra: 2,
     medido: { costo: 10027, destino: 'CP 5800 · Río Cuarto y CP 5900 · Villa María', fecha: '2026-09-13', operativa: '471351' },
   },
+  /* ------------------------------------------------------------------
+     Las dos que siguen cuestan LO MISMO y tardan distinto, y esa
+     asimetría es el hallazgo que ordena toda la tabla.
+
+     [ERROR CORREGIDO ·1] Antes eran «Centro, Cuyo y Litoral» a
+     $ 11.800 y «Norte» a $ 12.600. La segunda salía de suponer que
+     el norte, por lejos, tenía que salir más caro. No sale más caro.
+     Medido desde Córdoba con la misma caja:
+
+         CABA      $ 10.488      Salta     $ 10.488
+         Rosario   $ 10.488      Tucumán   $ 10.488
+         Mendoza   $ 10.488
+
+     Cinco destinos, cinco veces el mismo número. Desde Córdoba, OCA
+     no cobra por distancia. La zona «Norte» cobraba $ 2.112 de más
+     por una intuición geográfica.
+
+     [ERROR CORREGIDO ·2] Al descubrir eso las fusioné en una sola
+     zona, «Resto del país», con el peor plazo de las cinco: 5 días.
+     Correcto en el precio y caro en otra moneda — **a CABA le
+     prometía 5 días cuando OCA entrega en 2.**
+
+     Y no es un detalle del checkout: la calculadora de la ficha usa
+     esta tabla, no OCA. La fecha que ve TODO visitante en la página
+     de producto sale de acá. Le estaba agregando tres días al
+     mercado más grande del país, en la pantalla donde se decide la
+     compra.
+
+     El error de fondo fue confundir dos cosas que resultaron
+     distintas: **el precio se agrupa por tarifario, el plazo se
+     agrupa por distancia.** Que OCA cobre lo mismo no significa que
+     tarde lo mismo. Por eso hay dos zonas con la misma `base` y
+     `diasExtra` distintos, y por eso la prueba ya no exige que el
+     precio suba en cada escalón: exige que no baje.
+     ------------------------------------------------------------------ */
   {
-    nombre: 'Resto del país',
-    /* Todo lo que no es Córdoba ni Patagonia: CABA, Buenos Aires,
-       Santa Fe, Entre Ríos, Corrientes, Misiones, Chaco, Formosa,
-       Santiago del Estero, Tucumán, Catamarca, Salta, Jujuy,
-       La Rioja, San Juan, Mendoza, San Luis y La Pampa.
-
-       [ERROR CORREGIDO] Acá había DOS zonas: «Centro, Cuyo y
-       Litoral» a $ 11.800 y «Norte» a $ 12.600. La segunda salía de
-       suponer que el norte, por lejos, tenía que salir más caro.
-
-       No sale más caro. Medido el 13/9/2026 desde Córdoba, con la
-       misma caja:
-
-           CABA      $ 10.488      Salta     $ 10.488
-           Rosario   $ 10.488      Tucumán   $ 10.488
-           Mendoza   $ 10.488
-
-       Cinco destinos, cinco veces el mismo número. El tarifario de
-       OCA desde Córdoba trabaja con una sola zona ancha para todo
-       esto, y la distancia no entra en la cuenta. La zona «Norte»
-       cobraba $ 2.112 de más por una intuición geográfica.
-
-       Nadie iba a reclamar ese sobreprecio: el comprador de Salta no
-       escribe para avisar que el envío le pareció caro, simplemente
-       no compra. Por eso la corrida en vivo ahora avisa cuando la
-       tabla se despega más de un 25 % del costo real, no sólo cuando
-       queda por debajo. */
-    rangos: [[1000, 4999], [5300, 5799], [6000, 8299]],
+    nombre: 'Centro y Litoral',
+    /* CABA, Buenos Aires, Santa Fe, Entre Ríos y La Pampa. */
+    rangos: [[1000, 2999], [6000, 8299]],
     base: 11800,
     porKiloExtra: 820,
-    /* El máximo medido, no el promedio. CABA y Tucumán dieron 2
-       días, Rosario 3, Mendoza 4 y Salta 5. Esta tabla es la red de
-       seguridad: se usa cuando OCA no contesta y no hay forma de
-       saber cuál de los cinco es. Prometer el peor y llegar antes es
-       el error barato. */
+    /* CABA dio 2 días y Rosario 3. Se toma el peor de la zona. */
+    diasExtra: 3,
+    medido: { costo: 10488, destino: 'CP 1425 · CABA y CP 2000 · Rosario', fecha: '2026-09-13', operativa: '471351' },
+  },
+  {
+    nombre: 'Cuyo y Norte',
+    /* Mendoza, San Juan, San Luis, La Rioja, y todo el norte:
+       Santa Fe norte, Chaco, Formosa, Corrientes, Misiones,
+       Santiago del Estero, Tucumán, Catamarca, Salta y Jujuy. */
+    rangos: [[3000, 4999], [5300, 5799]],
+    base: 11800,
+    porKiloExtra: 820,
+    /* Mendoza dio 4 días y Salta 5. Tucumán dio 2, que es menos que
+       Rosario estando más lejos: los plazos que devuelve OCA tienen
+       ruido y conviene no afinarlos más de lo que aguantan. */
     diasExtra: 5,
-    medido: { costo: 10488, destino: 'CABA, Rosario, Mendoza, Salta y Tucumán', fecha: '2026-09-13', operativa: '471351' },
+    medido: { costo: 10488, destino: 'CP 5500 · Mendoza, CP 4400 · Salta y CP 4000 · Tucumán', fecha: '2026-09-13', operativa: '471351' },
   },
   {
     nombre: 'Patagonia',

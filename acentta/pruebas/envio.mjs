@@ -130,7 +130,8 @@ for (const [a, b] of huecos) {
    ============================================================ */
 const CORDOBA = 'Córdoba capital y alrededores';
 const PROVINCIA = 'Provincia de Córdoba';
-const RESTO = 'Resto del país';
+const CENTRO = 'Centro y Litoral';
+const NORTE = 'Cuyo y Norte';
 
 const REALES = [
   [5000, CORDOBA, 'Córdoba capital · primer código de la zona'],
@@ -139,27 +140,37 @@ const REALES = [
   [5800, PROVINCIA, 'Río Cuarto'],
   [5900, PROVINCIA, 'Villa María'],
   [5280, PROVINCIA, 'Cruz del Eje'],
-  [1425, RESTO, 'Palermo, CABA'],
-  [1000, RESTO, 'primer código del país'],
-  [1602, RESTO, 'Florida, Vicente López'],
-  [1900, RESTO, 'La Plata'],
-  [2000, RESTO, 'Rosario'],
-  [5500, RESTO, 'Mendoza'],
-  [5400, RESTO, 'San Juan'],
-  [5300, RESTO, 'La Rioja'],
-  [7000, RESTO, 'Tandil'],
-  [8000, RESTO, 'Bahía Blanca'],
-  [8299, RESTO, 'último antes de la Patagonia'],
-  /* El norte entra en la misma zona que CABA, y no por descuido:
-     OCA cobra lo mismo. Estos tres están acá justamente para que
-     nadie vuelva a separarlos «porque están más lejos». */
-  [3100, RESTO, 'Paraná'],
-  [4000, RESTO, 'San Miguel de Tucumán · medido, sale igual que CABA'],
-  [4400, RESTO, 'Salta · medido, sale igual que CABA'],
-  [4600, RESTO, 'San Salvador de Jujuy · lo más al norte del país'],
+  [1425, CENTRO, 'Palermo, CABA'],
+  [1000, CENTRO, 'primer código del país'],
+  [1602, CENTRO, 'Florida, Vicente López'],
+  [1900, CENTRO, 'La Plata'],
+  [2000, CENTRO, 'Rosario'],
+  [7000, CENTRO, 'Tandil'],
+  [8000, CENTRO, 'Bahía Blanca'],
+  [8299, CENTRO, 'último antes de la Patagonia'],
+  [5500, NORTE, 'Mendoza'],
+  [5400, NORTE, 'San Juan'],
+  [5300, NORTE, 'La Rioja'],
+  [3100, NORTE, 'Paraná'],
+  [4000, NORTE, 'San Miguel de Tucumán'],
+  [4400, NORTE, 'Salta'],
+  [4600, NORTE, 'San Salvador de Jujuy · lo más al norte del país'],
   [8300, 'Patagonia', 'Neuquén'],
   [9410, 'Patagonia', 'Ushuaia'],
 ];
+
+/* Salta y CABA caen en zonas distintas y tienen que costar IGUAL.
+   Es la comprobación que fija el hallazgo: desde Córdoba, OCA no
+   cobra por distancia, y la única razón de que sean dos zonas es el
+   plazo. Si alguien vuelve a separar los precios «porque el norte
+   está más lejos», esto lo dice con nombre. */
+{
+  const caba = calcularEnvio('1425', 1), salta = calcularEnvio('4400', 1);
+  ok(caba.ok && salta.ok && caba.costo === salta.costo,
+    `CABA sale ${caba.costo} y Salta ${salta.costo}: desde Córdoba OCA cobra lo mismo a las dos ($ 10.488 medido)`);
+  ok(salta.diasExtra > caba.diasExtra,
+    'Salta tendría que prometer más días que CABA: cuestan igual pero no tardan igual');
+}
 
 for (const [cp, esperada, ciudad] of REALES) {
   const r = calcularEnvio(String(cp), 1);
@@ -185,19 +196,66 @@ for (const z of ZONAS) {
    Patagonia, y la tabla lo cumplía perfecto — porque las dos estaban
    equivocadas de la misma manera. Una prueba escrita desde la misma
    suposición que el código no puede encontrar nada. */
-const orden = [CORDOBA, PROVINCIA, RESTO, 'Patagonia'];
+const orden = [CORDOBA, PROVINCIA, CENTRO, NORTE, 'Patagonia'];
 const porNombre = Object.fromEntries(ZONAS.map((z) => [z.nombre, z]));
 
 ok(orden.length === ZONAS.length,
   `la tabla tiene ${ZONAS.length} zonas y el orden por distancia nombra ${orden.length}; alguna quedó sin verificar`);
 for (const n of orden) ok(porNombre[n], `el orden por distancia nombra «${n}» y esa zona no existe en la tabla`);
 
+/* [ERROR CORREGIDO] Esto exigía `b.base > a.base`: que cada zona más
+   lejana costara ESTRICTAMENTE más que la anterior.
+
+   Parecía una verdad obvia y no lo es. Desde Córdoba, OCA cobra lo
+   mismo a CABA que a Salta — su tarifario no mira la distancia. La
+   prueba, al exigir que subiera, obligaba a inventar un escalón de
+   precio que el correo no cobra; y cuando lo saqué fusionando las
+   dos zonas en una, se llevó puesto el plazo: CABA pasó a prometer
+   5 días cuando OCA entrega en 2.
+
+   El precio se agrupa por tarifario y el plazo por distancia. Son
+   dos agrupaciones distintas, y una prueba que las fuerza a
+   coincidir empuja el código a mentir en una de las dos.
+
+   Ahora se exige que no BAJE. Dos zonas pueden costar igual y
+   tardar distinto, que es exactamente lo que mide el correo. */
 for (let i = 1; i < orden.length; i++) {
   const a = porNombre[orden[i - 1]], b = porNombre[orden[i]];
   if (!a || !b) continue;
-  ok(b.base > a.base, `${b.nombre} cuesta ${b.base} y ${a.nombre}, que está más cerca de Córdoba, cuesta ${a.base}`);
+  ok(b.base >= a.base, `${b.nombre} cuesta ${b.base} y ${a.nombre}, que está más cerca de Córdoba, cuesta ${a.base}`);
   ok(b.diasExtra >= a.diasExtra, `${b.nombre} promete llegar antes que ${a.nombre}, que está más cerca de Córdoba`);
   ok(b.porKiloExtra >= a.porKiloExtra, `${b.nombre} cobra menos por kilo extra que ${a.nombre}, que está más cerca`);
+}
+
+/* Con `>=` la tabla podría quedar toda plana y pasar igual, así que
+   se pide explícitamente que los extremos se distingan: si el envío
+   a Ushuaia sale lo mismo que a Córdoba capital, alguien pisó la
+   tabla con un solo precio. */
+{
+  const primera = porNombre[orden[0]], ultima = porNombre[orden[orden.length - 1]];
+  if (primera && ultima) {
+    ok(ultima.base > primera.base,
+      `la tabla quedó plana: ${ultima.nombre} cuesta lo mismo que ${primera.nombre}`);
+    ok(ultima.diasExtra > primera.diasExtra,
+      `la tabla promete el mismo plazo para ${ultima.nombre} que para ${primera.nombre}`);
+  }
+}
+
+/* Dos zonas que cuestan igual tienen que diferenciarse en algo, o
+   son la misma zona escrita dos veces — y una zona de más es una
+   línea más para desactualizar. */
+{
+  const porPrecio = new Map();
+  for (const z of ZONAS) {
+    if (!porPrecio.has(z.base)) porPrecio.set(z.base, []);
+    porPrecio.get(z.base).push(z);
+  }
+  for (const [base, zonas] of porPrecio) {
+    if (zonas.length < 2) continue;
+    const plazos = new Set(zonas.map((z) => z.diasExtra));
+    ok(plazos.size === zonas.length,
+      `${zonas.map((z) => z.nombre).join(' y ')} cuestan $${base} y prometen el mismo plazo: son la misma zona partida en dos`);
+  }
 }
 
 /* La zona más barata tiene que ser la de casa. Es una perogrullada

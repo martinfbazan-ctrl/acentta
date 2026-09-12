@@ -173,7 +173,17 @@ Hizo falta un dato de afuera —la tarifa real del correo— para que apareciera
 
 **Y la tabla rehecha también estaba mal, en el otro sentido.** Al medir los diez destinos apareció que OCA cobra **exactamente lo mismo** a CABA, Rosario, Mendoza, Salta y Tucumán: $ 10.488, cinco veces el mismo número. La zona «Norte» que yo había puesto a $ 12.600 salía de suponer que la distancia se paga, y desde Córdoba no se paga — el tarifario trabaja con una sola zona ancha. Cobraba $ 2.112 de más a medio país.
 
-Ese sobreprecio es el que nadie reclama: el comprador de Salta no escribe para avisar que el envío le pareció caro, simplemente no compra. Las seis zonas pasaron a cuatro, que son los cuatro precios que OCA cobra de verdad, y la corrida en vivo ahora avisa también cuando la tabla se despega más de un 25 % hacia arriba, no sólo cuando queda por debajo.
+Ese sobreprecio es el que nadie reclama: el comprador de Salta no escribe para avisar que el envío le pareció caro, simplemente no compra. La corrida en vivo ahora avisa también cuando la tabla se despega más de un 25 % hacia arriba, no sólo cuando queda por debajo.
+
+**Y el arreglo de eso rompió otra cosa.** Al ver cinco veces el mismo precio, fusioné las cinco zonas en una sola, «Resto del país», con el peor plazo de las cinco: 5 días. Correcto en el precio y caro en otra moneda — **a CABA le prometía 5 días cuando OCA entrega en 2.**
+
+Y no era un detalle del checkout: la calculadora de la ficha corre en el navegador y usa esta tabla, no OCA. La consulta al correo pasa recién en el checkout, del lado del servidor. Así que la fecha que ve *todo* visitante en la página de producto salía de acá: tres días de más en el mercado más grande del país, en la pantalla donde se decide la compra.
+
+El error de fondo fue confundir dos agrupaciones que resultaron distintas: **el precio se agrupa por tarifario, el plazo se agrupa por distancia.** Que OCA cobre lo mismo no significa que tarde lo mismo.
+
+Lo que lo empujó fue la propia prueba. Exigía `b.base > a.base` — que cada zona más lejana costara *estrictamente* más que la anterior. Parece una verdad obvia y no lo es, y al forzarla obligaba al código a inventar un escalón de precio que el correo no cobra; al sacarlo por el único camino que la prueba permitía —fusionar— se llevó puesto el plazo. Una prueba que fuerza a coincidir dos cosas que no coinciden empuja el código a mentir en una de las dos.
+
+Ahora se exige que el precio **no baje**, con dos comprobaciones nuevas para que `>=` no deje pasar una tabla plana: que los extremos se distingan, y que dos zonas del mismo precio se diferencien en el plazo o sean la misma zona escrita dos veces. Y una prueba fija el hallazgo por su nombre: CABA y Salta, en zonas distintas, tienen que costar igual.
 
 **El caso de la operativa equivocada.** OCA genera ocho operativas por cuenta —sucursal a puerta, sucursal a sucursal, y seis más— con números consecutivos. Al cargar la de sucursal a sucursal en la variable de entrega a domicilio, todas las tarifas bajaron entre un 25 % y un 30 %. Leído de corrido parecía que OCA había abaratado, y el paso siguiente natural era bajar la tabla para acompañar.
 
