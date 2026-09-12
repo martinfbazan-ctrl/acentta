@@ -59,6 +59,26 @@ export function modoDeclarado(): 'prueba' | 'produccion' {
 
 const base = () => (modoDeclarado() === 'produccion' ? PRODUCCION : QA);
 
+/**
+ * ¿Se puede crear un envío de verdad?
+ *
+ * Consultar una tarifa y dar de alta un envío son operaciones de
+ * riesgo opuesto: la primera es una pregunta y la segunda genera una
+ * orden de retiro que alguien tiene que ir a cancelar si estuvo mal.
+ * Con un solo interruptor había que aceptar las dos juntas.
+ *
+ * Y hace falta que estén separadas, porque **el entorno de prueba de
+ * OCA no conoce las operativas de tu cuenta**: sólo las de su cuenta
+ * de demostración. Para cotizar con tarifas reales hay que ir a
+ * producción sí o sí, y eso no puede implicar que un despacho se
+ * dispare por accidente.
+ *
+ * Así que despachar pide su propio permiso, escrito a mano y aparte.
+ */
+export function despachoRealPermitido(): boolean {
+  return variable('OCA_DESPACHO_REAL').trim().toLowerCase() === 'si';
+}
+
 /* ------------------------------------------------------------------ *
  * Credenciales y datos de cuenta
  * ------------------------------------------------------------------ */
@@ -347,6 +367,77 @@ export async function camposDeLaRespuesta(
   return { etiquetas, campos, muestra: xml.slice(0, 400), fila: fila ?? '(no se detectó)' };
 }
 
+/**
+ * Los centros de costo habilitados para una operativa.
+ *
+ * Es el dato más incómodo de conseguir de toda la integración: no
+ * está en el panel a la vista, sale de una consulta, y sin él no se
+ * puede dar de alta un envío. Por eso se pide desde acá en lugar de
+ * mandar a buscarlo.
+ *
+ * Ojo: este método vive en OTRO servicio. En producción es
+ * `oep_tracking/Oep_Track.asmx` y no `ePak_tracking/Oep_TrackEPak.asmx`
+ * como el resto; en el entorno de prueba ni siquiera termina en
+ * `.asmx`. Usar la dirección del resto de los métodos devuelve un 404
+ * que se lee como «no hay centros de costo».
+ */
+export async function centrosDeCosto(): Promise<{ id: string; nombre: string }[]> {
+  /* [ERROR CORREGIDO] Acá había una sola dirección, copiada de su
+     documentación, y en el entorno de prueba devolvía un 404 con una
+     página de error de IIS. La documentación de este método está
+     incompleta: vive en otro servicio que el resto —`Oep_Track` y no
+     `Oep_TrackEPak`— y la dirección de prueba que publican ni
+     siquiera termina en `.asmx`.
+   *
+     Con una sola dirección, un 404 se lee como «no tenés centros de
+     costo», que es un diagnóstico equivocado sobre la cuenta a partir
+     de un error de documentación. Se prueban las variantes razonables
+     y gana la primera que conteste algo. */
+  const candidatas = modoDeclarado() === 'produccion'
+    ? [
+      'https://webservice.oca.com.ar/oep_tracking/Oep_Track.asmx/GetCentroCostoPorOperativa',
+      'https://webservice.oca.com.ar/ePak_tracking/Oep_TrackEPak.asmx/GetCentroCostoPorOperativa',
+    ]
+    : [
+      'https://integraciones.ocadev.com.ar/epak_tracking_test/Oep_TrackEPak.asmx/GetCentroCostoPorOperativa',
+      'https://integraciones.ocadev.com.ar/oep_tracking_test/Oep_Track.asmx/GetCentroCostoPorOperativa',
+      'https://integraciones.ocadev.com.ar/epak_tracking_test/GetCentroCostoPorOperativa',
+    ];
+
+  const cuerpo = new URLSearchParams({ CUIT: cuit(), Operativa: operativa() }).toString();
+  const errores: string[] = [];
+
+  for (const url of candidatas) {
+    try {
+      const r = await fetch(url, {
+        method: 'POST',
+        signal: AbortSignal.timeout(10000),
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: cuerpo,
+      });
+      const xml = await r.text();
+
+      if (!r.ok) { errores.push(`${r.status} en ${url.split('/').slice(3).join('/')}`); continue; }
+      /* Una página HTML no es una respuesta: es un error disfrazado. */
+      if (/^\s*<(!DOCTYPE|html)/i.test(xml)) { errores.push(`HTML en ${url.split('/').slice(3).join('/')}`); continue; }
+
+      const centros = filas(xml, 'Table', 'CentroCosto', 'Centro')
+        .map((f) => ({
+          id: f.idcentrocosto ?? f.centrocosto ?? f.nrocentrocosto ?? f.numerocentrocosto ?? '',
+          nombre: f.descripcion ?? f.nombre ?? f.centrocostodescripcion ?? '',
+        }))
+        .filter((c) => c.id);
+
+      if (centros.length) return centros;
+      errores.push(`sin filas en ${url.split('/').slice(3).join('/')}`);
+    } catch (e) {
+      errores.push(`${e instanceof Error ? e.message : e} en ${url.split('/').slice(3).join('/')}`);
+    }
+  }
+
+  throw new Error(`Ninguna dirección devolvió centros de costo. Se probaron: ${errores.join(' · ')}`);
+}
+
 export interface Sucursal {
   id: string;
   nombre: string;
@@ -424,6 +515,18 @@ function fechaOCA(d = new Date()): string {
 export async function despachar(datos: DatosDeDespacho): Promise<Despacho> {
   if (!puedeDespachar()) {
     throw new Error('Faltan OCA_USUARIO, OCA_CLAVE y OCA_CUENTA para dar de alta un envío.');
+  }
+
+  /* El seguro. En producción esto crea una orden de retiro real: OCA
+     queda esperando un paquete, y cancelarla es un trámite. Cotizar
+     ahí es inofensivo y hace falta —el entorno de prueba no conoce
+     las operativas propias—, así que el permiso para despachar se
+     pide aparte y a mano. */
+  if (modoDeclarado() === 'produccion' && !despachoRealPermitido()) {
+    throw new Error(
+      'Estás en producción y OCA_DESPACHO_REAL no dice «si». No se dio de alta el envío '
+      + 'a propósito: sería una orden de retiro real. Cotizar sigue funcionando.',
+    );
   }
 
   const o = origen();

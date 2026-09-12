@@ -11,7 +11,7 @@
  */
 
 import { UMBRAL_ENVIO_GRATIS } from '@tipos/catalogo';
-import { calcularEnvio } from '@lib/envio';
+import { calcularEnvio, ZONAS } from '@lib/envio';
 
 export interface ItemCarrito {
   id: string;
@@ -208,8 +208,20 @@ export function resumen(cp = leerCP(), items = leer()): Resumen {
   }
 
   /* Sin código postal se muestra el piso de la tabla, marcado como
-     estimado. Es preferible a mostrar cero y sorprender después. */
-  const piso = 4200;
+     estimado. Es preferible a mostrar cero y sorprender después.
+
+     [ERROR CORREGIDO] Acá decía `const piso = 4200`, que era el
+     precio de CABA copiado a mano cuando CABA era la zona más
+     barata. Al rehacer la tabla para despachar desde Córdoba la
+     zona más barata pasó a ser Córdoba a $ 8.800, y este número se
+     quedó donde estaba: el carrito estimaba $ 4.200 y el checkout
+     cobraba hasta $ 13.900.
+
+     Eso es exactamente el costo sorpresa que el comentario de arriba
+     dice estar evitando, y la copia a mano es la razón por la que
+     pasó. Ahora sale de la tabla, así que no puede volver a quedar
+     desincronizado. */
+  const piso = Math.min(...ZONAS.map((z) => z.base));
   return {
     subtotal: sub,
     envio: piso,

@@ -170,7 +170,35 @@ export interface Producto {
    Viven acá para que la misma regla no se reescriba en cada vista.
    ============================================================ */
 
-export const UMBRAL_ENVIO_GRATIS = 50_000; // ARS · brief §12.4
+/**
+ * A partir de qué subtotal el envío lo pone la tienda.
+ *
+ * El número no es de diseño: sale de lo que OCA cobra de verdad,
+ * medido el 12/9/2026 desde Córdoba capital con un paquete de
+ * 27x16x11 cm y 0,6 kg.
+ *
+ *     Córdoba capital   $  7.851
+ *     CABA              $ 10.488
+ *     Rosario           $ 10.488
+ *     Bariloche         $ 12.336
+ *
+ * Estaba en $ 50.000, puesto cuando el catálogo era decoración
+ * barata. Con termos de $ 135.000 eso significaba que TODAS las
+ * ventas viajaban bonificadas y el costo salía del margen, sin que
+ * ninguna pantalla lo dijera: el sitio no se rompe cuando el envío
+ * gratis es demasiado generoso, sólo se hace menos rentable.
+ *
+ * En $ 100.000 el umbral vuelve a ser una decisión y no un
+ * automatismo. Los termos siguen viajando gratis —que es lo que hace
+ * la tienda oficial de Stanley, así que cobrar envío ahí sería
+ * competir en desventaja— y el bazar más barato que viene después
+ * empieza cobrando envío, con el umbral funcionando como lo que es:
+ * un empujón para sumar una segunda unidad al carrito.
+ *
+ * Cuando cambien las tarifas de OCA, `npm run logistica:vivo` las
+ * vuelve a medir y compara contra la tabla propia.
+ */
+export const UMBRAL_ENVIO_GRATIS = 100_000; // ARS
 export const STOCK_BAJO = 5;               // umbral de "últimas unidades"
 
 /** Stock total sumando todas las variantes. */

@@ -271,8 +271,17 @@ const { firmaValida, cobroPermitido, fechaParaMercadoPago, enlaceDePago } = awai
    ============================================================ */
 {
   const { todos } = await cargar('src/lib/catalogo.ts', 'catalogo3');
-  const caro = todos().find((p) => p.precio >= 50000 && p.variantes.some((v) => v.stock > 0));
-  const barato = todos().find((p) => p.precio < 20000 && p.variantes.some((v) => v.stock > 0));
+
+  /* [ERROR CORREGIDO] Acá decía `p.precio >= 50000`: el umbral de
+     envío gratis copiado a mano. El día que subió a $ 100.000, esta
+     prueba siguió eligiendo un producto de $ 60.000 y exigiéndole
+     envío gratis, que es justo lo que el cambio dejó de hacer. Una
+     prueba que falla por estar desactualizada enseña a ignorar las
+     pruebas, y ése es el daño de verdad. Ahora sale de la constante. */
+  const { UMBRAL_ENVIO_GRATIS } = await cargar('src/types/catalogo.ts', 'umbral3');
+
+  const caro = todos().find((p) => p.precio >= UMBRAL_ENVIO_GRATIS && p.variantes.some((v) => v.stock > 0));
+  const barato = todos().find((p) => p.precio < UMBRAL_ENVIO_GRATIS && p.variantes.some((v) => v.stock > 0));
 
   if (caro) {
     const c = cotizar([{ id: caro.id, cantidad: 1 }], '5000');
@@ -282,7 +291,13 @@ const { firmaValida, cobroPermitido, fechaParaMercadoPago, enlaceDePago } = awai
   if (barato) {
     const c = cotizar([{ id: barato.id, cantidad: 1 }], '5000');
     ok(!c.envioGratis && c.envio > 0, 'un pedido chico tendría que pagar envío');
-    ok(c.zona === 'Centro y Cuyo', `5000 tendría que cotizar Centro y Cuyo y da ${c.zona}`);
+
+    /* El nombre de la zona tampoco se escribe a mano: se pregunta
+       cuál cubre el 5000. Antes decía «Centro y Cuyo», que dejó de
+       existir al rehacer la tabla para despachar desde Córdoba. */
+    const { ZONAS } = await cargar('src/lib/envio.ts', 'envio-cobro');
+    const esperada = ZONAS.find((z) => z.rangos.some(([a, b]) => 5000 >= a && 5000 <= b))?.nombre;
+    ok(c.zona === esperada, `5000 tendría que cotizar «${esperada}» y da «${c.zona}»`);
 
     const sucursal = cotizar([{ id: barato.id, cantidad: 1 }], '5000', 'sucursal');
     ok(sucursal.envio < c.envio, 'retirar en sucursal tendría que salir menos');

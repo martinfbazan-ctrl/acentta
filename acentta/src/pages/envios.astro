@@ -1,6 +1,7 @@
 ---
 import Documento from '@layouts/Documento.astro';
 import { ZONAS } from '@lib/envio';
+import { DESCUENTO_SUCURSAL } from '@lib/cotizacion';
 import { precio } from '@lib/formato';
 import { UMBRAL_ENVIO_GRATIS } from '@tipos/catalogo';
 ---
@@ -22,7 +23,7 @@ import { UMBRAL_ENVIO_GRATIS } from '@tipos/catalogo';
     <p>
       <strong>Superando {precio(UMBRAL_ENVIO_GRATIS)} el envío es gratis</strong>, a
       cualquier punto del país. Por debajo de ese monto, el costo exacto aparece en la
-      ficha de cada producto apenas escribes tu código postal — no esperás al último paso
+      ficha de cada producto apenas escribes tu código postal — no esperas al último paso
       del checkout para enterarte.
     </p>
   </div>
@@ -41,8 +42,14 @@ import { UMBRAL_ENVIO_GRATIS } from '@tipos/catalogo';
 
   <h2 id="costos">Costos por zona</h2>
   <p>
-    El costo depende de la zona y del peso. Estos son los valores base para envíos de
-    hasta 5 kg; por encima se suma un adicional por kilo.
+    <strong>Despachamos desde Córdoba capital</strong>, con stock propio. Por eso la zona
+    más barata es Córdoba y no Buenos Aires: el costo depende de la distancia real que
+    recorre tu pedido, no de dónde está la mayoría de los compradores.
+  </p>
+  <p>
+    Estos son los valores base para envíos de hasta 5 kg; por encima se suma un adicional
+    por kilo. Cuando el correo puede cotizar tu código postal exacto, se usa esa tarifa y
+    no esta tabla — que queda como respaldo.
   </p>
   <table>
     <thead>
@@ -59,8 +66,8 @@ import { UMBRAL_ENVIO_GRATIS } from '@tipos/catalogo';
     </tbody>
   </table>
   <p>
-    El <strong>retiro en sucursal del correo</strong> descuenta {precio(1200)} y suele
-    llegar un día antes que la entrega a domicilio.
+    El <strong>retiro en sucursal del correo</strong> descuenta {precio(DESCUENTO_SUCURSAL)}
+    y suele llegar un día antes que la entrega a domicilio.
   </p>
 
   <h2 id="plazos">Plazos reales</h2>

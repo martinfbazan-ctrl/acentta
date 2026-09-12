@@ -16,7 +16,25 @@
  * hay nada en la consola. Un error de datos silencioso sólo se
  * encuentra si alguien pregunta lo correcto.
  *
- * Las tres preguntas que hace esta prueba:
+ * SEGUNDO ERROR, ENCONTRADO MUCHO DESPUÉS
+ *
+ * La tabla corregida seguía estando mal, y de una forma que ninguna
+ * de las preguntas de abajo podía detectar: estaba armada para
+ * despachar desde Buenos Aires. CABA era la zona más barata y la
+ * Patagonia la más cara. acentta despacha desde Córdoba.
+ *
+ * Era coherente consigo misma, cubría el país entero, no se pisaba,
+ * daba zonas plausibles y pasaba las tres preguntas limpio. Lo único
+ * que la desmintió fue preguntarle el precio a OCA: cobraba $ 4.200
+ * a CABA donde el correo cobra $ 10.488.
+ *
+ * La lección quedó escrita en la sección 3 bis. Una prueba sólo
+ * puede encontrar los errores que no comparte con el código: mientras
+ * las dos suponían un origen en Buenos Aires, la comparación era
+ * entre dos copias de la misma suposición. Hizo falta traer un dato
+ * de afuera —la tarifa real— para que apareciera.
+ *
+ * Las preguntas que hace esta prueba:
  *
  *   1. ¿Algún código postal cae en dos zonas? Si pasa, el resultado
  *      depende del orden de la lista, y ese orden es accidental.
@@ -24,6 +42,8 @@
  *   3. ¿Códigos postales reales conocidos dan la zona que
  *      corresponde? No rangos inventados: capitales de provincia y
  *      ciudades grandes, que es lo que alguien va a escribir.
+ *   4. ¿El precio sube con la distancia AL ORIGEN, que es Córdoba?
+ *   5. ¿Alguna zona cobra menos de lo que el correo cobra de verdad?
  *
  * Las dos primeras valen para cualquier tabla futura: si mañana se
  * agrega una zona y pisa a otra, esto lo dice antes de publicar.
@@ -50,7 +70,8 @@ const compilado = await build({
 });
 const tmp = path.join(AQUI, '.envio.compilado.mjs');
 fs.writeFileSync(tmp, compilado.outputFiles[0].text);
-const { ZONAS, calcularEnvio, normalizarCP } = await import(`file://${tmp}`);
+const { ZONAS, calcularEnvio, normalizarCP, MARGEN_SOBRE_TARIFA_REAL } =
+  await import(`file://${tmp}`);
 fs.unlinkSync(tmp);
 
 const fallos = [];
@@ -107,18 +128,28 @@ for (const [a, b] of huecos) {
    1900 y 1901, 5999 y 6000. Un error de un dígito en un límite es
    exactamente el que nadie prueba a mano.
    ============================================================ */
+const CORDOBA = 'Córdoba capital y alrededores';
+const PROVINCIA = 'Provincia de Córdoba';
+const CENTRO = 'Centro, Cuyo y Litoral';
+
 const REALES = [
-  [1425, 'CABA', 'Palermo'],
-  [1000, 'CABA', 'primer código de la zona'],
-  [1499, 'CABA', 'último código de la zona'],
-  [1602, 'Gran Buenos Aires', 'Florida, Vicente López'],
-  [1900, 'Gran Buenos Aires', 'La Plata · último de la zona'],
-  [1950, 'Provincia de Buenos Aires', 'Berisso'],
-  [7000, 'Provincia de Buenos Aires', 'Tandil'],
-  [8000, 'Provincia de Buenos Aires', 'Bahía Blanca'],
-  [2000, 'Centro y Cuyo', 'Rosario'],
-  [5000, 'Centro y Cuyo', 'Córdoba capital'],
-  [5500, 'Centro y Cuyo', 'Mendoza'],
+  [5000, CORDOBA, 'Córdoba capital · primer código de la zona'],
+  [5152, CORDOBA, 'Villa Carlos Paz'],
+  [5199, CORDOBA, 'último código de la zona'],
+  [5800, PROVINCIA, 'Río Cuarto'],
+  [5900, PROVINCIA, 'Villa María'],
+  [5280, PROVINCIA, 'Cruz del Eje'],
+  [1425, CENTRO, 'Palermo, CABA'],
+  [1000, CENTRO, 'primer código del país'],
+  [1602, CENTRO, 'Florida, Vicente López'],
+  [1900, CENTRO, 'La Plata'],
+  [2000, CENTRO, 'Rosario'],
+  [5500, CENTRO, 'Mendoza'],
+  [5400, CENTRO, 'San Juan'],
+  [5300, CENTRO, 'La Rioja'],
+  [7000, CENTRO, 'Tandil'],
+  [8000, CENTRO, 'Bahía Blanca'],
+  [8299, CENTRO, 'último antes de la Patagonia'],
   [3100, 'Norte', 'Paraná'],
   [4000, 'Norte', 'San Miguel de Tucumán'],
   [4400, 'Norte', 'Salta'],
@@ -139,15 +170,142 @@ for (const z of ZONAS) {
   ok(alcanzadas.has(z.nombre), `la zona «${z.nombre}» está declarada y ningún código postal real la alcanza`);
 }
 
-/* El precio tiene que subir con la distancia. Si una zona más lejos
-   sale más barata, alguien se equivocó al copiar un número. */
-const orden = ['CABA', 'Gran Buenos Aires', 'Provincia de Buenos Aires', 'Centro y Cuyo', 'Norte', 'Patagonia'];
+/* El precio tiene que subir con la distancia AL ORIGEN, y el origen
+   es Córdoba capital. Este arreglo es la única declaración de ese
+   hecho en toda la prueba: el día que la tienda se mude, acá se ve
+   qué hay que reordenar.
+
+   Esta lista es también la que atrapa el error que motivó la
+   reescritura de la tabla. Antes decía, en este orden, CABA · Gran
+   Buenos Aires · Provincia de Buenos Aires · Centro y Cuyo · Norte ·
+   Patagonia, y la tabla lo cumplía perfecto — porque las dos estaban
+   equivocadas de la misma manera. Una prueba escrita desde la misma
+   suposición que el código no puede encontrar nada. */
+const orden = [CORDOBA, PROVINCIA, CENTRO, 'Norte', 'Patagonia'];
 const porNombre = Object.fromEntries(ZONAS.map((z) => [z.nombre, z]));
+
+ok(orden.length === ZONAS.length,
+  `la tabla tiene ${ZONAS.length} zonas y el orden por distancia nombra ${orden.length}; alguna quedó sin verificar`);
+for (const n of orden) ok(porNombre[n], `el orden por distancia nombra «${n}» y esa zona no existe en la tabla`);
+
 for (let i = 1; i < orden.length; i++) {
   const a = porNombre[orden[i - 1]], b = porNombre[orden[i]];
   if (!a || !b) continue;
-  ok(b.base > a.base, `${b.nombre} cuesta ${b.base} y ${a.nombre}, que está más cerca, cuesta ${a.base}`);
-  ok(b.diasExtra >= a.diasExtra, `${b.nombre} promete llegar antes que ${a.nombre}, que está más cerca`);
+  ok(b.base > a.base, `${b.nombre} cuesta ${b.base} y ${a.nombre}, que está más cerca de Córdoba, cuesta ${a.base}`);
+  ok(b.diasExtra >= a.diasExtra, `${b.nombre} promete llegar antes que ${a.nombre}, que está más cerca de Córdoba`);
+  ok(b.porKiloExtra >= a.porKiloExtra, `${b.nombre} cobra menos por kilo extra que ${a.nombre}, que está más cerca`);
+}
+
+/* La zona más barata tiene que ser la de casa. Es una perogrullada
+   hasta que no lo es: la tabla anterior cobraba CABA a $ 4.200 y
+   Córdoba a $ 8.100, y nadie lo notó durante meses. */
+ok(ZONAS.every((z) => z.base >= porNombre[CORDOBA].base),
+  `hay una zona más barata que ${CORDOBA}, que es de donde sale el paquete`);
+
+/* ============================================================
+   3 bis · La tabla no puede cobrar menos de lo que sale
+   ------------------------------------------------------------
+   Ésta es la prueba que faltaba y la única que atrapa el error de
+   fondo: la tabla es la red de seguridad para cuando OCA no
+   contesta, así que se usa justo cuando nadie puede comparar. Si
+   queda por debajo del costo real, la diferencia la pone el
+   vendedor en cada venta y no aparece en ninguna pantalla.
+
+   Sólo se puede verificar donde hay una medición. Las zonas
+   interpoladas se listan al final para que se sepa cuáles siguen
+   siendo una estimación.
+   ============================================================ */
+/* Si el margen no llega, todas las comparaciones de abajo dan NaN y
+   NaN nunca es mayor ni menor que nada: la prueba fallaría entera
+   con mensajes que hablan de precios y no de un import roto. */
+ok(typeof MARGEN_SOBRE_TARIFA_REAL === 'number' && MARGEN_SOBRE_TARIFA_REAL > 0,
+  `MARGEN_SOBRE_TARIFA_REAL no llegó desde envio.ts (vale ${MARGEN_SOBRE_TARIFA_REAL}); sin él las comparaciones de precio dan NaN`);
+
+const sinMedir = [];
+for (const z of ZONAS) {
+  if (!z.medido) { sinMedir.push(z.nombre); continue; }
+
+  ok(z.base >= z.medido.costo,
+    `¡GRAVE! ${z.nombre} cobra $${z.base} y OCA cobra $${z.medido.costo} (${z.medido.destino}): pierdes $${z.medido.costo - z.base} en cada envío`);
+
+  const minimo = Math.round(z.medido.costo * (1 + MARGEN_SOBRE_TARIFA_REAL));
+  ok(z.base >= minimo,
+    `${z.nombre} cobra $${z.base} y el margen declarado del ${Math.round(MARGEN_SOBRE_TARIFA_REAL * 100)} % sobre $${z.medido.costo} pide al menos $${minimo}`);
+
+  /* Y el techo, porque el margen también protege al comprador: si
+     la tabla se despega demasiado, deja de ser una red de seguridad
+     y pasa a ser un recargo por que el correo no haya contestado. */
+  ok(z.base <= z.medido.costo * 1.35,
+    `${z.nombre} cobra $${z.base}, un ${Math.round((z.base / z.medido.costo - 1) * 100)} % por encima de lo que sale: la red de seguridad no debería ser un recargo`);
+
+  /* La fecha importa: una tarifa argentina de hace un año no es un
+     dato, es una anécdota. */
+  const meses = (Date.now() - new Date(z.medido.fecha).getTime()) / (1000 * 60 * 60 * 24 * 30);
+  if (meses > 6) {
+    console.log(`  ⚠ ${z.nombre}: la última medición es de hace ${Math.round(meses)} meses. Corré npm run logistica:vivo.`);
+  }
+}
+
+/* ============================================================
+   3 ter · Nadie copia un precio de la tabla a mano
+   ------------------------------------------------------------
+   El carrito muestra un envío estimado cuando todavía no hay código
+   postal, y ese estimado tiene que ser el piso de la tabla. Estaba
+   escrito así:
+
+       const piso = 4200;
+
+   Un número correcto el día que se escribió y una bomba de tiempo
+   desde el día siguiente. Al rehacer la tabla el piso pasó a $ 8.800
+   y esta copia se quedó donde estaba: el carrito prometía $ 4.200 y
+   el checkout cobraba hasta $ 13.900. Justo el costo sorpresa que el
+   comentario de esa función dice estar evitando.
+
+   Lo que no se puede es confiar en acordarse. Esta prueba lee el
+   archivo y exige que el piso salga de ZONAS. Es una prueba sobre el
+   código y no sobre su resultado —poco elegante— y va igual: el
+   valor correcto no se distingue del incorrecto mirando la salida,
+   porque los dos son un número de pesos plausible.
+   ============================================================ */
+{
+  const carrito = fs.readFileSync(path.join(AQUI, '..', 'src', 'lib', 'carrito.ts'), 'utf8');
+
+  /* Los comentarios se borran ANTES de mirar nada, y no filtrando
+     líneas que empiecen con `*`. La explicación de este error, en
+     carrito.ts, cita textualmente la línea vieja:
+
+         [ERROR CORREGIDO] Acá decía `const piso = 4200`…
+
+     Con un filtro por línea, la prueba encuentra PRIMERO esa cita
+     —está arriba de la línea real— y falla acusando al comentario
+     que documenta el arreglo. Una prueba que se dispara con su
+     propia documentación se termina desactivando, y ahí se pierde
+     de verdad. Cada comentario se reemplaza por espacios en lugar
+     de borrarse, para que los números de línea sigan siendo los del
+     archivo. */
+  const codigo = carrito
+    .replace(/\/\*[\s\S]*?\*\//g, (c) => c.replace(/[^\n]/g, ' '))
+    .replace(/(^|[^:])\/\/.*$/gm, '$1');
+
+  const linea = codigo.split('\n').find((l) => /^\s*const piso\s*=/.test(l));
+
+  ok(linea, 'no se encontró la línea del piso estimado en carrito.ts; si se renombró, actualizá esta prueba');
+  if (linea) {
+    ok(!/=\s*[\d_]+\s*;/.test(linea),
+      `el piso del envío estimado está escrito a mano en carrito.ts (${linea.trim()}); tiene que salir de ZONAS o vuelve a desincronizarse`);
+    ok(/ZONAS/.test(linea),
+      `el piso del envío estimado no se deriva de ZONAS: ${linea.trim()}`);
+  }
+
+  /* Y que no haya ningún otro número igual a un `base` suelto en el
+     código: sería la misma copia con otro nombre. */
+  const bases = new Set(ZONAS.map((z) => z.base));
+
+  codigo.split('\n').forEach((l, i) => {
+    const copiados = [...(l.match(/\b\d{4,6}\b/g) ?? [])].filter((n) => bases.has(Number(n)));
+    ok(copiados.length === 0,
+      `carrito.ts línea ${i + 1} tiene un precio de la tabla escrito a mano (${copiados.join(', ')}): ${l.trim()}`);
+  });
 }
 
 /* ============================================================
@@ -162,7 +320,7 @@ ok(!calcularEnvio('0500', 1).ok, 'da cobertura a un código postal que no existe
 
 /* El peso encarece, pero sólo por encima del umbral. */
 const liviano = calcularEnvio('5000', 2), pesado = calcularEnvio('5000', 12);
-ok(liviano.costo === porNombre['Centro y Cuyo'].base, 'un paquete liviano no debería pagar extra por peso');
+ok(liviano.costo === porNombre[CORDOBA].base, 'un paquete liviano no debería pagar extra por peso');
 ok(pesado.costo > liviano.costo, 'un paquete de 12 kg cuesta lo mismo que uno de 2');
 
 /* ============================================================
@@ -226,10 +384,18 @@ ok(pesado.costo > liviano.costo, 'un paquete de 12 kg cuesta lo mismo que uno de
 
 /* ============================================================ */
 console.log('\n=== ENVÍO · tabla de zonas ===');
-console.log(`  ${ZONAS.length} zonas · ${cubiertos.length} códigos postales cubiertos · ${REALES.length} ciudades verificadas`);
+console.log('  Origen: Córdoba capital (CP 5000) · la tabla es la red de seguridad de OCA\n');
+console.log(`  ${ZONAS.length} zonas · ${cubiertos.length} códigos postales cubiertos · ${REALES.length} ciudades verificadas\n`);
+console.log(`  ${'ZONA'.padEnd(30)} ${'RANGOS'.padEnd(28)} ${'COBRA'.padStart(9)}  ${'OCA'.padStart(9)}  DÍAS`);
 for (const z of ZONAS) {
   const rangos = z.rangos.map(([a, b]) => `${a}-${b}`).join(', ');
-  console.log(`  ${z.nombre.padEnd(26)} ${rangos.padEnd(30)} $ ${z.base}  +${z.diasExtra} días`);
+  const real = z.medido ? `$ ${z.medido.costo}` : '· estimada';
+  console.log(`  ${z.nombre.padEnd(30)} ${rangos.padEnd(28)} ${('$ ' + z.base).padStart(9)}  ${real.padStart(9)}  +${z.diasExtra}`);
+}
+if (sinMedir.length) {
+  console.log(`\n  ${sinMedir.length} zona(s) con precio estimado y no medido: ${sinMedir.join(', ')}.`);
+  console.log('  Para medirlas:  $env:OCA_MODO = "produccion"  y  npm run logistica:vivo');
+  console.log('  (cotizar es una consulta de precio: no da de alta ningún envío)');
 }
 
 if (fallos.length) {

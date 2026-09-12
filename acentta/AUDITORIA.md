@@ -154,6 +154,25 @@ Tres defectos que llegaron a estar publicados, los tres invisibles para las audi
 
 De paso apareció otro hueco: los códigos 8200-8299 no los cubría nadie.
 
+**La misma tabla, corregida, seguía estando mal — y la prueba no podía verlo.** Meses después, al integrar OCA, apareció que la tabla estaba armada para despachar desde Buenos Aires: CABA era la zona más barata a $ 4.200 y la Patagonia la más cara. acentta despacha desde Córdoba capital.
+
+Comparada con lo que OCA cobra de verdad, saliendo de CP 5000:
+
+| Destino | OCA cobra | la tabla cobraba |
+|---|---|---|
+| Córdoba capital | $ 7.851 | $ 8.100 |
+| CABA | $ 10.488 | **$ 4.200** |
+| Rosario | $ 10.488 | $ 8.100 |
+| Bariloche | $ 12.336 | $ 11.800 |
+
+Tres de los cuatro destinos medidos se cobraban por debajo del costo, uno de ellos por $ 6.288. No llegó a costar plata porque el umbral de envío gratis estaba en $ 50.000 con un catálogo de $ 135.000: **todo viajaba bonificado, así que un error tapaba al otro.**
+
+Lo que hace este caso distinto de los demás de esta lista es que la prueba pasaba limpia, y no por descuido. `pruebas/envio.mjs` verificaba que el precio subiera con la distancia, y lo verificaba contra un arreglo escrito así: `['CABA', 'Gran Buenos Aires', …, 'Patagonia']`. La tabla lo cumplía perfecto **porque las dos estaban equivocadas de la misma manera**. Una prueba escrita desde la misma suposición que el código no compara nada: compara dos copias de la suposición.
+
+Hizo falta un dato de afuera —la tarifa real del correo— para que apareciera. La tabla se rehízo con cinco zonas ordenadas desde Córdoba, cada `base` sobre el costo medido más un 12 %, y cada zona declara si su precio está **medido** o **estimado**. La prueba nueva compara contra ese costo real y falla si alguna zona cobra por debajo.
+
+**Y arrastraba un tercero.** El carrito muestra un envío estimado mientras no hay código postal, y ese piso estaba escrito `const piso = 4200` — el precio de CABA, copiado a mano el día que CABA era lo más barato. Al rehacer la tabla el piso pasó a $ 8.800 y la copia se quedó donde estaba: el carrito prometía $ 4.200 y el checkout cobraba hasta $ 13.900. Exactamente el costo sorpresa que el comentario de esa función dice estar evitando. Ahora sale de `ZONAS`, y hay una prueba que lee el archivo y falla si vuelve a aparecer un número de la tabla escrito a mano.
+
 **Grillas que no se pueden achicar.** Una columna de grilla mide `auto` si no se dice otra cosa, y `auto` se niega a achicarse por debajo del contenido más ancho que tenga adentro. Un nombre largo, un total de siete cifras o un `<input>` —que trae ancho propio— estiran la columna más que la pantalla, y el bloque queda cortado por el borde derecho. El patrón era siempre el mismo: `display: grid` sin columnas, y más abajo una consulta de medios que sí las pone para escritorio. Quien lo escribió pensó la versión ancha y dio por sentada la angosta. **Diez casos**, de los cuales dos se veían: el carrito, cortado 49 px en Android, y el resumen del pedido.
 
 **Flex sin permiso de encoger.** El mismo problema con otra propiedad. Un hijo de flex arranca con `min-width: auto`; un `<input>` tiene ancho natural de unos veinte caracteres, así que el botón de al lado se iba del borde. La calculadora de envío de la ficha se salía 41 px a 360 px de ancho. Cuatro casos.

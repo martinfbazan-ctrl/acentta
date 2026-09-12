@@ -489,7 +489,20 @@ const OCA = await cargar('src/lib/oca.ts', 'oca');
 
   const { cotizarConCorreo } = await cargar('src/lib/tarifa.ts', 'tarifa');
   const p = todos().find((x) => x.variantes.some((v) => v.stock > 0));
-  const barato = todos().find((x) => x.precio < 50000 && x.variantes.some((v) => v.stock > 0));
+
+  /* Hace falta un producto que NO llegue al envío gratis: con envío
+     bonificado el costo es cero venga de donde venga, y las tres
+     comprobaciones de abajo —que la caída del operador no rompa la
+     venta— pasan sin haber ejercitado nada.
+
+     El umbral se lee, no se copia. Decía `< 50000`, que era el valor
+     de entonces; cuando subió a $ 100.000 la condición siguió siendo
+     verdadera por casualidad. La próxima vez podía no serlo, y el
+     síntoma habría sido una prueba en verde que dejó de probar. */
+  const { UMBRAL_ENVIO_GRATIS } = await cargar('src/types/catalogo.ts', 'umbral-tarifa');
+  const barato = todos().find((x) => x.precio < UMBRAL_ENVIO_GRATIS && x.variantes.some((v) => v.stock > 0));
+  ok(barato, `no hay ningún producto por debajo de $${UMBRAL_ENVIO_GRATIS} en stock: esta sección no está probando el camino del envío pago`);
+
   const linea = [{ id: (barato ?? p).id, cantidad: 1 }];
   const destino = { cp: '5000', provincia: 'Córdoba', ciudad: 'Córdoba' };
 
@@ -629,28 +642,91 @@ if (VIVO) {
     console.log(`  Producto: ${p.nombre}`);
     console.log(`  Paquete ${caja} cm · ${peso} kg · ${OCA.volumenEnMetrosCubicos(caja)} m³\n`);
 
+    /* Al menos un destino por zona de la tabla propia, y de las dos
+       zonas que hoy tienen precio estimado —Provincia de Córdoba y
+       Norte— van dos, porque son las que esta corrida existe para
+       convertir en dato. Ushuaia entra porque es el destino más caro
+       posible y es donde una interpolación se equivoca más. */
     const destinos = [
       ['Córdoba capital', 'Córdoba', '5000'],
+      ['Río Cuarto', 'Córdoba', '5800'],
+      ['Villa María', 'Córdoba', '5900'],
       ['CABA', 'CABA', '1425'],
       ['Rosario', 'Santa Fe', '2000'],
+      ['Mendoza', 'Mendoza', '5500'],
+      ['Salta', 'Salta', '4400'],
+      ['Tucumán', 'Tucumán', '4000'],
       ['Bariloche', 'Río Negro', '8400'],
+      ['Ushuaia', 'Tierra del Fuego', '9410'],
     ];
 
+    /* La tabla propia, para poder comparar acá mismo. Sin esto la
+       corrida da una lista de precios y la comparación queda en la
+       cabeza de quien la lee, que es donde se pierde. */
+    let calcularEnvio = null, UMBRAL = null;
+    try {
+      ({ calcularEnvio } = await cargar('src/lib/envio.ts', 'envio-vivo'));
+      ({ UMBRAL_ENVIO_GRATIS: UMBRAL } = await cargar('src/types/catalogo.ts', 'catalogo-umbral'));
+    } catch { /* si no compila, la corrida sigue: los precios de OCA valen igual */ }
+
+    console.log(`  ${'DESTINO'.padEnd(16)} ${'OCA'.padStart(9)}  ${'TU TABLA'.padStart(9)}  ${'DIFERENCIA'.padStart(11)}  ZONA`);
+
     let algunaCotizo = false;
+    let masCaro = 0, masBarato = Infinity;
+    const pierde = [];
     for (const [nombre, provincia, cp] of destinos) {
       try {
         const t = await OCA.cotizarDomicilio({
           provincia, cp, peso, paquetes: caja, valorDeclarado: p.precio,
         });
-        if (t) {
-          algunaCotizo = true;
-          console.log(`  ${nombre.padEnd(16)} $${String(Math.round(t.costo)).padStart(8)}  ${t.diasExtra} días hábiles`);
-        } else {
-          console.log(`  ${nombre.padEnd(16)} sin cotización`);
+        if (!t) { console.log(`  ${nombre.padEnd(16)} sin cotización`); continue; }
+
+        algunaCotizo = true;
+        const real = Math.round(t.costo);
+        if (real > masCaro) masCaro = real;
+        if (real < masBarato) masBarato = real;
+        const propio = calcularEnvio?.(cp, peso);
+
+        if (!propio?.ok) {
+          console.log(`  ${nombre.padEnd(16)} ${('$' + real).padStart(9)}  ${'sin zona'.padStart(9)}  ${''.padStart(11)}  ${propio?.error ? '⚠ ' + propio.error.slice(0, 40) : ''}`);
+          continue;
         }
+
+        /* El signo es lo único que importa de esta columna. Negativo
+           significa que la tabla cobra menos de lo que sale, y esa
+           diferencia sale del margen sin que ninguna pantalla la
+           muestre: es el error que motivó la reescritura de la tabla. */
+        const dif = propio.costo - real;
+        const marca = dif < 0 ? '✗' : ' ';
+        if (dif < 0) pierde.push({ nombre, dif, zona: propio.zona });
+
+        console.log(`  ${nombre.padEnd(16)} ${('$' + real).padStart(9)}  ${('$' + propio.costo).padStart(9)}  ${marca}${(dif >= 0 ? '+' : '') + '$' + dif}`.padEnd(66) + `  ${propio.zona} · ${t.diasExtra}d`);
       } catch (e) {
         console.log(`  ${nombre.padEnd(16)} ✗ ${e.message.slice(0, 160)}`);
       }
+    }
+
+    if (pierde.length) {
+      console.log(`\n  ✗ La tabla cobra de menos en ${pierde.length} destino(s):`);
+      for (const x of pierde) console.log(`      ${x.nombre} (${x.zona}): $${-x.dif} por envío, de tu bolsillo`);
+      console.log('    Se usa sólo cuando OCA no contesta, así que no rompe nada visible.');
+      console.log('    Ajustá el `base` de esas zonas en src/lib/envio.ts y su campo `medido`.');
+    } else if (algunaCotizo && calcularEnvio) {
+      console.log('\n  ✓ La tabla propia cubre el costo real en todos los destinos medidos.');
+    }
+
+    /* El umbral de envío gratis es la decisión que estos números
+       existen para informar, así que la corrida la deja escrita en
+       vez de dejarla para después. */
+    if (UMBRAL && masCaro) {
+      console.log(`\n  ─── ENVÍO GRATIS ───`);
+      console.log(`  Umbral: $${UMBRAL.toLocaleString('es-AR')} · producto medido: ${p.nombre} a $${p.precio.toLocaleString('es-AR')}`);
+      console.log(p.precio >= UMBRAL
+        ? `  Supera el umbral: viaja bonificado y lo pagás vos, entre $${
+            masBarato.toLocaleString('es-AR')} y $${masCaro.toLocaleString('es-AR')} según el destino.`
+        : '  No llega al umbral: el envío lo paga el comprador.');
+      console.log(`  El envío más caro medido es el ${
+        Math.round((masCaro / p.precio) * 100)} % de este producto.`);
     }
 
     console.log('\n  ─────────────── CONCLUSIÓN ───────────────');
@@ -683,9 +759,31 @@ if (VIVO) {
       console.log('  usuario de e-Pak. Con eso se pasa de cotizar a despachar, y recién ahí');
       console.log('  los números son los tuyos.');
     } else {
-      console.log('  Ninguna cotización. Con las credenciales públicas eso suele significar');
-      console.log('  que el entorno de prueba de OCA está caído; con las tuyas, que la');
-      console.log('  operativa declarada no corresponde a tu cuenta.');
+      if (propias && (process.env.OCA_MODO || 'prueba').toLowerCase().startsWith('prue')) {
+        /* La explicación correcta, y no es «tu operativa está mal».
+           El entorno de prueba de OCA sólo conoce las operativas de su
+           cuenta de demostración: 64665, 62342, 94584 y 78254. Una
+           operativa propia ahí no existe, y la respuesta a algo que no
+           existe es una lista vacía. */
+        console.log('  Estás en modo prueba con TU operativa, y el entorno de prueba de OCA');
+        console.log('  sólo conoce las de su cuenta de demostración. La tuya existe únicamente');
+        console.log('  en producción, así que ahí no hay nada que cotizar. No es un problema');
+        console.log('  de tu cuenta ni de la operativa.');
+        console.log('');
+        console.log('  Cotizar es una consulta de precio: no crea ni reserva nada. Para ver');
+        console.log('  tus tarifas reales:');
+        console.log('');
+        console.log('     $env:OCA_MODO = "produccion"');
+        console.log('     npm run logistica:vivo');
+        console.log('');
+        console.log('  Dar de alta un envío en producción sí crea una orden de retiro real, y');
+        console.log('  por eso pide un permiso aparte: OCA_DESPACHO_REAL = "si". Mientras no');
+        console.log('  esté, el despacho queda bloqueado aunque el modo sea producción.');
+      } else {
+        console.log('  Ninguna cotización. Con las credenciales públicas eso suele significar');
+        console.log('  que el entorno de prueba de OCA está caído; en producción, que la');
+        console.log('  operativa declarada no corresponde a tu cuenta o no cubre esos destinos.');
+      }
     }
 
     /* Se busca una sucursal de admisión en Córdoba: es a dónde vas a
@@ -725,6 +823,43 @@ if (VIVO) {
       }
     } catch (e) {
       console.log(`\n  Sucursales: ✗ ${e.message.slice(0, 160)}`);
+    }
+
+    /* ---- Lo que hace falta para pasar de cotizar a despachar ----
+       El centro de costo se pide acá y no se manda a buscar: no está
+       a la vista en ningún panel, sale de una consulta, y sin él no
+       se puede dar de alta un envío. */
+    if (propias) {
+      try {
+        const centros = await OCA.centrosDeCosto();
+        console.log(`\n  Centros de costo de la operativa ${process.env.OCA_OPERATIVA || '(la de fábrica)'}:`);
+        if (!centros.length) {
+          console.log('     ninguno — revisá que la operativa sea una de las tuyas');
+        }
+        for (const c of centros) console.log(`     ${String(c.id).padEnd(8)} ${c.nombre}`);
+        if (centros.length === 1) {
+          console.log(`\n     → $env:OCA_CENTRO_COSTO = "${centros[0].id}"`);
+        } else if (centros.length > 1) {
+          console.log('\n     → elegí el que corresponda y ponelo en OCA_CENTRO_COSTO');
+        }
+      } catch (e) {
+        console.log(`\n  Centros de costo: ✗ ${e.message.slice(0, 200)}`);
+      }
+
+      const pendientes = [
+        ['OCA_USUARIO', 'usuario de e-Pak'],
+        ['OCA_CLAVE', 'contraseña de e-Pak'],
+        ['OCA_CUENTA', 'número de cuenta, con la barra: 111757/001'],
+        ['OCA_CENTRO_COSTO', 'el de la lista de arriba'],
+        ['OCA_CALLE_ORIGEN', 'calle desde donde despachás'],
+        ['OCA_NUMERO_ORIGEN', 'altura'],
+        ['OCA_EMAIL', 'tu correo, para los avisos del correo'],
+        ['OCA_SUCURSAL_ORIGEN', 'ID de la sucursal donde dejás el paquete'],
+      ].filter(([v]) => !process.env[v]);
+
+      console.log('\n  Para despachar todavía faltan:');
+      if (!pendientes.length) console.log('     nada: están todas cargadas');
+      for (const [v, q] of pendientes) console.log(`     ${v.padEnd(22)} ${q}`);
     }
 
     if (!propias) delete process.env.OCA_CUIT;
