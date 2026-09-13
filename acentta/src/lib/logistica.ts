@@ -93,6 +93,19 @@ export interface DatosDeDespacho {
   cajas: { alto: number; ancho: number; largo: number; peso: number }[];
   correoId?: string;
   servicio?: string;
+  /**
+   * El identificador de la sucursal donde retira el comprador.
+   *
+   * Va en el contrato aunque el botón de despachar todavía no exista,
+   * porque es el dato que se pierde si no se piensa ahora: el alta
+   * del envío en OCA necesita el centro de imposición de destino, y
+   * para entonces el pedido ya está cobrado. Recalcularlo desde el
+   * código postal daría la primera sucursal de la lista, no la que la
+   * persona eligió.
+   *
+   * `undefined` para entrega a domicilio, que es el caso normal.
+   */
+  sucursalDestino?: string;
 }
 
 export interface Despacho {

@@ -97,6 +97,31 @@ export const POST: APIRoute = async ({ request, url }) => {
     return json({ error: 'Falta la dirección de entrega.' }, 400);
   }
 
+  /* ---- La sucursal de retiro ----
+     Igual que todo lo que llega del navegador: se recorta, se acota y
+     se valida acá. El identificador que manda el cliente no se usa
+     para decidir precio —eso lo hace la operativa— pero sí termina
+     en el alta del envío en OCA, así que no puede ser un texto
+     arbitrario de mil caracteres.
+
+     Y la regla que importa: **retiro en sucursal sin sucursal no es
+     un pedido válido.** El guion del checkout ya lo bloquea, pero
+     esta ruta no puede confiar en eso: es lo mismo que con los
+     precios. Un pedido armado a mano que llegue así se cobraría y
+     después no habría a dónde mandarlo. */
+  if (entrega.metodo === 'sucursal') {
+    const s = (e.sucursal ?? {}) as Record<string, unknown>;
+    const id = texto(s.id, 20);
+    if (!id) {
+      return json({ error: 'Elegí en cuál sucursal vas a retirar el pedido.' }, 400);
+    }
+    entrega.sucursal = {
+      id,
+      nombre: texto(s.nombre, 120),
+      direccion: texto(s.direccion, 160),
+    };
+  }
+
   const metodoPago = (texto(cuerpo.metodoPago, 20) || 'tarjeta') as MetodoPago;
 
   /* ---- El total ----

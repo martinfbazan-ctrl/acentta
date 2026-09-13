@@ -48,6 +48,10 @@ const rutasDeCobro = {
       injectRoute({ pattern: '/api/aviso-de-pago', entrypoint: './src/api/aviso-de-pago.ts', prerender: false });
       injectRoute({ pattern: '/api/pedido', entrypoint: './src/api/pedido.ts', prerender: false });
       injectRoute({ pattern: '/api/admin', entrypoint: './src/api/admin.ts', prerender: false });
+      /* Las sucursales donde el comprador puede retirar. Va acá y no
+         en `src/pages` por lo mismo que las otras: necesita servidor
+         porque las credenciales de OCA no pueden viajar al navegador. */
+      injectRoute({ pattern: '/api/sucursales', entrypoint: './src/api/sucursales.ts', prerender: false });
       /* Diagnóstico. Dice qué variables ve la función, sin valores.
          Se puede borrar cuando el circuito esté verificado. */
       injectRoute({ pattern: '/api/estado', entrypoint: './src/api/estado.ts', prerender: false });

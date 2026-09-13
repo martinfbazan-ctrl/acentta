@@ -53,6 +53,17 @@ export interface Entrega {
   piso?: string;
   entre?: string;
   referencias?: string;
+  /**
+   * La sucursal de OCA donde el comprador retira, cuando eligió
+   * retiro. Sólo existe con `metodo === 'sucursal'`.
+   *
+   * Se guarda con el pedido y no se recalcula al despachar. Volver a
+   * pedirle la lista a OCA en ese momento daría la primera del
+   * código postal, que no tiene por qué ser la que la persona eligió
+   * —puede haber una docena— y el paquete terminaría en un mostrador
+   * al otro lado de la ciudad. El dato es de ella, no nuestro.
+   */
+  sucursal?: { id: string; nombre: string; direccion: string };
 }
 
 export interface Pedido {

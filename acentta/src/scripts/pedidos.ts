@@ -27,6 +27,7 @@ interface PedidoPanel {
   entrega: {
     metodo: string; cp: string; provincia: string; ciudad: string;
     calle: string; numero: string; piso?: string; entre?: string; referencias?: string;
+    sucursal?: { id: string; nombre: string; direccion: string };
   };
   items: { nombre: string; variante: string; cantidad: number; precio: number }[];
 }
@@ -67,7 +68,18 @@ function tarjeta(p: PedidoPanel): string {
       <dl>
         <div class="pedido__dato"><dt>Comprador</dt><dd>${esc(p.comprador.nombre)} ${esc(p.comprador.apellido)} · DNI ${esc(p.comprador.dni)}</dd></div>
         <div class="pedido__dato"><dt>Contacto</dt><dd>${esc(p.comprador.telefono)} · ${esc(p.comprador.email)}</dd></div>
-        <div class="pedido__dato"><dt>Entrega</dt><dd>${p.entrega.metodo === 'sucursal' ? 'Retiro en sucursal' : 'A domicilio'} · ${esc(dir)}</dd></div>
+        <!-- Con retiro en sucursal, el dato operativo es A CUÁL, no
+             la dirección del comprador: es lo que hay que cargar al
+             dar de alta el envío en OCA. La dirección se sigue
+             mostrando porque es donde vive quien compró, pero abajo
+             y como dato secundario. -->
+        <div class="pedido__dato"><dt>Entrega</dt><dd>${
+          p.entrega.metodo === 'sucursal'
+            ? `<b>Retiro en sucursal</b>${p.entrega.sucursal
+                ? ` · ${esc(p.entrega.sucursal.nombre)}${p.entrega.sucursal.direccion ? ` (${esc(p.entrega.sucursal.direccion)})` : ''} · ID ${esc(p.entrega.sucursal.id)}`
+                : ' · <b>SIN SUCURSAL ELEGIDA</b> — hay que preguntarle al comprador antes de despachar'}<br><span class="pedido__envio-nota">Domicilio del comprador: ${esc(dir)}</span>`
+            : `A domicilio · ${esc(dir)}`
+        }</dd></div>
         ${p.entrega.referencias ? `<div class="pedido__dato"><dt>Indicaciones</dt><dd>${esc(p.entrega.referencias)}</dd></div>` : ''}
         <div class="pedido__dato"><dt>Pago</dt><dd>${esc(p.metodoPago)}${p.detallePago ? ` · ${esc(p.detallePago)}` : ''}${p.envioGratis ? ' · envío gratis' : ` · envío ${esc(fPrecio(p.envio))}`}</dd></div>
       </dl>

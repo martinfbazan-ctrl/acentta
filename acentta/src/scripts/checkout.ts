@@ -137,6 +137,11 @@ if (contenedor) {
       guardarCP(cpCheckout.value);
       pintarResumen();
       pintarEnvio();
+      /* Las sucursales dependen del código postal, así que se
+         refrescan cuando cambia. `traerSucursales` no vuelve a
+         llamar a OCA si el código es el mismo que ya consultó: sin
+         ese freno, cada tecla sería una llamada. */
+      void traerSucursales();
     }
   });
 
@@ -205,6 +210,33 @@ if (contenedor) {
       for (const entrada of entradas) {
         if (!validar(entrada) && !primerError) primerError = entrada;
       }
+
+      /* Retiro en sucursal sin sucursal elegida no puede avanzar.
+         ------------------------------------------------------------
+         Un pedido así no se puede despachar: al ir a darlo de alta en
+         OCA falta el dato, y para conseguirlo hay que escribirle al
+         comprador y preguntarle algo que el sitio tendría que haberle
+         preguntado antes de cobrarle.
+
+         Se corta acá, con el mensaje al lado de la lista, siguiendo
+         la misma regla que el error de los términos: bloquear en
+         silencio es lo que hace que alguien apriete el botón y crea
+         que el sitio no anda. */
+      const pasoDeEnvio = Number(forma.dataset.pasoForma) === 2;
+      if (pasoDeEnvio && eligeSucursal() && !sucursalElegida()) {
+        if (notaSucursales) {
+          notaSucursales.textContent = cpConsultado
+            ? 'Elegí en cuál sucursal la vas a retirar.'
+            : 'Escribí tu código postal para ver las sucursales, o elegí entrega a domicilio.';
+          notaSucursales.dataset.error = 'true';
+        }
+        const primera = listaSucursales?.querySelector<HTMLInputElement>('input')
+          ?? document.querySelector<HTMLInputElement>('#cp-checkout');
+        primera?.focus({ preventScroll: true });
+        primera?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        return;
+      }
+      if (notaSucursales) delete notaSucursales.dataset.error;
 
       /* [ERROR CORREGIDO] Un envío bloqueado tiene que DECIR que está
          bloqueado, y decirlo donde se apretó.
@@ -382,6 +414,141 @@ if (contenedor) {
   }
 
   /* ============================================================
+     ELEGIR SUCURSAL DE RETIRO
+     ------------------------------------------------------------
+     Faltaba entero: se podía marcar «retiro en sucursal», pagar, y
+     ni el comprador ni el vendedor sabían a cuál iba el paquete.
+
+     Las sucursales las tiene OCA y dependen del código postal, así
+     que se piden a `/api/sucursales`. Tres decisiones que valen la
+     pena nombrar:
+
+     1 · La lista se pide con el código postal ya escrito, no antes.
+         Sin código postal no hay lista posible, y un desplegable
+         vacío al marcar la opción se lee como «esto no anda».
+
+     2 · Si no se puede traer la lista —OCA caído, sin credenciales,
+         sin cobertura— **se vuelve a domicilio**, con aviso. La
+         alternativa era dejar elegir sucursal sin sucursal, que es
+         cobrar por una promesa que no se puede cumplir.
+
+     3 · La elección es obligatoria para avanzar. Un pedido de retiro
+         sin sucursal no se puede despachar, y descubrirlo al
+         despachar significa escribirle al comprador para preguntarle
+         algo que el sitio tendría que haberle preguntado.
+     ============================================================ */
+  interface SucursalOCA { id: string; nombre: string; direccion: string; localidad: string }
+
+  const cajaSucursales = document.querySelector<HTMLElement>('[data-sucursales]');
+  const listaSucursales = document.querySelector<HTMLElement>('[data-sucursales-lista]');
+  const notaSucursales = document.querySelector<HTMLElement>('[data-sucursales-nota]');
+
+  /** El último código postal para el que ya se pidió la lista. */
+  let cpConsultado = '';
+  let pidiendo = false;
+
+  function eligeSucursal(): boolean {
+    return metodoEnvioRadios.find((r) => r.checked)?.value === 'sucursal';
+  }
+
+  /** La sucursal marcada, o `null` si no hay ninguna. */
+  function sucursalElegida(): { id: string; nombre: string; direccion: string } | null {
+    const marcado = listaSucursales?.querySelector<HTMLInputElement>('input:checked');
+    if (!marcado) return null;
+    return {
+      id: marcado.value,
+      nombre: marcado.dataset.nombre ?? '',
+      direccion: marcado.dataset.direccion ?? '',
+    };
+  }
+
+  function pintarSucursales(lista: SucursalOCA[]) {
+    if (!listaSucursales || !notaSucursales) return;
+
+    if (lista.length === 0) {
+      listaSucursales.innerHTML = '';
+      notaSucursales.textContent =
+        'OCA no tiene sucursales de retiro en tu zona. Elegí entrega a domicilio.';
+      return;
+    }
+
+    notaSucursales.textContent = `${lista.length} sucursal(es) cerca de tu código postal. Llevá tu DNI.`;
+    listaSucursales.innerHTML = lista.map((s, i) => `
+      <label class="metodo">
+        <input type="radio" name="sucursal-retiro" value="${esc(s.id)}"
+               data-nombre="${esc(s.nombre)}" data-direccion="${esc(s.direccion)}"
+               ${i === 0 ? 'checked' : ''} />
+        <span class="metodo__cuerpo">
+          <span class="sucursal__nombre">${esc(s.nombre)}</span>
+          <span class="sucursal__direccion">${esc(s.direccion)}${s.localidad ? ` · ${esc(s.localidad)}` : ''}</span>
+        </span>
+      </label>`).join('');
+  }
+
+  /** Escapa lo que viene de la API antes de meterlo en el HTML. */
+  function esc(s: string): string {
+    return String(s).replace(/[&<>"']/g, (c) => (
+      { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!
+    ));
+  }
+
+  async function traerSucursales() {
+    if (!cajaSucursales || !listaSucursales || !notaSucursales) return;
+
+    const cp = leerCP();
+    cajaSucursales.hidden = !eligeSucursal();
+    if (!eligeSucursal()) return;
+
+    if (!cp) {
+      listaSucursales.innerHTML = '';
+      notaSucursales.textContent = 'Escribí tu código postal más abajo y te mostramos las de tu zona.';
+      cpConsultado = '';
+      return;
+    }
+    if (cp === cpConsultado || pidiendo) return;
+
+    pidiendo = true;
+    notaSucursales.textContent = 'Buscando sucursales…';
+    try {
+      const r = await fetch(`/api/sucursales?cp=${encodeURIComponent(cp)}`, {
+        signal: AbortSignal.timeout(8000),
+      });
+      const d = (await r.json()) as { sucursales?: SucursalOCA[]; error?: string };
+      if (!r.ok) throw new Error(d.error ?? 'sin respuesta');
+
+      cpConsultado = cp;
+      pintarSucursales(d.sucursales ?? []);
+      pintarResumen();
+    } catch {
+      /* Volver a domicilio y decirlo. Dejar marcada una opción que no
+         se puede completar es peor que sacarla: el comprador paga
+         creyendo que va a retirar en algún lado. */
+      const domicilio = metodoEnvioRadios.find((r) => r.value === 'domicilio');
+      if (domicilio) { domicilio.checked = true; domicilio.dispatchEvent(new Event('change', { bubbles: true })); }
+      cajaSucursales.hidden = true;
+      const aviso = document.querySelector<HTMLElement>('[data-envio-resumen]');
+      if (aviso) {
+        aviso.textContent =
+          'No pudimos traer las sucursales de retiro, así que dejamos la entrega a domicilio. '
+          + 'Podés intentar de nuevo en un momento.';
+      }
+    } finally {
+      pidiendo = false;
+    }
+  }
+
+  for (const r of metodoEnvioRadios) r.addEventListener('change', () => void traerSucursales());
+
+  /* Delegado y no por radio: la lista se rehace entera cada vez que
+     cambia el código postal, así que escuchar en cada `input` sería
+     volver a atar todo en cada dibujo, y olvidarse una vez deja una
+     opción que se marca sin actualizar el resumen. */
+  listaSucursales?.addEventListener('change', () => {
+    if (notaSucursales) delete notaSucursales.dataset.error;
+    pintarElegido();
+  });
+
+  /* ============================================================
      LO ELEGIDO
      ------------------------------------------------------------
      La tarjeta mostraba cuánto sale y cuándo llega, pero no a dónde
@@ -415,9 +582,16 @@ if (contenedor) {
        envío. Antes, la opción marcada es la de fábrica y mostrarla
        sería informar una decisión que nadie tomó todavía. */
     const enSucursal = metodoEnvioRadios.find((r) => r.checked)?.value === 'sucursal';
+    /* Con retiro en sucursal, el dato que la persona vuelve a mirar
+       antes de pagar no es «retiro en sucursal» sino A CUÁL. Decir
+       sólo la modalidad la obliga a subir dos veces a comprobarlo. */
+    const suc = enSucursal ? sucursalElegida() : null;
     const hayEntrega = fila(
       'data-ck-fila-entrega', 'data-ck-metodo-envio',
-      pasoActual >= 2 ? (enSucursal ? 'Retiro en sucursal del correo' : 'A domicilio') : ''
+      pasoActual < 2 ? ''
+        : enSucursal
+          ? (suc ? `Retiro en ${suc.nombre}${suc.direccion ? ` · ${suc.direccion}` : ''}` : 'Retiro en sucursal del correo')
+          : 'A domicilio'
     );
 
     /* Dirección: se arma con lo que haya. Un renglón a medias
@@ -498,6 +672,11 @@ if (contenedor) {
           cp: campo('cp-checkout'), provincia: campo('provincia'), ciudad: campo('ciudad'),
           calle: campo('calle'), numero: campo('numero'), piso: campo('piso'),
           entre: campo('entre'), referencias: campo('referencias'),
+          /* La sucursal viaja con el pedido y no se deduce después.
+             Al despachar hay que decirle a OCA a dónde va, y volver
+             a calcularla desde el código postal daría la primera de
+             la lista, no la que la persona eligió. */
+          sucursal: sucursalElegida(),
         },
     });
 

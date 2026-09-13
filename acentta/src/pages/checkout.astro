@@ -145,6 +145,28 @@ const pasos = [
             )}
           </fieldset>
 
+          <!-- Elegir a cuál sucursal.
+               Aparece sólo al marcar «retiro en sucursal», y sólo con
+               un código postal escrito: sin eso no hay lista que pedir.
+               Arranca vacío porque la lista sale de OCA y depende de lo
+               que la persona escriba.
+
+               El comentario va ACÁ y no adentro del `{haySucursal && …}`.
+               Dentro de las llaves se espera JSX, donde un comentario se
+               escribe `{/* … */}`; un `<!-- -->` ahí adentro no es un
+               comentario sino tokens sueltos, y el compilador corta con
+               «Unexpected token» señalando la línea del comentario, no
+               la de la llave que cambió el contexto. -->
+          {haySucursal && (
+            <fieldset class="sucursales" data-sucursales hidden>
+              <legend class="metodos__titulo">¿En cuál la retirás?</legend>
+              <p class="sucursales__nota" data-sucursales-nota>
+                Escribí tu código postal más abajo y te mostramos las de tu zona.
+              </p>
+              <div class="sucursales__lista" data-sucursales-lista role="radiogroup" aria-label="Sucursal de retiro"></div>
+            </fieldset>
+          )}
+
           <div class="paso__campos">
             <div class="paso__par">
               <!-- Los dos llevan ejemplo, no valor. Un ejemplo se
@@ -477,6 +499,28 @@ const pasos = [
     font-size: var(--t-meta); font-weight: 700;
     text-transform: uppercase; letter-spacing: .07em; color: var(--gris-texto);
   }
+  /* ---- Elegir sucursal de retiro ----
+     Reusa `.metodo` para cada opción: es el mismo gesto —una lista de
+     radios con borde— y hacerle un estilo propio sería mantener dos
+     cosas que tienen que verse igual.
+
+     `minmax(0, 1fr)` en la columna del texto, no `1fr`: el nombre de
+     una sucursal de OCA puede ser largo («PUNTO OCA – Rapipago ·
+     MARIANO FRAGUEIRO 2143») y una columna `auto` no se achica por
+     debajo de su contenido. Es el mismo error que cortó el carrito
+     49 px en Android. */
+  .sucursales { border: 0; padding: 0; margin: 0 0 var(--e-5); display: grid; gap: var(--e-2); }
+  .sucursales__nota { font-size: var(--t-meta); color: var(--gris-texto); }
+  /* Cuando el paso se bloquea por falta de sucursal, el mensaje tiene
+     que verse. La lección viene del error de los términos: una clase
+     sin regla de estilo bloquea en silencio, y el síntoma es «aprieto
+     y no pasa nada». */
+  .sucursales__nota[data-error] { color: var(--rojo); font-weight: 600; }
+  .sucursales__lista { display: grid; gap: var(--e-2); }
+  .sucursales__lista:empty { display: none; }
+  .sucursal__nombre { font-weight: 600; font-size: 0.9375rem; overflow-wrap: anywhere; }
+  .sucursal__direccion { font-size: var(--t-meta); color: var(--gris-texto); overflow-wrap: anywhere; }
+
   .metodo {
     display: flex; align-items: flex-start; gap: var(--e-3);
     padding: var(--e-4);
