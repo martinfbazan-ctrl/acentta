@@ -158,12 +158,40 @@ for (const esMovil of [true, false]) {
   ok(/[Tt]ransferencia/.test(texto('[data-ck-metodo-pago]')),
     `${donde} · se eligió transferencia y la tarjeta sigue diciendo «${texto('[data-ck-metodo-pago]')}»`);
 
-  /* Y el retiro en sucursal, también. */
+  /* Y el retiro en sucursal, cuando está disponible.
+     ------------------------------------------------------------------
+     [ERROR CORREGIDO] Esto daba por sentado que la opción existe
+     siempre, y reventaba con «Cannot set properties of null» apenas
+     dejó de existir.
+
+     Dejó de existir por una decisión correcta: el retiro en sucursal
+     es una operativa aparte de OCA, y el checkout ya no la ofrece si
+     no está contratada —mostrarla cobrando la tarifa de entrega a
+     domicilio era prometer algo que el sitio no cumple—. Con
+     `OCA_OPERATIVA_SUCURSAL` sin cargar en el entorno de la
+     construcción, la opción no se imprime.
+
+     Que la prueba reviente con un error de programación en vez de
+     decir «la opción no está» es lo que la hace inútil justo cuando
+     hay algo que entender. Se verifica lo que corresponde en cada
+     caso: si está, que funcione; si no está, que la ausencia sea
+     completa y no a medias. */
   const sucursal = d.querySelector('[name="metodo-envio"][value="sucursal"]');
-  sucursal.checked = true;
-  sucursal.dispatchEvent(new dom.window.Event('change', { bubbles: true }));
-  ok(/sucursal/i.test(texto('[data-ck-metodo-envio]')),
-    `${donde} · se eligió retiro en sucursal y la tarjeta dice «${texto('[data-ck-metodo-envio]')}»`);
+  if (sucursal) {
+    sucursal.checked = true;
+    sucursal.dispatchEvent(new dom.window.Event('change', { bubbles: true }));
+    ok(/sucursal/i.test(texto('[data-ck-metodo-envio]')),
+      `${donde} · se eligió retiro en sucursal y la tarjeta dice «${texto('[data-ck-metodo-envio]')}»`);
+  } else {
+    /* Sin la operativa contratada la opción no va, pero entonces
+       tampoco puede quedar la etiqueta suelta ni el renglón de
+       precio: media opción es peor que ninguna. */
+    ok(!d.querySelector('[data-precio-sucursal]'),
+      `${donde} · no está el botón de retiro en sucursal pero sí quedó su renglón de precio`);
+    ok(d.querySelectorAll('[name="metodo-envio"]').length >= 1,
+      `${donde} · no quedó ninguna forma de entrega para elegir`);
+    console.log(`  (${donde}: sin OCA_OPERATIVA_SUCURSAL, el retiro en sucursal no se ofrece)`);
+  }
 
   /* ---- 6 · Apretar «Confirmar compra» tiene que hacer algo ----
 

@@ -41,11 +41,18 @@
  *
  * CÓMO ESTÁN PUESTOS LOS PRECIOS DE ABAJO
  *
- * Sobre el costo real de OCA, más un 12 %. El margen no es codicia:
- * esta tabla se usa justo cuando OCA no contesta, o sea cuando no
- * hay forma de saber si la tarifa cambió desde la última medición.
- * Entre cobrar unos pesos de más y regalar $ 6.288 en cada envío,
- * el error barato es el primero.
+ * Sobre el costo real de OCA **con IVA**, más un 12 %.
+ *
+ * Lo del IVA no es un detalle contable. OCA cotiza en neto —tanto su
+ * calculadora web como su API— y acentta factura como monotributo,
+ * así que ese 21 % no se recupera como crédito fiscal: es costo
+ * puro. Cobrar la tarifa pelada dejaba las cuatro zonas por debajo
+ * del costo, entre $ 700 y $ 1.000 por envío.
+ *
+ * El margen del 12 % no es codicia: esta tabla se usa justo cuando
+ * OCA no contesta, o sea cuando no hay forma de saber si la tarifa
+ * cambió desde la última medición. Entre cobrar unos pesos de más y
+ * regalar $ 6.288 en cada envío, el error barato es el primero.
  *
  * Las cuatro zonas están medidas. Para volver a medirlas:
  * `npm run logistica:vivo` con `OCA_MODO = "produccion"`, que sólo
@@ -110,7 +117,27 @@ export interface Zona {
    * concluir «bajaron las tarifas» cuando lo que cambió fue el
    * servicio.
    */
-  medido?: { costo: number; destino: string; fecha: string; operativa: string };
+  medido?: {
+    costo: number;
+    destino: string;
+    fecha: string;
+    operativa: string;
+    /**
+     * Cómo llama OCA a esta zona: Local, Regional, Nacional 1,
+     * Nacional 2. Es la agrupación que decide el precio, y tenerla
+     * escrita convierte cada zona de abajo en una afirmación
+     * verificable en vez de una opinión geográfica.
+     */
+    ambito: string;
+    /**
+     * El PEOR plazo medido en la zona, en días hábiles.
+     *
+     * Existe porque `diasExtra` nunca puede quedar por debajo de
+     * esto: prometer antes de lo que el correo tarda es la única
+     * forma de romper la promesa desde el código.
+     */
+    dias: number;
+  };
 }
 
 /**
@@ -126,10 +153,14 @@ export const ZONAS: Zona[] = [
     /* Capital, Villa Carlos Paz, Alta Gracia, Río Ceballos, Jesús
        María: el Gran Córdoba entra en los primeros doscientos. */
     rangos: [[5000, 5199]],
-    base: 8800,
-    porKiloExtra: 620,
+    /* $ 7.851 + IVA = $ 9.500, más el 12 %. */
+    base: 10700,
+    porKiloExtra: 750,
     diasExtra: 1,
-    medido: { costo: 7851, destino: 'CP 5000 · Córdoba', fecha: '2026-09-13', operativa: '471351' },
+    medido: {
+      costo: 7851, destino: 'CP 5000 · Córdoba', fecha: '2026-09-13',
+      operativa: '471351', ambito: 'Local', dias: 1,
+    },
   },
   {
     nombre: 'Provincia de Córdoba',
@@ -140,10 +171,18 @@ export const ZONAS: Zona[] = [
        par de pueblos cordobeses paguen tarifa nacional a que medio
        Santa Fe pague tarifa provincial. */
     rangos: [[5200, 5299], [5800, 5999]],
-    base: 11300,
-    porKiloExtra: 700,
-    diasExtra: 2,
-    medido: { costo: 10027, destino: 'CP 5800 · Río Cuarto y CP 5900 · Villa María', fecha: '2026-09-13', operativa: '471351' },
+    /* $ 10.027 + IVA = $ 12.133, más el 12 %. */
+    base: 13700,
+    porKiloExtra: 960,
+    /* [ERROR CORREGIDO] Decía 2, tomado de Río Cuarto. Villa María
+       —más cerca de Córdoba— dio 4. La tabla prometía dos días para
+       un envío que OCA entrega en cuatro, que es la única forma de
+       romper una promesa desde el código: adelantarla. */
+    diasExtra: 4,
+    medido: {
+      costo: 10027, destino: 'CP 5800 · Río Cuarto y CP 5900 · Villa María', fecha: '2026-09-13',
+      operativa: '471351', ambito: 'Regional', dias: 4,
+    },
   },
   /* ------------------------------------------------------------------
      Las dos que siguen cuestan LO MISMO y tardan distinto, y esa
@@ -184,11 +223,15 @@ export const ZONAS: Zona[] = [
     nombre: 'Centro y Litoral',
     /* CABA, Buenos Aires, Santa Fe, Entre Ríos y La Pampa. */
     rangos: [[1000, 2999], [6000, 8299]],
-    base: 11800,
-    porKiloExtra: 820,
+    /* $ 10.488 + IVA = $ 12.690, más el 12 %. */
+    base: 14300,
+    porKiloExtra: 1000,
     /* CABA dio 2 días y Rosario 3. Se toma el peor de la zona. */
     diasExtra: 3,
-    medido: { costo: 10488, destino: 'CP 1425 · CABA y CP 2000 · Rosario', fecha: '2026-09-13', operativa: '471351' },
+    medido: {
+      costo: 10488, destino: 'CP 1425 · CABA y CP 2000 · Rosario', fecha: '2026-09-13',
+      operativa: '471351', ambito: 'Nacional 1', dias: 3,
+    },
   },
   {
     nombre: 'Cuyo y Norte',
@@ -196,27 +239,75 @@ export const ZONAS: Zona[] = [
        Santa Fe norte, Chaco, Formosa, Corrientes, Misiones,
        Santiago del Estero, Tucumán, Catamarca, Salta y Jujuy. */
     rangos: [[3000, 4999], [5300, 5799]],
-    base: 11800,
-    porKiloExtra: 820,
+    /* Mismo tarifario que Centro y Litoral: $ 12.690 con IVA. */
+    base: 14300,
+    porKiloExtra: 1000,
     /* Mendoza dio 4 días y Salta 5. Tucumán dio 2, que es menos que
        Rosario estando más lejos: los plazos que devuelve OCA tienen
        ruido y conviene no afinarlos más de lo que aguantan. */
     diasExtra: 5,
-    medido: { costo: 10488, destino: 'CP 5500 · Mendoza, CP 4400 · Salta y CP 4000 · Tucumán', fecha: '2026-09-13', operativa: '471351' },
+    medido: {
+      costo: 10488, destino: 'CP 5500 · Mendoza, CP 4400 · Salta y CP 4000 · Tucumán', fecha: '2026-09-13',
+      operativa: '471351', ambito: 'Nacional 1', dias: 5,
+    },
   },
   {
     nombre: 'Patagonia',
     rangos: [[8300, 9999]],
-    base: 13900,
-    porKiloExtra: 970,
+    /* $ 12.336 + IVA = $ 14.927, más el 12 %. */
+    base: 16800,
+    porKiloExtra: 1180,
     /* Bariloche dio 5 días y Ushuaia 9. Mismo criterio: el peor. */
     diasExtra: 9,
-    medido: { costo: 12336, destino: 'CP 8400 · Bariloche y CP 9410 · Ushuaia', fecha: '2026-09-13', operativa: '471351' },
+    medido: {
+      costo: 12336, destino: 'CP 8400 · Bariloche y CP 9410 · Ushuaia', fecha: '2026-09-13',
+      operativa: '471351', ambito: 'Nacional 2', dias: 9,
+    },
   },
 ];
 
 /** Cuánto se le suma al costo medido de OCA para armar `base`. */
 export const MARGEN_SOBRE_TARIFA_REAL = 0.12;
+
+/**
+ * Los `medido` de arriba son NETOS: no tienen el IVA adentro.
+ *
+ * Medido, no supuesto. La calculadora de la web de OCA aclara en
+ * rojo «Los precios no incluyen IVA», pero eso solo no alcanzaba
+ * para saber qué devuelve la API. Los dos números que había no eran
+ * comparables —se habían consultado con paquetes distintos— así que
+ * se repitió la consulta en la web con el mismo paquete que manda el
+ * adaptador:
+ *
+ *     API   0,6 kg · 0,004752 m³ → $ 10.488
+ *     Web   0,63 kg · 0,003 m³   → $ 10.080,6  «no incluyen IVA»
+ *
+ * Cuatro por ciento de diferencia, no veintiuno. Ese 4 % es el
+ * volumen aforado —la web redondeó a 0,003 m³— y no un impuesto. Si
+ * la API viniera con IVA tendría que haber dado unos $ 12.200.
+ *
+ * Conclusión: la API cotiza igual que la calculadora, en neto, y el
+ * adaptador le suma el 21 % antes de que el número llegue a ninguna
+ * pantalla. `OCA_TARIFA_INCLUYE_IVA = "si"` lo desactiva el día que
+ * OCA cambie de criterio.
+ *
+ * Las `base` de la tabla se comparan contra el costo CON IVA, que es
+ * lo que se paga de verdad. Antes de esta medición estaban las
+ * cuatro por debajo del costo: entre $ 700 y $ 1.000 por envío,
+ * puestos por el vendedor, sin que ninguna pantalla lo dijera.
+ */
+export const MEDICIONES_CON_IVA = false;
+
+/** IVA de los servicios de transporte. No tienen alícuota reducida. */
+export const IVA_ENVIO = 0.21;
+
+/** Lo que el envío cuesta de verdad, impuesto incluido. */
+export function costoRealDe(zona: Zona): number | null {
+  if (!zona.medido) return null;
+  return MEDICIONES_CON_IVA
+    ? zona.medido.costo
+    : Math.round(zona.medido.costo * (1 + IVA_ENVIO));
+}
 
 export interface ResultadoEnvio {
   ok: boolean;

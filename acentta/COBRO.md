@@ -1,10 +1,24 @@
-# Conectar el cobro con Mobbex
+# Conectar el cobro
+
+> ## ⚠️ Esta guía quedó vieja: describe Mobbex, y la pasarela activa es Mercado Pago
+>
+> Mobbex se apagó. Su arancel era la mitad, pero pide cuenta corriente bancaria, que todavía no hay. Mercado Pago ya está probada y funcionando.
+>
+> **Todo lo que dice de Mobbex sigue siendo cierto sobre Mobbex** —el adaptador está entero en `src/lib/mobbex.ts`, con sus pruebas— pero no es lo que cobra hoy. Los pasos de configuración de más abajo son de esa integración, no de la que está en uso.
+>
+> Lo que sí vale ahora mismo:
+>
+> - La pasarela de fábrica es **Mercado Pago**. Sin la variable `PASARELA`, es la que se usa.
+> - Para volver a Mobbex el día que haya cuenta corriente: `PASARELA=mobbex`.
+> - El operador logístico de fábrica es **OCA**, y es el único configurado.
+>
+> **Hay que reescribir este archivo.** Mientras tanto, esta advertencia evita que alguien —incluido yo dentro de seis meses— siga los pasos de abajo creyendo que configuran el cobro que está andando.
 
 El código está escrito y probado. Falta conectar las llaves, y eso lo hacés vos: **yo no toco credenciales**. Una clave en un archivo del repositorio es una clave pública, y una clave que pasa por un chat es una clave quemada.
 
 Arrancamos en **modo de prueba**: tarjetas falsas, ningún peso real. Pasar a producción después son dos variables.
 
-> **Por qué Mobbex y no Mercado Pago.** El arancel: casi el doble. El código de Mercado Pago **no se borró** — sigue entero en `src/lib/mercadopago.ts`, con sus pruebas, y se vuelve a encender poniendo `PASARELA=mercadopago`. Esa posibilidad es medio motivo por el que existe `src/lib/pasarela.ts`.
+> **Por qué se probó Mobbex.** El arancel: casi la mitad. El código de Mercado Pago **no se borró** — sigue entero en `src/lib/mercadopago.ts`, con sus pruebas, y hoy es el que cobra. Esa posibilidad de ir y volver en una variable es medio motivo por el que existe `src/lib/pasarela.ts`.
 
 ---
 
@@ -119,7 +133,7 @@ En Vercel: **Settings → Environment Variables**, todas para *Production*, *Pre
 | `MOBBEX_MODO` | `prueba` |
 | `ADMIN_CLAVE` | una clave larga que inventes, mínimo 12 caracteres |
 
-`PASARELA` no hace falta: sin ella el sitio usa Mobbex. Se pone sólo para volver a Mercado Pago.
+`PASARELA` **sí hace falta si querés Mobbex**: sin ella el sitio cobra con Mercado Pago, que es el valor de fábrica. Antes era al revés, y se dio vuelta a propósito — un olvido de configuración tiene que caer en la pasarela que funciona, no en la que está en pausa.
 
 > `ADMIN_CLAVE` es la que abre la pantalla de pedidos en `/pedidos`. Esa pantalla muestra nombre, DNI, teléfono y dirección de cada persona que te compró — es la información más delicada del sitio. **Poné una clave larga y que no uses en ningún otro lado.** Doce caracteres es el mínimo que el código acepta; veinte es mejor, y como la escribís una sola vez, que sea incómoda no molesta.
 

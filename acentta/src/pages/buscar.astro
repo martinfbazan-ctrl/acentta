@@ -39,7 +39,7 @@ const sugeridos = masVendidos(4);
    Estos cuatro son las categorías con más productos. */
 const atajos = CATEGORIAS_TODAS.map((c) => ({
   clave: c,
-  nombre: NOMBRE_CATEGORIA[c]!,
+  nombre: NOMBRE_CATEGORIA[c],
   cantidad: productos.filter((p) => p.categoria === c).length,
 }))
   .sort((a, b) => b.cantidad - a.cantidad)
@@ -92,9 +92,14 @@ const atajos = CATEGORIAS_TODAS.map((c) => ({
          No hace falta que se vea: hace falta que exista. -->
     <h2 class="vo" data-busqueda-h2>Productos</h2>
 
+    <!-- `data-categoria` acompaña al slug para que la celda diga sola
+         a qué categoría pertenece. No lo usa el guion del buscador:
+         lo usa la prueba, que así puede afirmar «buscar iluminación
+         devuelve exactamente los de iluminación» en vez de comparar
+         contra un número escrito a mano que envejece con el catálogo. -->
     <div class="grilla-productos" data-busqueda-grilla>
       {productos.map((p) => (
-        <div class="busqueda__celda" data-slug={p.slug}>
+        <div class="busqueda__celda" data-slug={p.slug} data-categoria={p.categoria}>
           <TarjetaProducto producto={p} />
         </div>
       ))}

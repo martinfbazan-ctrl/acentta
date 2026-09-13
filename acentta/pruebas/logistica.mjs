@@ -344,11 +344,85 @@ const OCA = await cargar('src/lib/oca.ts', 'oca');
   const antes = process.env.OCA_CUIT;
   process.env.OCA_CUIT = '30-53625919-4';
 
-  ok((await conPrecio('9876.54'))?.costo === 9876.54, 'un precio con punto decimal se leyó mal');
-  ok((await conPrecio('9876,54'))?.costo === 9876.54, 'un precio con coma decimal se leyó mal');
-  ok((await conPrecio('1.234,56'))?.costo === 1234.56,
-    '¡GRAVE! «1.234,56» se leyó como otra cosa: el punto es separador de miles acá');
+  /* [ERROR CORREGIDO] Estas cuatro comparaban contra el número
+     pelado: `costo === 9876.54`. El día que el adaptador empezó a
+     sumarle el IVA —porque OCA cotiza en neto— las tres primeras
+     empezaron a fallar diciendo:
+
+         «un precio con punto decimal se leyó mal»
+         «¡GRAVE! 1.234,56 se leyó como otra cosa»
+
+     El parseo estaba perfecto. Lo que había cambiado era otra cosa
+     en la misma función, y el mensaje mandaba a buscar el problema
+     al lugar equivocado — casi salgo a arreglar `aNumero`, que no
+     tenía nada.
+
+     La lección: un mensaje de falla es una hipótesis, y una prueba
+     que atraviesa varias responsabilidades no puede afirmar cuál se
+     rompió. Ahora el parseo se verifica contra `aNumero` directo,
+     que es lo único que esta sección quiere probar, y el IVA tiene
+     su propia comprobación abajo. */
+  ok(OCA.aNumero('9876.54') === 9876.54, 'aNumero: un precio con punto decimal se leyó mal');
+  ok(OCA.aNumero('9876,54') === 9876.54, 'aNumero: un precio con coma decimal se leyó mal');
+  ok(OCA.aNumero('1.234,56') === 1234.56,
+    '¡GRAVE! aNumero: «1.234,56» se leyó como otra cosa: el punto es separador de miles acá');
+  /* Éstos salieron de una corrida real, no de la imaginación: OCA
+     devolvió `10080,6`, o sea que usa coma para los decimales. Con
+     eso, un punto seguido de tres dígitos sólo puede ser separador
+     de miles. Leerlo como decimal convertía $ 12.345 en $ 12. */
+  ok(OCA.aNumero('12.345') === 12345, '¡GRAVE! aNumero: «12.345» son doce mil, no doce');
+  ok(OCA.aNumero('1.234.567') === 1234567, 'aNumero: dos separadores de miles se leyeron mal');
+  ok(OCA.aNumero('10080,6') === 10080.6, 'aNumero: el formato que devuelve OCA de verdad se leyó mal');
+  ok(OCA.aNumero('12345') === 12345, 'aNumero: un número sin separadores se leyó mal');
+
+  /* Y el circuito entero, que es donde se aplica el impuesto. */
+  const conIva = Math.round(9876.54 * 1.21);
+  ok((await conPrecio('9876,54'))?.costo === conIva,
+    `cotizar() tendría que devolver ${conIva} —la tarifa de OCA más el 21 %— y no lo hizo`);
   ok((await conPrecio('0'))?.costo === undefined, 'un precio en cero no es una tarifa válida');
+
+  /* Con la variable puesta, no se toca el número: si algún día OCA
+     pasa a cotizar con IVA adentro, sumárselo lo duplicaría. */
+  process.env.OCA_TARIFA_INCLUYE_IVA = 'si';
+  ok((await conPrecio('9876,54'))?.costo === 9876.54,
+    'con OCA_TARIFA_INCLUYE_IVA=si la tarifa no se toca, y se tocó: el IVA se estaría cobrando dos veces');
+  delete process.env.OCA_TARIFA_INCLUYE_IVA;
+
+  /* ── El error que OCA manda adentro del documento ──
+     Cuando algo sale mal no devuelve un código HTTP de error:
+     devuelve 200 con un `<Table1>` que tiene un `<Error>` adentro.
+     El lector de filas buscaba `Table` y `Tarifar`, así que esa
+     explicación llegaba entera en cada respuesta y se descartaba.
+     Diez destinos fallando y diez veces «sin cotización», con el
+     motivo escrito en el mismo documento que estábamos leyendo. */
+  const conError = async (mensaje) => {
+    globalThis.fetch = async () => ({
+      ok: true,
+      text: async () => `<DataSet><NewDataSet><Table1>`
+        + `<Error>${mensaje}</Error></Table1></NewDataSet></DataSet>`,
+    });
+    try { return await OCA.cotizar({ provincia: 'Córdoba', cp: '5000', peso: 0.6, paquetes: '27x16x11' }); }
+    finally { globalThis.fetch = fetchOriginal; }
+  };
+
+  ok((await conError('La operativa no pertenece al CUIT')) === null,
+    'con un <Error> adentro no puede devolver una tarifa');
+  ok((OCA.motivoDeLaUltimaFalta() ?? '').includes('La operativa no pertenece al CUIT'),
+    'el mensaje que manda OCA tiene que llegar al diagnóstico, no descartarse: '
+    + `dijo «${OCA.motivoDeLaUltimaFalta()}»`);
+
+  /* Y el caso inverso: OCA manda `<Error></Error>` vacío cuando todo
+     salió bien. Tomarlo por una falla dejaría al sitio sin cotizar
+     nunca, que es el mismo síntoma con la causa opuesta. */
+  globalThis.fetch = async () => ({
+    ok: true,
+    text: async () => `<NewDataSet><Table><Error></Error>`
+      + `<Total>9876,54</Total><PlazoEntrega>3</PlazoEntrega></Table></NewDataSet>`,
+  });
+  const conErrorVacio = await OCA.cotizar({ provincia: 'Córdoba', cp: '5000', peso: 0.6, paquetes: '27x16x11' });
+  globalThis.fetch = fetchOriginal;
+  ok(conErrorVacio?.costo === Math.round(9876.54 * 1.21),
+    'un <Error> vacío significa que salió bien, y se tomó por una falla');
 
   if (antes === undefined) delete process.env.OCA_CUIT; else process.env.OCA_CUIT = antes;
 }
@@ -647,6 +721,16 @@ if (VIVO) {
        forma de saber desde acá qué producto es cada número —OCA no
        lo devuelve en la tarifa— y por eso ahora no se inventa. */
     console.log(`  Operativa: ${process.env.OCA_OPERATIVA || '94584'}`);
+    /* El modo faltaba en esta cabecera, y es la primera pregunta
+       cuando no cotiza nada: el entorno de prueba de OCA no conoce
+       las operativas de una cuenta real, así que en «prueba» con tu
+       operativa la respuesta correcta es una lista vacía. Sin verlo
+       impreso, diez «sin cotización» seguidos no distinguen eso de
+       un problema de cuenta. */
+    const modo = (process.env.OCA_MODO || 'prueba').toLowerCase();
+    console.log(`  Modo: ${modo}${modo.startsWith('prue')
+      ? '  ⚠ el entorno de prueba de OCA no conoce tu operativa; para tarifas reales: $env:OCA_MODO = "produccion"'
+      : ''}`);
     console.log(`  Producto: ${p.nombre}`);
     console.log(`  Paquete ${caja} cm · ${peso} kg · ${OCA.volumenEnMetrosCubicos(caja)} m³\n`);
 
@@ -711,7 +795,39 @@ if (VIVO) {
       fallos.push(`la operativa cambió de ${opMedida} a ${opActual}: los precios de esta corrida no son comparables con los de la tabla`);
     }
 
-    console.log(`  ${'DESTINO'.padEnd(16)} ${'OCA'.padStart(9)}  ${'TU TABLA'.padStart(9)}  ${'DIFERENCIA'.padStart(11)}  ZONA`);
+    /* ── IVA ──
+       La calculadora de la web de OCA aclara en rojo «Los precios no
+       incluyen IVA». Si su API contesta lo mismo, todo lo medido es
+       neto y cobrarlo tal cual nos deja poniendo el 21 % en cada
+       envío — unos $ 2.200 sobre un envío de $ 10.500, invisibles
+       hasta conciliar la factura de fin de mes.
+
+       No se resuelve suponiendo: se resuelve pidiéndole a la
+       calculadora de OCA el MISMO paquete que manda el adaptador.
+       Los parámetros van impresos para copiar y pegar. */
+    console.log('  ─── IVA · UNA MEDICIÓN QUE FALTA HACER ───');
+    console.log(`  Hoy el adaptador ${OCA.tarifaIncluyeIva()
+      ? 'toma la tarifa de OCA como FINAL (no le suma nada)'
+      : 'le SUMA 21 % a la tarifa que devuelve OCA'}.`);
+    console.log('');
+    console.log('  Para cerrarlo hace falta comparar el MISMO paquete en los dos lados.');
+    console.log('  En la web de OCA → Herramientas → Calculadora de envíos, cargá exactamente:');
+    console.log('');
+    console.log(`      Origen ${OCA.origen().cp}   ·   Destino 4400 (Salta)   ·   1 paquete`);
+    console.log(`      Peso ${peso} kg   ·   Volumen ${OCA.volumenEnMetrosCubicos(caja)} m³`);
+    console.log(`      Operativa ${process.env.OCA_OPERATIVA || '94584'}`);
+    console.log('');
+    console.log('  Y compará el total de la web contra la línea «respuesta cruda de OCA»');
+    console.log('  que aparece abajo — ésa es la tarifa tal cual la devuelve la API, sin');
+    console.log('  tocar. Los dos números salen del mismo tarifario, así que:');
+    console.log('');
+    console.log('      · si son IGUALES → la API también cotiza sin IVA, y está bien');
+    console.log('        que el adaptador se lo sume. Dejalo como está.');
+    console.log('      · si la API da un 21 % MÁS → ya viene con IVA, y sumárselo lo');
+    console.log('        duplica:  $env:OCA_TARIFA_INCLUYE_IVA = "si"');
+    console.log('');
+
+    console.log(`  ${'DESTINO'.padEnd(16)} ${'OCA'.padStart(9)}  ${'TU TABLA'.padStart(9)}  ${'DIFERENCIA'.padStart(11)}  ÁMBITO · ZONA`);
 
     let algunaCotizo = false;
     let masCaro = 0, masBarato = Infinity;
@@ -723,7 +839,10 @@ if (VIVO) {
         const t = await OCA.cotizar({
           provincia, cp, peso, paquetes: caja, valorDeclarado: p.precio,
         });
-        if (!t) { console.log(`  ${nombre.padEnd(16)} sin cotización`); continue; }
+        if (!t) {
+          console.log(`  ${nombre.padEnd(16)} sin cotización — ${OCA.motivoDeLaUltimaFalta() ?? 'sin motivo registrado'}`);
+          continue;
+        }
 
         algunaCotizo = true;
         const real = Math.round(t.costo);
@@ -745,7 +864,25 @@ if (VIVO) {
         const marca = dif < 0 ? '✗' : ' ';
         if (dif < 0) pierde.push({ nombre, dif, zona: propio.zona });
 
-        console.log(`  ${nombre.padEnd(16)} ${('$' + real).padStart(9)}  ${('$' + propio.costo).padStart(9)}  ${marca}${(dif >= 0 ? '+' : '') + '$' + dif}`.padEnd(66) + `  ${propio.zona} · ${t.diasExtra}d`);
+        /* El ámbito es la agrupación con la que OCA decide el precio.
+           Verlo al lado de nuestra zona es la forma más directa de
+           descubrir que dos destinos que separamos en la tabla son,
+           para el correo, exactamente el mismo. */
+        /* El ámbito que OCA declara hoy contra el que quedó grabado
+           en la tabla. Si OCA reclasifica un destino —pasa cuando
+           abren o cierran un centro de distribución— el precio se
+           mueve solo y esta línea es la que lo dice. */
+        const zonaTabla = ZONAS?.find((z) => z.nombre === propio.zona);
+        const esperado = zonaTabla?.medido?.ambito;
+        if (t.ambito && esperado && t.ambito !== esperado) {
+          fallos.push(
+            `${nombre}: OCA lo clasifica como «${t.ambito}» y la tabla lo tiene en `
+            + `«${propio.zona}», medida como «${esperado}». Cambió de ámbito: su precio también.`,
+          );
+        }
+
+        const ambito = t.ambito ? `${t.ambito} · ` : '';
+        console.log(`  ${nombre.padEnd(16)} ${('$' + real).padStart(9)}  ${('$' + propio.costo).padStart(9)}  ${marca}${(dif >= 0 ? '+' : '') + '$' + dif}`.padEnd(66) + `  ${ambito}${propio.zona} · ${t.diasExtra}d`);
       } catch (e) {
         console.log(`  ${nombre.padEnd(16)} ✗ ${e.message.slice(0, 160)}`);
       }
@@ -779,7 +916,10 @@ if (VIVO) {
             OCA.cotizar({ provincia, cp, peso, paquetes: caja, valorDeclarado: p.precio }),
             OCA.cotizar({ provincia, cp, peso, paquetes: caja, valorDeclarado: p.precio, entrega: 'sucursal' }),
           ]);
-          if (!dom || !suc) { console.log(`  ${nombre.padEnd(16)} sin cotización`); continue; }
+          if (!dom || !suc) {
+            console.log(`  ${nombre.padEnd(16)} sin cotización — ${OCA.motivoDeLaUltimaFalta() ?? 'sin motivo registrado'}`);
+            continue;
+          }
           const ahorro = Math.round(dom.costo - suc.costo);
           console.log(`  ${nombre.padEnd(16)} domicilio $${String(Math.round(dom.costo)).padStart(7)}  ·  sucursal $${String(Math.round(suc.costo)).padStart(7)}  ·  ahorra $${ahorro}  (${suc.diasExtra}d)`);
           /* Si la sucursal sale IGUAL o más cara, la operativa
@@ -792,6 +932,18 @@ if (VIVO) {
         } catch (e) {
           console.log(`  ${nombre.padEnd(16)} ✗ ${e.message.slice(0, 120)}`);
         }
+      }
+    }
+
+    /* La tarifa tal cual la devuelve la API, sin el IVA que le suma
+       el adaptador. Es el único número comparable contra la
+       calculadora de la web de OCA, que cotiza en neto. */
+    if (masCaro) {
+      const factor = OCA.tarifaIncluyeIva() ? 1 : 1 + OCA.IVA_TRANSPORTE;
+      const crudo = medidos.get('4400');
+      if (crudo) {
+        console.log(`\n  Respuesta cruda de OCA a Salta (4400): $${Math.round(crudo / factor)}`);
+        console.log(`  Con el 21 % que le suma el adaptador:     $${crudo}`);
       }
     }
 
@@ -887,9 +1039,23 @@ if (VIVO) {
         console.log('  por eso pide un permiso aparte: OCA_DESPACHO_REAL = "si". Mientras no');
         console.log('  esté, el despacho queda bloqueado aunque el modo sea producción.');
       } else {
-        console.log('  Ninguna cotización. Con las credenciales públicas eso suele significar');
-        console.log('  que el entorno de prueba de OCA está caído; en producción, que la');
-        console.log('  operativa declarada no corresponde a tu cuenta o no cubre esos destinos.');
+        const dijo = OCA.motivoDeLaUltimaFalta();
+        if (dijo?.startsWith('OCA rechazó')) {
+          /* Cuando OCA explicó el motivo, la conclusión es lo que
+             dijo OCA. Cualquier cosa que agregue yo acá es una
+             hipótesis compitiendo con un dato. */
+          console.log(`  ${dijo}`);
+          console.log('');
+          console.log('  Ése es el mensaje textual del servicio, no una interpretación.');
+          console.log('  Si menciona el CUIT o la operativa, revisá que las variables tengan');
+          console.log('  el formato que OCA espera —el CUIT suele ir sin guiones— y que la');
+          console.log('  operativa sea una de las que figuran en tu tabla de operativas.');
+        } else {
+          console.log('  Ninguna cotización, y OCA no dijo por qué. Con las credenciales');
+          console.log('  públicas eso suele significar que su entorno de prueba está caído;');
+          console.log('  en producción, que la operativa no corresponde a tu cuenta.');
+          if (dijo) console.log(`  Lo último que se registró: ${dijo}`);
+        }
       }
     }
 

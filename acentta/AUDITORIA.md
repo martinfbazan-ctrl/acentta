@@ -193,6 +193,18 @@ Lo peor fue cómo se disimuló: la corrida imprimía `Operativa: 471352 (sucursa
 
 Ahora cada zona guarda **con qué operativa se midió**, y la corrida se niega a comparar precios si cambió. Dos tarifas sólo son comparables si salieron del mismo producto.
 
+**El IVA que no estaba en ningún lado.** La calculadora de envíos de la web de OCA aclara en rojo, debajo del total: «Los precios no incluyen IVA». Nada en la respuesta de su API lo dice — devuelve un número y ya.
+
+Si la API cotiza igual que la calculadora, todo lo medido era neto, la tabla entera estaba por debajo del costo y cada envío se despachaba perdiendo el 21 %. Sobre $ 10.488 son $ 2.202 por venta, invisibles hasta conciliar la factura de fin de mes. Y acentta factura como monotributo: ese IVA no se recupera como crédito fiscal, es costo puro.
+
+Lo tentador era deducirlo. Los dos números disponibles eran $ 10.488 de la API y $ 10.080 de la web, y la diferencia no era 21 % — pero tampoco eran comparables: se habían consultado con paquetes distintos, 0,6 kg contra 0,98 kg. El IVA, el peso, o los dos tapándose. Cualquier conclusión ahí era una adivinanza con plata ajena.
+
+Se resolvió repitiendo la consulta en la web con **el mismo paquete** que manda el adaptador: 0,63 kg, $ 10.080,6. Contra $ 10.488 de la API: 4 % de diferencia, que es el volumen aforado. Si la API viniera con IVA habría dado $ 12.200. Conclusión: cotiza en neto, y el adaptador ahora le suma el 21 % antes de que el número llegue a ninguna pantalla.
+
+Mientras la pregunta estuvo abierta, la auditoría **cortó la publicación**. Una constante en `null` y una prueba que falla nombrándola. Podría haber sido una advertencia; una advertencia se lee dos veces y después se ignora.
+
+Y la prueba que verificaba «la tabla nunca cobra por debajo del costo» pasaba limpia todo ese tiempo: comparaba contra el costo neto. Era verdad sobre un costo que no existe.
+
 **Y arrastraba otro más.** El carrito muestra un envío estimado mientras no hay código postal, y ese piso estaba escrito `const piso = 4200` — el precio de CABA, copiado a mano el día que CABA era lo más barato. Al rehacer la tabla el piso pasó a $ 8.800 y la copia se quedó donde estaba: el carrito prometía $ 4.200 y el checkout cobraba hasta $ 13.900. Exactamente el costo sorpresa que el comentario de esa función dice estar evitando. Ahora sale de `ZONAS`, y hay una prueba que lee el archivo y falla si vuelve a aparecer un número de la tabla escrito a mano.
 
 **Grillas que no se pueden achicar.** Una columna de grilla mide `auto` si no se dice otra cosa, y `auto` se niega a achicarse por debajo del contenido más ancho que tenga adentro. Un nombre largo, un total de siete cifras o un `<input>` —que trae ancho propio— estiran la columna más que la pantalla, y el bloque queda cortado por el borde derecho. El patrón era siempre el mismo: `display: grid` sin columnas, y más abajo una consulta de medios que sí las pone para escritorio. Quien lo escribió pensó la versión ancha y dio por sentada la angosta. **Diez casos**, de los cuales dos se veían: el carrito, cortado 49 px en Android, y el resumen del pedido.

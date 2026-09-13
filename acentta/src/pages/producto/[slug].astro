@@ -50,7 +50,10 @@ const stock = stockTotal(p);
 const opiniones = opinionesDe(p.slug);
 const relacionados = complementos(p, 4);
 const entrega = rangoDeEntrega(p.plazoEnvio.min, p.plazoEnvio.max);
-const categoriaNombre = NOMBRE_CATEGORIA[p.categoria]!;
+/* Sin `!`: con el mapa tipado por categoría, el compilador ya sabe
+   que hay valor. El `!` que estaba acá era una promesa que resultó
+   falsa y dejó cuatro fichas con la miga en blanco. */
+const categoriaNombre = NOMBRE_CATEGORIA[p.categoria];
 const datosCarrito = JSON.stringify(datosParaCarrito(p));
 
 /* Datos estructurados. Es lo que hace que el buscador muestre precio,

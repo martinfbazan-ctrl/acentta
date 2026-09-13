@@ -149,7 +149,12 @@ export interface ResumenCategoria {
   imagen: { src: string; alt: string };
 }
 
-const NOMBRES_CATEGORIA: Record<string, { nombre: string; descripcion: string }> = {
+/* Éste es el de las tarjetas de la portada: nombre corto y una
+   línea de apoyo. Es distinto de `NOMBRE_CATEGORIA` —el de los
+   encabezados— y por eso los dos son exhaustivos por tipo: tener dos
+   mapas parecidos es aceptable; tener dos que se desincronizan en
+   silencio, no. */
+const NOMBRES_CATEGORIA: Record<Categoria, { nombre: string; descripcion: string }> = {
   'vasos-y-botellas': { nombre: 'Vasos y botellas', descripcion: 'Térmicos, con manija y sorbete' },
   termos: { nombre: 'Termos', descripcion: 'Para el mate y para el viaje' },
   mate: { nombre: 'Mate', descripcion: 'Mates, bombillas y yerberas' },
@@ -302,7 +307,38 @@ export function conteoPorCategoria(items: Producto[]): Map<Categoria, number> {
   return mapa;
 }
 
-export const NOMBRE_CATEGORIA: Record<string, string> = {
+/**
+ * El título de cada categoría, para encabezados y migas.
+ *
+ * [ERROR CORREGIDO] Le faltaban las cuatro categorías de bazar
+ * —vasos y botellas, termos, mate, café— desde que entró el rubro.
+ * Yo las había agregado a `NOMBRES_CATEGORIA`, que es OTRO mapa, el
+ * de las tarjetas de la portada. Dos nombres casi iguales, dos
+ * contenidos distintos.
+ *
+ * El resultado no fue un error sino un vacío: `/categoria/cafe`
+ * salía publicada con un `<h1>` sin texto adentro y los enlaces a
+ * esas categorías sin nada que leer. Ocho hallazgos de
+ * accesibilidad, cero excepciones. Un `<h1></h1>` no rompe la
+ * página: la deja muda para un lector de pantalla y sin título para
+ * el buscador.
+ *
+ * Y estaba escrito `NOMBRE_CATEGORIA[categoria]!`. Ese `!` es lo
+ * que dejó pasar todo: le prometía al compilador que siempre hay
+ * valor, y era mentira. Tercera vez en este proyecto que un `!`
+ * tapa un dato faltante.
+ *
+ * El tipo cambió de `Record<string, string>` a
+ * `Record<Categoria, string>`: ahora **TypeScript exige que estén
+ * las trece**. El día que se agregue una categoría, esto no compila
+ * hasta que tenga nombre. Es la diferencia entre una convención y
+ * una garantía.
+ */
+export const NOMBRE_CATEGORIA: Record<Categoria, string> = {
+  'vasos-y-botellas': 'Vasos y botellas',
+  termos: 'Termos',
+  mate: 'Mate',
+  cafe: 'Café',
   iluminacion: 'Iluminación',
   textil: 'Textil',
   alfombras: 'Alfombras',
@@ -314,7 +350,33 @@ export const NOMBRE_CATEGORIA: Record<string, string> = {
   conectividad: 'Conectividad',
 };
 
-export const DESCRIPCION_CATEGORIA: Record<string, string> = {
+/**
+ * El nombre de una clave que puede no ser una categoría conocida.
+ *
+ * El mapa de arriba es exhaustivo y está bien que lo sea: obliga a
+ * darle nombre a toda categoría nueva. Pero el índice del buscador
+ * trabaja con claves sueltas —cadenas que salen de los datos, no del
+ * tipo— y ahí indexar directo no compila, con razón.
+ *
+ * En vez de callar al compilador con un `as`, que es lo mismo que el
+ * `!` que causó el `<h1>` vacío, la conversión vive en un solo lugar
+ * y devuelve la clave cruda cuando no la conoce. Un rótulo feo en un
+ * filtro es mejor que un renglón en blanco.
+ */
+export function nombreDeCategoria(clave: string): string {
+  return NOMBRE_CATEGORIA[clave as Categoria] ?? clave;
+}
+
+/** Misma regla que arriba: exhaustivo por tipo, no por costumbre. */
+export const DESCRIPCION_CATEGORIA: Record<Categoria, string> = {
+  'vasos-y-botellas':
+    'Vasos térmicos, botellas y cantimploras. Conservan frío o calor durante horas y entran en el portavasos del auto.',
+  termos:
+    'Termos para el mate y para el viaje. Acero inoxidable, cierre a prueba de derrames y garantía de por vida.',
+  mate:
+    'Mates, bombillas y yerberas. Lo que hace falta para el ritual, sin adornos que no se usan.',
+  cafe:
+    'Vasos de viaje y accesorios para café. Para el que sale con el café en la mano y no lo termina hasta la oficina.',
   iluminacion:
     'Lámparas de pie, de mesa y colgantes. La luz define el ambiente antes que cualquier mueble.',
   textil:

@@ -365,11 +365,87 @@ ok(vercel.trailingSlash === false,
       if (!real) continue;
 
       if (real.ancho !== Number(ancho) || real.alto !== Number(alto)) {
+        /* [ERROR CORREGIDO] Acá decía `path.basename(declarado)`, y
+           el panel guarda TODAS las fotos con el mismo nombre:
+           `{producto}/imagenes/{n}/archivo.webp`. El mensaje salía
+           idéntico para las cuatro —«la foto archivo.webp»— así que
+           con dos fotos mal, el informe repetía dos veces la misma
+           línea y no había forma de saber cuáles.
+
+           Un diagnóstico que no distingue entre dos casos no sirve
+           para arreglar ninguno. Ahora nombra la posición, que es
+           como se las ve en el panel, y la ruta entera. */
+        const posicion = declarado.match(/imagenes\/(\d+)\//)?.[1];
         fallos.push(
-          `${nombre}: la foto ${path.basename(declarado)} mide ${real.ancho}×${real.alto} `
-          + `y está declarada ${ancho}×${alto}. Corregilo en el panel o la página salta al cargar`,
+          `${nombre}: la foto ${posicion !== undefined ? `n.º ${Number(posicion) + 1}` : declarado} `
+          + `mide ${real.ancho}×${real.alto} y está declarada ${ancho}×${alto}. `
+          + `Corregilo en el panel o la página salta al cargar · ${declarado}`,
         );
       }
+    }
+  }
+}
+
+/* ============================================================
+   8 bis · Cada foto se describe distinto de las otras
+   ------------------------------------------------------------
+   Cuatro fotos de un producto con el mismo texto alternativo pasan
+   todas las auditorías: el atributo está, no está vacío, y axe da
+   verde. Pero para quien navega con lector de pantalla, la galería
+   dice cuatro veces «Corkcicle cold cup 887 ml latte» y no hay
+   forma de elegir cuál mirar. Es una galería de una sola foto,
+   repetida.
+
+   Y no es sólo accesibilidad: el texto alternativo es lo que lee el
+   buscador de imágenes. Cuatro descripciones idénticas son una
+   descripción, con tres copias.
+
+   Se pide que sean distintas entre sí, no que sean buenas — eso no
+   se puede verificar. Con una sola foto no aplica.
+   ============================================================ */
+{
+  const dirProductos = path.join(RAIZ, 'src', 'contenido', 'productos');
+
+  for (const nombre of fs.readdirSync(dirProductos).filter((f) => f.endsWith('.yaml'))) {
+    const texto = fs.readFileSync(path.join(dirProductos, nombre), 'utf8');
+    const bloque = texto.match(/^imagenes:\n([\s\S]*?)(?=^\S)/m)?.[1] ?? '';
+
+    /* El panel escribe el alt en una línea o plegado con `>-` en
+       varias; se junta todo lo que sigue hasta la clave siguiente. */
+    const alts = [...bloque.matchAll(/alt:\s*(?:>-\s*\n)?([\s\S]*?)(?=\n\s*(?:ancho|alto|archivo|idRemoto|-)\s*:|\n\s*-\s|$)/g)]
+      .map((m) => m[1].replace(/\s+/g, ' ').trim())
+      .filter(Boolean);
+
+    if (alts.length < 2) continue;
+
+    const distintos = new Set(alts.map((a) => a.toLowerCase()));
+    ok(distintos.size === alts.length,
+      `${nombre}: tiene ${alts.length} fotos y sólo ${distintos.size} descripción(es) distinta(s). `
+      + 'Un lector de pantalla lee la misma frase para todas y la galería queda inservible');
+  }
+
+  /* ── `idRemoto` tiene que ser un identificador, no una frase ──
+     Dos fotos de un termo traían `idRemoto: Termo Stanley Mate-System
+     | 1.2 litros`: el nombre del producto pegado en el campo
+     equivocado del panel.
+
+     Hoy no rompe nada, porque `fuenteDeImagen()` prefiere `archivo`
+     cuando está. Por eso es peligroso: es una bomba con el
+     temporizador puesto. El panel ya demostró que **borra la clave
+     `archivo` cuando no entiende la ruta** —pasó una vez y tumbó un
+     despliegue— y el día que vuelva a pasar, el respaldo va a ser
+     esa frase usada como dirección de imagen. No da error: da una
+     foto rota.
+
+     Un identificador no lleva espacios ni barras verticales. */
+  for (const nombre of fs.readdirSync(dirProductos).filter((f) => f.endsWith('.yaml'))) {
+    const texto = fs.readFileSync(path.join(dirProductos, nombre), 'utf8');
+    for (const [, valor] of texto.matchAll(/idRemoto:\s*(.+)/g)) {
+      const v = valor.trim();
+      if (!v || v === 'null') continue;
+      ok(!/[\s|]/.test(v),
+        `${nombre}: idRemoto dice «${v}», que es un texto y no un identificador. `
+        + 'Si el panel llega a borrar la clave «archivo», eso se usaría como dirección de la foto');
     }
   }
 }
@@ -446,13 +522,15 @@ ok(vercel.trailingSlash === false,
   if (Number.isInteger(declarado)) {
     const vistos = new Map();
 
-    for (const pagina of TODAS) {
-      const html = fs.readFileSync(pagina, 'utf8');
+    /* `TODAS` ya trae el HTML leído y la ruta en limpio; los otros
+       cinco bloques de este archivo desestructuran `{ ruta, html }`.
+       Yo escribí `readFileSync(pagina)` sobre el objeto entero, que
+       es lo que se gana por no mirar cómo se usa lo que ya existe. */
+    for (const { ruta, html } of TODAS) {
       for (const [, n] of html.matchAll(/(\d{1,2})\s*cuotas\s+sin\s+inter/gi)) {
         if (Number(n) === declarado) continue;
-        const rel = path.relative(DIST, pagina);
         if (!vistos.has(n)) vistos.set(n, new Set());
-        vistos.get(n).add(rel);
+        vistos.get(n).add(ruta);
       }
     }
 

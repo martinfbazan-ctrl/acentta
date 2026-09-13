@@ -299,14 +299,42 @@ function filasDe(xml: string, etiqueta: string): Record<string, string>[] {
  * Puede venir `1234.56` o `1234,56`. Tomar la coma por separador de
  * miles convierte $ 1.234,56 en $ 123456, y ese número se le cobra a
  * alguien.
+ *
+ * Exportada para que la prueba la verifique sola. Antes el parseo se
+ * probaba a través de `cotizar()`, y cuando esa función empezó a
+ * sumar IVA las pruebas fallaron acusando al parseo, que estaba
+ * intacto. Un mensaje de falla es una hipótesis: una prueba que
+ * atraviesa dos responsabilidades no puede decir cuál se rompió.
  */
-function aNumero(v: string | undefined): number {
+export function aNumero(v: string | undefined): number {
   if (!v) return NaN;
   const limpio = v.trim().replace(/\s/g, '');
-  /* Si hay coma y punto, el último que aparece es el decimal. */
-  const coma = limpio.lastIndexOf(',');
-  const punto = limpio.lastIndexOf('.');
-  if (coma > punto) return Number(limpio.replace(/\./g, '').replace(',', '.'));
+
+  /* Con coma, la coma manda: es el decimal argentino, y los puntos
+     que haya son separadores de miles. `1.234,56` → 1234,56. */
+  if (limpio.includes(',')) {
+    return Number(limpio.replace(/\./g, '').replace(',', '.'));
+  }
+
+  /* [ERROR CORREGIDO] Sin coma, esto tomaba el punto como decimal
+     siempre. `12.345` se leía como doce con trescientos cuarenta y
+     cinco milésimos: **doce pesos en lugar de doce mil**.
+
+     Un envío cotizado en $ 12 no revienta nada. Pasa la validación,
+     se le cobra al comprador, se despacha, y los $ 12.333 de
+     diferencia los pone el vendedor. Es el error más caro de todo
+     este archivo y estuvo escrito desde el primer día.
+
+     La regla que lo desambigua: un punto seguido de EXACTAMENTE
+     tres dígitos al final es separador de miles. No existe la plata
+     con tres decimales, y OCA ya demostró que usa coma para los
+     decimales —devolvió `10080,6`—. Con dos dígitos después del
+     punto sí es decimal, que es como escriben los sistemas que
+     hablan en inglés. */
+  if (/\.\d{3}$/.test(limpio)) {
+    return Number(limpio.replace(/\./g, ''));
+  }
+
   return Number(limpio.replace(/,/g, ''));
 }
 
@@ -329,11 +357,67 @@ function operativaPara(entrega: MetodoDeEntrega | undefined): string | null {
   return operativa();
 }
 
+/**
+ * Por qué la última cotización devolvió `null`.
+ *
+ * Sólo para diagnosticar: lo lee `logistica:vivo`. No entra en
+ * ninguna decisión y no se muestra a ningún comprador.
+ */
+let ultimoMotivo: string | null = null;
+
+export function motivoDeLaUltimaFalta(): string | null {
+  return ultimoMotivo;
+}
+
+/**
+ * El mensaje de error que OCA pone adentro del documento.
+ *
+ * [ERROR CORREGIDO] Esto no existía, y era el agujero más caro del
+ * diagnóstico. Cuando algo sale mal, OCA **no** devuelve un código
+ * HTTP de error: devuelve 200 con un DataSet donde, en vez de la
+ * tabla de tarifas, hay un `<Table1>` con un `<Error>` adentro que
+ * dice exactamente qué pasó.
+ *
+ * El lector de filas buscaba `Table` y `Tarifar`. `Table1` no
+ * coincide —el cierre es `</Table1>`— así que la explicación llegaba
+ * en cada respuesta, intacta, y se descartaba entera. Diez destinos
+ * fallando, diez veces «sin cotización», y el motivo venía escrito
+ * en el mismo documento que estábamos leyendo.
+ *
+ * Es el mismo patrón que ya apareció tres veces en este archivo: la
+ * API contesta bien y el que se equivoca al leerla soy yo. Con la
+ * diferencia de que acá la respuesta traía el diagnóstico incluido.
+ */
+function errorDeclarado(xml: string): string | null {
+  for (const m of xml.matchAll(/<Error>([\s\S]*?)<\/Error>/gi)) {
+    const texto = (m[1] ?? '').trim();
+    /* OCA manda `<Error></Error>` vacío cuando salió todo bien. */
+    if (texto) return texto.slice(0, 300);
+  }
+  return null;
+}
+
+/** Las etiquetas que trajo el documento, para saber qué contestó. */
+function resumenDeRespuesta(xml: string): string {
+  const etiquetas = [...new Set(
+    [...xml.matchAll(/<([A-Za-z_][\w.-]*)[\s>]/g)].map((m) => m[1]!),
+  )].slice(0, 8);
+  return etiquetas.length ? `trajo ${etiquetas.join(', ')}` : 'sin etiquetas reconocibles';
+}
+
 export async function cotizar(pedido: PedidoDeTarifa): Promise<TarifaExterna | null> {
-  if (!cuit()) return null;
+  if (!cuit()) {
+    ultimoMotivo = 'falta OCA_CUIT: sin CUIT no se puede ni preguntar el precio';
+    return null;
+  }
 
   const op = operativaPara(pedido.entrega);
-  if (!op) return null;
+  if (!op) {
+    ultimoMotivo = pedido.entrega === 'sucursal'
+      ? 'falta OCA_OPERATIVA_SUCURSAL: esa modalidad no está contratada'
+      : 'no hay operativa configurada';
+    return null;
+  }
 
   const xml = await llamar('Tarifar_Envio_Corporativo', {
     Cuit: cuit(),
@@ -349,16 +433,49 @@ export async function cotizar(pedido: PedidoDeTarifa): Promise<TarifaExterna | n
     ValorDeclarado: String(Math.round(pedido.valorDeclarado ?? 0)),
   });
 
-  const resultado = filas(xml, 'Table')[0] ?? filas(xml, 'Tarifar')[0];
-  if (!resultado) return null;
+  /* Lo primero que se mira es si OCA dijo qué salió mal. Va ANTES de
+     buscar la tarifa: un documento con `<Error>` adentro no tiene
+     tarifa, y reportar «sin filas» cuando el servicio explicó el
+     motivo es tirar la única pista que hay. */
+  const declarado = errorDeclarado(xml);
+  if (declarado) {
+    ultimoMotivo = `OCA rechazó la consulta: «${declarado}»`;
+    return null;
+  }
 
-  const costo = aNumero(resultado.total ?? resultado.precio);
-  if (!Number.isFinite(costo) || costo <= 0) return null;
+  const resultado = filas(xml, 'Table')[0] ?? filas(xml, 'Tarifar')[0];
+  if (!resultado) {
+    /* Por qué se anota el motivo en vez de devolver `null` y ya.
+       `cotizar()` devuelve `null` por cinco razones distintas —sin
+       CUIT, sin operativa para esa modalidad, documento vacío, fila
+       sin precio, precio en cero— y quien llama sólo ve «sin
+       cotización». Con diez destinos fallando, esas dos palabras
+       repetidas diez veces no distinguen «OCA no cubre ese código
+       postal» de «tu cuenta no tiene esa operativa» ni de «el
+       servicio devolvió un error», que se arreglan de formas
+       completamente distintas.
+
+       Va a `ultimoMotivo` y no a una excepción a propósito: no
+       cotizar es una respuesta válida y la venta tiene que seguir
+       con la tabla propia. Es información para diagnosticar, no un
+       corte. */
+    ultimoMotivo = xml.trim().length === 0
+      ? 'OCA devolvió una respuesta vacía'
+      : `OCA contestó pero sin ninguna fila de tarifa (${resumenDeRespuesta(xml)})`;
+    return null;
+  }
+
+  const bruto = aNumero(resultado.total ?? resultado.precio);
+  if (!Number.isFinite(bruto) || bruto <= 0) {
+    ultimoMotivo = `OCA devolvió una fila sin precio válido: ${JSON.stringify(resultado).slice(0, 160)}`;
+    return null;
+  }
+  ultimoMotivo = null;
 
   const dias = aNumero(resultado.plazoentrega);
 
   return {
-    costo,
+    costo: conIva(bruto),
     /* Los días vienen del correo y ya contemplan la modalidad: en
        sucursal a sucursal suele ser uno menos porque no hay reparto
        final. Por eso nadie más le resta un día: estaría contándolo
@@ -367,7 +484,51 @@ export async function cotizar(pedido: PedidoDeTarifa): Promise<TarifaExterna | n
     correo: 'OCA',
     correoId: 'oca',
     servicio: resultado.idtiposervicio ?? op,
+    /* La zona con la que OCA agrupa este destino: «Nacional 1»,
+       «Local», etcétera. No se usa para calcular; se guarda porque
+       es la agrupación de verdad, la que decide el precio, y tenerla
+       a la vista evita seguir inventando zonas por geografía. */
+    ambito: resultado.ambito ?? resultado.idambito,
   };
+}
+
+/* ------------------------------------------------------------------ *
+ * IVA
+ * ------------------------------------------------------------------ */
+
+/**
+ * ¿La tarifa que devuelve OCA ya tiene el IVA adentro?
+ *
+ * La calculadora de la web de OCA lo dice en rojo debajo del total:
+ * **«Los precios no incluyen IVA»**. Si su API contesta lo mismo que
+ * su calculadora —y es el mismo tarifario— entonces todo lo que
+ * medimos hasta ahora es NETO, y cobrarle eso al comprador nos deja
+ * poniendo el 21 % en cada envío.
+ *
+ * Sobre un envío de $ 10.488 son $ 2.202 por venta. No aparece en
+ * ninguna pantalla: el número es plausible, el envío sale, y la
+ * diferencia se ve recién al conciliar la factura de OCA a fin de
+ * mes contra lo cobrado.
+ *
+ * No se resuelve suponiendo. Se resuelve con una medición: pedirle a
+ * la calculadora de OCA el MISMO paquete que manda el adaptador y
+ * comparar los dos números. `npm run logistica:vivo` imprime los
+ * parámetros exactos para pegar ahí.
+ *
+ * Mientras tanto el valor por defecto es el que dice la evidencia
+ * —la tarifa viene neta— porque de los dos errores posibles éste es
+ * el barato: cobrar de más se nota y se corrige; cobrar de menos se
+ * paga.
+ */
+export function tarifaIncluyeIva(): boolean {
+  return variable('OCA_TARIFA_INCLUYE_IVA').trim().toLowerCase() === 'si';
+}
+
+/** El 21 % general. Los servicios de transporte no tienen alícuota reducida. */
+export const IVA_TRANSPORTE = 0.21;
+
+export function conIva(neto: number): number {
+  return tarifaIncluyeIva() ? neto : Math.round(neto * (1 + IVA_TRANSPORTE));
 }
 
 /* ------------------------------------------------------------------ *

@@ -24,7 +24,7 @@ export function getStaticPaths() {
 const { clave } = Astro.params;
 const categoria = clave as Categoria;
 const productos = porCategoria(categoria);
-const nombre = NOMBRE_CATEGORIA[categoria]!;
+const nombre = NOMBRE_CATEGORIA[categoria];
 const descripcion = DESCRIPCION_CATEGORIA[categoria]!;
 
 /* Las migas muestran el rubro cuando la categoría pertenece al

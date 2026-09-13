@@ -166,6 +166,21 @@ export function construirIndice(
  *    "aspiradora" siga encontrando el robot, sin que "puff" traiga
  *    mesas de arrastre.
  */
+/**
+ * El piso del nivel «coincidencia directa».
+ *
+ * Estaba escrito `10_000` a mano en `puntuar()` y otra vez en
+ * `buscar()`, en funciones distintas y a cincuenta líneas de
+ * distancia. Ese es el motivo de fondo por el que la penalización
+ * del stock agotado pudo hacer desaparecer un producto: quien
+ * escribió el `-250` no tenía cómo ver que había un umbral, y quien
+ * escribió el umbral no tenía cómo ver que alguien iba a restar.
+ *
+ * Con nombre, la relación queda a la vista: todo ajuste de puntaje
+ * convive con un límite que no puede cruzar.
+ */
+export const NIVEL_DIRECTO = 10_000;
+
 export function puntuar(e: EntradaIndice, consulta: string, sinonimos = ''): number {
   const q = normalizar(consulta);
   if (!q) return 0;
@@ -193,7 +208,7 @@ export function puntuar(e: EntradaIndice, consulta: string, sinonimos = ''): num
   /* La distancia entre los dos niveles es enorme a propósito: ningún
      acierto de categoría puede trepar por encima de una coincidencia
      directa por muchos puntos de detalle que sume. */
-  let puntos = directa ? 10_000 : 1;
+  let puntos = directa ? NIVEL_DIRECTO : 1;
 
   if (nombre === q || nombreLlano === q) puntos += 1000;
   else if (nombre.startsWith(q) || nombreLlano.startsWith(q)) puntos += 500;
@@ -206,8 +221,31 @@ export function puntuar(e: EntradaIndice, consulta: string, sinonimos = ''): num
   }
 
   /* Lo agotado sigue apareciendo —esconderlo hace pensar que no se
-     vende— pero nunca arriba de algo que se puede comprar hoy. */
-  if (e.agotado) puntos -= 250;
+     vende— pero nunca arriba de algo que se puede comprar hoy.
+     ------------------------------------------------------------------
+     [ERROR CORREGIDO] Esto era `puntos -= 250` a secas, y hacía justo
+     lo que el párrafo de arriba dice evitar: lo escondía.
+
+     Los 250 puntos alcanzaban para cruzar el umbral de los 10.000
+     hacia abajo. `buscar()` separa las coincidencias directas con
+     `p >= 10_000` y, cuando hay alguna, descarta el resto — así que
+     un producto agotado que coincidía DIRECTO caía a 9.750, dejaba
+     de contar como directo y desaparecía de la lista.
+
+     Concreto: buscar «muebles chicos» traía las mesas ratonas y no
+     la banqueta, que es de esa categoría y coincide igual de bien.
+     Sólo por estar sin stock.
+
+     El error de fondo es que un mismo número servía para dos cosas
+     distintas: decir a qué nivel pertenece un resultado, y ordenarlo
+     dentro de ese nivel. Restar para lo segundo movía lo primero.
+
+     La corrección no es ponerle un piso a la resta —ahí un agotado y
+     un disponible sin bonus de nombre empatarían en 10.000— sino
+     darlo vuelta: **se premia al disponible en vez de castigar al
+     agotado.** El orden relativo queda igual, y ningún producto puede
+     perder su nivel por una cuestión de stock. */
+  if (!e.agotado) puntos += 250;
 
   return puntos;
 }
@@ -219,8 +257,13 @@ export function buscar(indice: Indice, consulta: string, limite = 60): EntradaIn
 
   /* Si hay coincidencias directas, las de categoría no se muestran.
      Aparecen sólo cuando no hay nada mejor, que es cuando de verdad
-     ayudan en vez de ensuciar. */
-  const directas = puntuados.filter((x) => x.p >= 10_000);
+     ayudan en vez de ensuciar.
+
+     El umbral tiene que ser exactamente la base del nivel directo:
+     cualquier ajuste de puntaje que lo cruce hacia abajo saca un
+     resultado de la lista en vez de correrlo de lugar. Ya pasó una
+     vez, con la penalización por stock agotado. */
+  const directas = puntuados.filter((x) => x.p >= NIVEL_DIRECTO);
   const finales = directas.length > 0 ? directas : puntuados;
 
   return finales

@@ -1,7 +1,7 @@
 nombre: Corkcicle Cold Cup XL con asa
 rubro: bazar
 categoria: vasos-y-botellas
-precio: 99000
+precio: 100000
 precioAnterior: 120000
 variantes:
   - tipo: color
@@ -10,19 +10,21 @@ variantes:
     stock: 1
 imagenes:
   - archivo: /imagenes/productos/corkcicle-cold-cup-xl-con-asa/imagenes/0/archivo.webp
-    alt: Corkcicle cold cup 887 ml latte
-    ancho: 1000
-    alto: 1000
+    alt: >-
+      Vaso Corkcicle Cold Cup XL color latte sobre una mesada de mármol, junto a
+      un licuado verde
+    ancho: 1001
+    alto: 1001
   - archivo: /imagenes/productos/corkcicle-cold-cup-xl-con-asa/imagenes/1/archivo.webp
-    alt: Corkcicle cold cup 887 ml latte
+    alt: El vaso de perfil, con el asa y los laterales planos a la vista
     ancho: 1000
     alto: 1000
   - archivo: /imagenes/productos/corkcicle-cold-cup-xl-con-asa/imagenes/2/archivo.webp
-    alt: Corkcicle cold cup 887 ml latte
-    ancho: 1000
-    alto: 1000
+    alt: El vaso con la pajita puesta en la tapa central
+    ancho: 1001
+    alto: 1001
   - archivo: /imagenes/productos/corkcicle-cold-cup-xl-con-asa/imagenes/3/archivo.webp
-    alt: Corkcicle cold cup 887 ml latte
+    alt: Esquema con las medidas del vaso y de la tapa a prueba de derrames
     ancho: 1000
     alto: 1000
 descripcion: >-

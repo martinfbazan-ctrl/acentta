@@ -19,13 +19,13 @@
  * /buscar, que resuelve lo mismo del lado de la página.
  */
 import { foto } from '@lib/imagenes';
-import { todos, NOMBRE_CATEGORIA } from '@lib/catalogo';
+import { todos, nombreDeCategoria } from '@lib/catalogo';
 import { construirIndice } from '@lib/buscador';
 
 /* El índice se arma al construir el sitio y viaja como JSON en cada
    página. Las URLs de las miniaturas se resuelven acá y no en el
    navegador: así el guion no necesita saber quién sirve las fotos. */
-const indice = construirIndice(todos(), (c) => NOMBRE_CATEGORIA[c] ?? c);
+const indice = construirIndice(todos(), nombreDeCategoria);
 const paquete = {
   ...indice,
   entradas: indice.entradas.map((e) => ({ ...e, foto: foto(e.imagen, 120) })),

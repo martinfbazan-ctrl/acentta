@@ -209,19 +209,29 @@ export interface Pasarela {
  * ------------------------------------------------------------------ */
 
 /**
- * Mobbex de fábrica.
+ * Mercado Pago de fábrica.
  *
- * Mercado Pago sigue entero en el repositorio y se enciende poniendo
- * `PASARELA=mercadopago`. No se borró a propósito: fue la primera
- * integración del sitio, funciona, y tenerlo al lado es lo que
- * permite volver en una variable de entorno si el arancel cambia.
+ * [ERROR CORREGIDO] Esto devolvía `mobbex` cuando la variable no
+ * estaba puesta. Quedó de cuando Mobbex iba a ser la pasarela, y
+ * sobrevivió a la vuelta atrás.
  *
- * El valor de fábrica está escrito y no deducido: si alguien olvida
- * declarar la variable, el sitio cobra con la pasarela que decidimos,
- * no con la que quedó primera en un objeto.
+ * El riesgo era concreto: Mobbex está apagado y sin credenciales que
+ * funcionen. Si `PASARELA` se borra de Vercel, o alguien despliega
+ * desde otro entorno, o se levanta una vista previa sin las
+ * variables, **el sitio intenta cobrar con la pasarela que no
+ * anda**. Y no falla al construir ni al abrir: falla en el último
+ * paso del checkout, con el comprador adentro.
+ *
+ * El valor de fábrica tiene que ser el que está funcionando hoy. Un
+ * olvido de configuración debe degradar a lo que anda, nunca a lo
+ * que está en pausa.
+ *
+ * Mobbex sigue entero en el repositorio y se enciende poniendo
+ * `PASARELA=mobbex`. No se borró a propósito: está escrito, probado,
+ * y lo que costó no fue el código sino descubrir sus condiciones.
  */
 export function nombreDePasarela(): 'mobbex' | 'mercadopago' {
-  return variable('PASARELA').toLowerCase() === 'mercadopago' ? 'mercadopago' : 'mobbex';
+  return variable('PASARELA').toLowerCase() === 'mobbex' ? 'mobbex' : 'mercadopago';
 }
 
 /**

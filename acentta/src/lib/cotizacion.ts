@@ -84,6 +84,15 @@ export interface TarifaExterna {
   diasExtra: number;
   /** Nombre para mostrar: «OCA», «Andreani». */
   correo?: string;
+  /**
+   * Cómo agrupa el correo este destino: «Nacional 1», «Local».
+   *
+   * No entra en ninguna cuenta. Se arrastra hasta acá para poder
+   * verla en la corrida de diagnóstico, porque es la agrupación que
+   * de verdad decide el precio — y la tabla propia se equivocó dos
+   * veces seguidas por inventar zonas geográficas en su lugar.
+   */
+  ambito?: string;
   /** Identificadores que hacen falta después, al despachar. */
   correoId?: string;
   servicio?: string;

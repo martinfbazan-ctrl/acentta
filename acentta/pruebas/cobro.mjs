@@ -306,10 +306,64 @@ const { firmaValida, cobroPermitido, fechaParaMercadoPago, enlaceDePago } = awai
     ok(transferencia.descuento > 0, 'la transferencia tendría que descontar');
     ok(transferencia.total === c.total - transferencia.descuento, 'el descuento no se restó bien');
 
-    /* Dos unidades pesan el doble, y el envío puede subir por peso. */
-    const dos = cotizar([{ id: barato.id, cantidad: 2 }], '5000');
-    ok(dos.subtotal === barato.precio * 2, 'el subtotal por dos no dio el doble');
-    ok(dos.envio >= c.envio, 'el envío de dos unidades salió más barato que el de una');
+    /* Dos unidades pesan el doble, y el envío puede subir por peso.
+     *
+     * [ERROR CORREGIDO] Esto pedía dos unidades de `barato`, que se
+     * eligió por PRECIO y nada más. Cuando el umbral de envío gratis
+     * subió a $ 100.000, el primer producto barato pasó a ser uno con
+     * una sola unidad en stock, y `cotizar()` cortó —bien— con
+     * «Quedan 1 unidades». La prueba reventó entera, y no por un
+     * defecto: por pedirle a un producto algo que nunca prometió.
+     *
+     * Es el mismo error que rompió /sistema: buscar por una
+     * propiedad y después usar el resultado para otra. Ahora se
+     * busca por la que hace falta —una variante con dos o más— y si
+     * no hay, el caso no se ejecuta en vez de inventar un fallo. */
+    const dosEnStock = todos().find(
+      (p) => p.precio < UMBRAL_ENVIO_GRATIS && p.variantes.some((v) => v.stock >= 2),
+    );
+    if (dosEnStock) {
+      const una = cotizar([{ id: dosEnStock.id, cantidad: 1 }], '5000');
+      const dos = cotizar([{ id: dosEnStock.id, cantidad: 2 }], '5000');
+      ok(dos.subtotal === dosEnStock.precio * 2, 'el subtotal por dos no dio el doble');
+      ok(dos.peso > una.peso, 'dos unidades tendrían que pesar más que una');
+
+      /* [ERROR CORREGIDO] Acá decía, a secas, `dos.envio >= una.envio`:
+         más peso nunca puede salir más barato.
+
+         Con un umbral de envío gratis POR MONTO eso deja de ser
+         cierto, y de la mejor manera posible. Si el producto pasa la
+         mitad del umbral, dos unidades lo cruzan y el envío se hace
+         cero: una unidad paga, dos viajan gratis. La prueba lo
+         reportó como «el envío de dos unidades salió más barato que
+         el de una», que es literalmente verdad y no es un defecto.
+
+         Es justamente el incentivo por el que existe el umbral. Una
+         prueba que lo llama error empuja a sacarlo.
+
+         Se separan los dos casos, y cada uno afirma lo suyo. */
+      if (dos.envioGratis) {
+        ok(dos.envio === 0, 'cruzó el umbral y el envío no quedó en cero');
+        ok(dos.subtotal >= UMBRAL_ENVIO_GRATIS,
+          'se declaró envío gratis sin llegar al umbral');
+        ok(!una.envioGratis && una.envio > 0,
+          `${dosEnStock.nombre}: dos unidades viajan gratis y una también, `
+          + 'así que este caso no está probando el umbral');
+      } else {
+        ok(dos.envio >= una.envio,
+          'sin cruzar el umbral, el envío de dos unidades no puede salir menos que el de una');
+      }
+    }
+
+    /* Y que pedir más de lo que hay siga cortando. Es la otra mitad
+       de lo mismo: el corte de recién era correcto, y conviene
+       tenerlo verificado a propósito en vez de descubrirlo de casualidad. */
+    const conUna = todos().find((p) => p.variantes.some((v) => v.stock === 1));
+    if (conUna) {
+      let corto = false;
+      try { cotizar([{ id: conUna.id, cantidad: 2 }], '5000'); } catch { corto = true; }
+      ok(corto, `${conUna.nombre} tiene una sola unidad y aceptó un pedido de dos`);
+    }
   }
 }
 

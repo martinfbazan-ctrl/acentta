@@ -70,12 +70,23 @@ const compilado = await build({
 });
 const tmp = path.join(AQUI, '.envio.compilado.mjs');
 fs.writeFileSync(tmp, compilado.outputFiles[0].text);
-const { ZONAS, calcularEnvio, normalizarCP, MARGEN_SOBRE_TARIFA_REAL } =
-  await import(`file://${tmp}`);
+const {
+  ZONAS, calcularEnvio, normalizarCP,
+  MARGEN_SOBRE_TARIFA_REAL, MEDICIONES_CON_IVA, IVA_ENVIO, costoRealDe,
+} = await import(`file://${tmp}`);
+
 fs.unlinkSync(tmp);
 
 const fallos = [];
 const ok = (c, m) => { if (!c) fallos.push(m); };
+
+/* Mientras esto valga `null`, la publicación se corta. Fue así unas
+   horas y sirvió: una advertencia se lee dos veces y después se
+   ignora, y lo que estaba en juego era el 21 % de cada envío. */
+ok(MEDICIONES_CON_IVA !== null,
+  'MEDICIONES_CON_IVA está en null: falta confirmar si la tarifa que devuelve OCA '
+  + 'incluye IVA. Se cierra con una medición: npm run logistica:vivo imprime el peso '
+  + 'y el volumen exactos para pegar en la calculadora de OCA.');
 
 /* ============================================================
    1 · Ningún código postal puede caer en dos zonas
@@ -223,8 +234,31 @@ for (let i = 1; i < orden.length; i++) {
   const a = porNombre[orden[i - 1]], b = porNombre[orden[i]];
   if (!a || !b) continue;
   ok(b.base >= a.base, `${b.nombre} cuesta ${b.base} y ${a.nombre}, que está más cerca de Córdoba, cuesta ${a.base}`);
-  ok(b.diasExtra >= a.diasExtra, `${b.nombre} promete llegar antes que ${a.nombre}, que está más cerca de Córdoba`);
   ok(b.porKiloExtra >= a.porKiloExtra, `${b.nombre} cobra menos por kilo extra que ${a.nombre}, que está más cerca`);
+}
+
+/* [ERROR CORREGIDO] Acá también se exigía que los DÍAS subieran con
+   la distancia. Es la tercera suposición geográfica que los datos
+   desmienten, y la más obstinada de mi parte.
+
+   Villa María está a 150 km de Córdoba y OCA tarda 4 días. CABA está
+   a 700 km y tarda 2. Tucumán, 2. Salta, 5. La red de OCA rutea por
+   centros de distribución, así que un pueblo chico cerca puede
+   demorar más que una capital lejos: el camión pasa cuando pasa.
+
+   Mantener la regla habría obligado a falsear uno de los dos
+   números para que la prueba pasara — y el que se falsea siempre es
+   el que no se mide.
+
+   Lo que SÍ tiene que valer, y es lo único que importa de verdad:
+   **nunca prometer antes de lo que el correo tardó.** Eso no sale de
+   la geografía, sale de la medición, y por eso cada zona guarda el
+   peor plazo que se le midió. */
+for (const z of ZONAS) {
+  if (!z.medido) continue;
+  ok(z.diasExtra >= z.medido.dias,
+    `${z.nombre} promete +${z.diasExtra} días y OCA tardó ${z.medido.dias} (${z.medido.destino}): `
+    + 'la fecha que ve el comprador llegaría antes que el paquete');
 }
 
 /* Con `>=` la tabla podría quedar toda plana y pasar igual, así que
@@ -238,6 +272,29 @@ for (let i = 1; i < orden.length; i++) {
       `la tabla quedó plana: ${ultima.nombre} cuesta lo mismo que ${primera.nombre}`);
     ok(ultima.diasExtra > primera.diasExtra,
       `la tabla promete el mismo plazo para ${ultima.nombre} que para ${primera.nombre}`);
+  }
+}
+
+/* Las zonas son las de OCA, no las nuestras. Cada precio medido
+   viene con el ámbito que OCA le puso —Local, Regional, Nacional 1,
+   Nacional 2— y dos zonas del mismo ámbito tienen que costar igual:
+   es el mismo tarifario. Si alguna vez difieren, o alguien partió un
+   ámbito en dos precios inventados, o la medición quedó vieja. */
+{
+  const porAmbito = new Map();
+  for (const z of ZONAS) {
+    if (!z.medido) continue;
+    const previa = porAmbito.get(z.medido.ambito);
+    if (previa) {
+      ok(previa.base === z.base,
+        `«${z.nombre}» y «${previa.nombre}» son el mismo ámbito de OCA (${z.medido.ambito}) `
+        + `y cobran distinto: $${z.base} contra $${previa.base}`);
+      ok(previa.medido.costo === z.medido.costo,
+        `«${z.nombre}» y «${previa.nombre}» son el mismo ámbito (${z.medido.ambito}) `
+        + 'y sus mediciones no coinciden: alguna quedó vieja');
+    } else {
+      porAmbito.set(z.medido.ambito, z);
+    }
   }
 }
 
@@ -287,18 +344,29 @@ const sinMedir = [];
 for (const z of ZONAS) {
   if (!z.medido) { sinMedir.push(z.nombre); continue; }
 
-  ok(z.base >= z.medido.costo,
-    `¡GRAVE! ${z.nombre} cobra $${z.base} y OCA cobra $${z.medido.costo} (${z.medido.destino}): pierdes $${z.medido.costo - z.base} en cada envío`);
+  /* [ERROR CORREGIDO] Esto comparaba contra `z.medido.costo` pelado.
+     OCA cotiza en NETO —lo dice su propia calculadora, y se
+     confirmó midiendo el mismo paquete de los dos lados— así que
+     ese número no es lo que se paga: falta el 21 %.
 
-  const minimo = Math.round(z.medido.costo * (1 + MARGEN_SOBRE_TARIFA_REAL));
+     Con la comparación mal hecha, las cuatro zonas pasaban la
+     prueba mientras cobraban entre $ 700 y $ 1.000 por debajo del
+     costo real. La prueba decía «la tabla cubre el costo» y era
+     verdad sobre un costo que no existe. */
+  const real = costoRealDe(z);
+
+  ok(z.base >= real,
+    `¡GRAVE! ${z.nombre} cobra $${z.base} y el envío sale $${real} con IVA (${z.medido.destino}): pierdes $${real - z.base} en cada envío`);
+
+  const minimo = Math.round(real * (1 + MARGEN_SOBRE_TARIFA_REAL));
   ok(z.base >= minimo,
-    `${z.nombre} cobra $${z.base} y el margen declarado del ${Math.round(MARGEN_SOBRE_TARIFA_REAL * 100)} % sobre $${z.medido.costo} pide al menos $${minimo}`);
+    `${z.nombre} cobra $${z.base} y el margen declarado del ${Math.round(MARGEN_SOBRE_TARIFA_REAL * 100)} % sobre $${real} pide al menos $${minimo}`);
 
   /* Y el techo, porque el margen también protege al comprador: si
      la tabla se despega demasiado, deja de ser una red de seguridad
      y pasa a ser un recargo por que el correo no haya contestado. */
-  ok(z.base <= z.medido.costo * 1.35,
-    `${z.nombre} cobra $${z.base}, un ${Math.round((z.base / z.medido.costo - 1) * 100)} % por encima de lo que sale: la red de seguridad no debería ser un recargo`);
+  ok(z.base <= real * 1.35,
+    `${z.nombre} cobra $${z.base}, un ${Math.round((z.base / real - 1) * 100)} % por encima de lo que sale: la red de seguridad no debería ser un recargo`);
 
   /* La fecha importa: una tarifa argentina de hace un año no es un
      dato, es una anécdota. */
@@ -448,11 +516,13 @@ ok(pesado.costo > liviano.costo, 'un paquete de 12 kg cuesta lo mismo que uno de
 console.log('\n=== ENVÍO · tabla de zonas ===');
 console.log('  Origen: Córdoba capital (CP 5000) · la tabla es la red de seguridad de OCA\n');
 console.log(`  ${ZONAS.length} zonas · ${cubiertos.length} códigos postales cubiertos · ${REALES.length} ciudades verificadas\n`);
-console.log(`  ${'ZONA'.padEnd(30)} ${'RANGOS'.padEnd(28)} ${'COBRA'.padStart(9)}  ${'OCA'.padStart(9)}  DÍAS`);
+console.log(`  Las tarifas de OCA son netas; la columna «SALE» ya tiene el ${Math.round(IVA_ENVIO * 100)} % de IVA.\n`);
+console.log(`  ${'ZONA'.padEnd(30)} ${'RANGOS'.padEnd(28)} ${'COBRA'.padStart(9)}  ${'SALE'.padStart(9)}  ${'MARGEN'.padStart(7)}  DÍAS`);
 for (const z of ZONAS) {
   const rangos = z.rangos.map(([a, b]) => `${a}-${b}`).join(', ');
-  const real = z.medido ? `$ ${z.medido.costo}` : '· estimada';
-  console.log(`  ${z.nombre.padEnd(30)} ${rangos.padEnd(28)} ${('$ ' + z.base).padStart(9)}  ${real.padStart(9)}  +${z.diasExtra}`);
+  const real = costoRealDe(z);
+  const margen = real ? `${Math.round((z.base / real - 1) * 100)} %` : '·';
+  console.log(`  ${z.nombre.padEnd(30)} ${rangos.padEnd(28)} ${('$ ' + z.base).padStart(9)}  ${(real ? '$ ' + real : '· estimada').padStart(9)}  ${margen.padStart(7)}  +${z.diasExtra}`);
 }
 const operativas = [...new Set(ZONAS.filter((z) => z.medido).map((z) => z.medido.operativa))];
 if (operativas.length) {
