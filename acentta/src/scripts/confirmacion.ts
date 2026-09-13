@@ -205,9 +205,31 @@ if (numeroEnLaUrl) {
      Sin número en la dirección, la demostración del portafolio. */
   const pedido = leerPedido();
 
+  /**
+   * Los datos para transferir, cuando el pedido se pagó así.
+   *
+   * La caja ya está impresa en la página —con el CBU y el alias
+   * leídos al construir el sitio— y arranca oculta. Acá sólo se
+   * decide si mostrarla y se completa el concepto, que es el número
+   * de pedido: sin esa referencia, un depósito es un movimiento
+   * anónimo en el resumen del banco y no hay forma de saber a qué
+   * compra corresponde.
+   */
+  function mostrarComoTransferir(numero: string, esTransferencia: boolean) {
+    const caja = $('[data-transferir]');
+    /* Puede no existir: la caja no se imprime si faltan los datos
+       bancarios. Un pedido por transferencia sin datos cargados no
+       debería poder crearse —el servidor lo rechaza— pero acá no se
+       da por sentado. */
+    if (!caja) return;
+    caja.hidden = !esTransferencia;
+    if (esTransferencia) texto('[data-transferir-numero]', numero);
+  }
+
   if (pedido) {
     texto('[data-numero-pedido]', pedido.numero);
     habilitarCopiar(pedido.numero);
+    mostrarComoTransferir(pedido.numero, pedido.metodoPago === 'transferencia');
 
     const extra = pedido.diasExtra ?? 0;
     texto('[data-fecha-entrega]', ' ' + rangoDeEntrega(PREPARACION.min + extra, PREPARACION.max + extra, new Date(pedido.fecha)));

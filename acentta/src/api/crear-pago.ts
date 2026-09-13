@@ -31,6 +31,7 @@ import { ErrorDeCotizacion, type LineaPedida, type MetodoEnvio, type MetodoPago 
 import { cotizarConCorreo } from '@lib/tarifa';
 import { elegirPasarela } from '@lib/pasarela';
 import { guardarPedido, hayAlmacen, nuevoNumero, type Comprador, type Entrega, type Pedido } from '@lib/pedidos';
+import { datosDeTransferencia } from '@lib/transferencia';
 
 export const prerender = false;
 
@@ -160,6 +161,48 @@ export const POST: APIRoute = async ({ request, url }) => {
     await guardarPedido(pedido);
   } catch {
     return json({ error: 'No pudimos registrar el pedido. Probá de nuevo en un momento.' }, 502);
+  }
+
+  /* ---- Transferencia: no hay pasarela que llamar ----
+     ------------------------------------------------------------
+     [ERROR CORREGIDO] Antes esta rama no existía: se aplicaba el
+     descuento del 10 % y se llamaba igual a la pasarela, así que el
+     comprador terminaba pagando con tarjeta un total ya rebajado.
+     El descuento salía del margen y encima había que pagar la
+     comisión sobre el resto.
+
+     El descuento por transferencia se paga solo con la comisión que
+     se ahorra. Si hay pasarela en el medio, no hay de dónde sacarlo.
+
+     Se contesta antes de tocar la pasarela, no después: llamarla y
+     descartar la respuesta dejaría un cobro abierto en el panel de
+     Mercado Pago por cada pedido que nunca va a pasar por ahí. */
+  if (metodoPago === 'transferencia') {
+    const datos = datosDeTransferencia();
+    if (!datos) {
+      /* No debería llegar acá: el checkout no ofrece la opción sin
+         los datos cargados. Si llega, es un pedido armado a mano o
+         una variable que se borró — y cobrar sin poder decir a dónde
+         transferir es peor que rechazar. */
+      return json({ error: 'El pago por transferencia no está disponible ahora.' }, 503);
+    }
+
+    /* No hace falta un estado nuevo. El pedido ya quedó guardado como
+       «pendiente», que es exactamente lo que es: falta que entre la
+       plata. Quien mira /pedidos lo distingue por el método de pago,
+       y agregar un sexto estado sólo para esto obligaría a
+       contemplarlo en la conciliación, en el seguimiento y en la
+       página del comprador, sin que ninguno de los tres necesite
+       saberlo. */
+    return json({
+      numero: pedido.numero,
+      total: cotizacion.total,
+      /* Sin `enlace`: es lo que le dice al navegador que no hay a
+         dónde redirigir. El checkout lo usa para mostrar los datos
+         en vez de saltar a la pasarela. */
+      transferencia: datos,
+      real: true,
+    });
   }
 
   /* ---- El cobro ---- */

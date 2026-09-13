@@ -64,6 +64,26 @@ Y las otras dos:
 
 **`OCA_MODO` y `OCA_DESPACHO_REAL` están separadas a propósito.** Cotizar es una consulta de precio y no crea nada; dar de alta un envío genera una orden de retiro real que alguien tiene que ir a cancelar si estuvo mal. Con un solo interruptor había que aceptar las dos juntas — y como el entorno de prueba de OCA no conoce las operativas de tu cuenta, para ver tarifas reales hay que ir a producción sí o sí.
 
+### Cobrar por transferencia
+
+| Variable | Para qué |
+|---|---|
+| `TRANSFERENCIA_CBU` | los 22 dígitos, sin espacios ni guiones |
+| `TRANSFERENCIA_ALIAS` | el alias de tu cuenta |
+| `TRANSFERENCIA_TITULAR` | a nombre de quién está |
+| `TRANSFERENCIA_CUIT` | opcional; algunos bancos lo piden para validar |
+| `TRANSFERENCIA_BANCO` | opcional; sólo para que el comprador reconozca |
+
+**Las tres primeras son todo o nada.** Sin alguna, la opción de pagar por transferencia no aparece en el checkout. Es a propósito: una pantalla que muestra el alias pero no el CBU deja a alguien con la plata en la mano y sin poder mandarla.
+
+El CBU se valida: si no tiene exactamente 22 dígitos, la opción tampoco aparece. Un dígito de menos manda a transferir a una cuenta que no existe.
+
+> **Por qué la transferencia no pasa por Mercado Pago.** El descuento del 10 % se paga solo con la comisión que te ahorrás. Antes el sitio aplicaba el descuento y mandaba igual a la pasarela: perdías las dos cosas en la misma venta. Ahora el pedido queda pendiente, el comprador ve el CBU con su número de pedido como concepto, y vos lo marcás cobrado desde `/pedidos` cuando la plata está acreditada.
+>
+> Ese último paso es a mano a propósito. Automatizarlo pide leer el resumen del banco, que es una integración aparte y con acceso a bastante más de lo que hace falta.
+
+---
+
 ### Cuál operativa va en cada variable
 
 OCA genera las ocho de una vez y las manda en una tabla, en números consecutivos. Dos van al sitio:

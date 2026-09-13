@@ -387,6 +387,56 @@ ok(vercel.trailingSlash === false,
 }
 
 /* ============================================================
+   7 ter · Ningún resto de marcado se publica como texto
+   ------------------------------------------------------------
+   Existe por un comentario que se leyó en el sitio publicado.
+
+   El comentario explicaba, justamente, cómo se escriben los
+   comentarios — y para explicarlo escribía `<!-- -->` adentro de un
+   `<!-- -->`. Los comentarios de HTML no se anidan: el analizador
+   toma el PRIMER cierre que encuentra, así que la mitad de la
+   explicación quedó como texto visible en medio del checkout. El
+   `-->` final apareció dibujado como una flecha, porque la
+   tipografía tiene esa ligadura.
+
+   Ninguna de las ocho baterías lo vio. axe no protesta —es texto
+   legítimo—, el contraste está bien, la política de seguridad no
+   mira contenido, y el compilador no tiene nada que decir: el
+   documento es válido. La única forma de detectarlo era mirar el
+   texto que la página muestra de verdad.
+
+   Se quitan comentarios, guiones y estilos, y en lo que queda se
+   buscan marcas que sólo pueden venir de código filtrado.
+   ============================================================ */
+{
+  /* Sólo marcas inequívocas. Se probó incluir cosas como `&& (`, y
+     es exactamente el tipo de regla amplia que empieza a fallar sobre
+     texto legítimo y termina desactivada. Un cierre de comentario
+     suelto no tiene lectura inocente. */
+  const delatores = ['-->', '<!--', '{/*', '*/}'];
+
+  for (const { ruta, html } of TODAS) {
+    /* Primero se sacan los comentarios BIEN formados y todo lo que no
+       es texto visible. Lo que sobreviva y contenga una de esas
+       marcas se está mostrando en pantalla. */
+    const visible = html
+      .replace(/<!--[\s\S]*?-->/g, ' ')
+      .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+      .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+      .replace(/<[^>]+>/g, ' ');
+
+    for (const marca of delatores) {
+      if (!visible.includes(marca)) continue;
+      const donde = visible.indexOf(marca);
+      const muestra = visible.slice(Math.max(0, donde - 60), donde + 60).replace(/\s+/g, ' ').trim();
+      ok(false,
+        `${ruta} · se está publicando «${marca}» como texto visible. `
+        + `Suele ser un comentario que se cerró antes de tiempo: …${muestra}…`);
+    }
+  }
+}
+
+/* ============================================================
    8 bis · Cada foto se describe distinto de las otras
    ------------------------------------------------------------
    Cuatro fotos de un producto con el mismo texto alternativo pasan

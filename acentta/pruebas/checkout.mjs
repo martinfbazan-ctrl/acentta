@@ -152,11 +152,21 @@ for (const esMovil of [true, false]) {
   ok(/Llega/.test(texto('[data-ck-entrega]')), `${donde} · no dice cuándo llega`);
 
   /* Cambiar de forma de pago tiene que reflejarse ahí mismo. */
+  /* Igual que el retiro en sucursal: la transferencia se ofrece sólo
+     con los datos bancarios cargados, así que la opción puede no
+     existir. Sin el guardado, esto reventaba con «Cannot set
+     properties of null» y no decía nada del sitio. */
   const transferencia = d.querySelector('[name="metodo-pago"][value="transferencia"]');
-  transferencia.checked = true;
-  transferencia.dispatchEvent(new dom.window.Event('change', { bubbles: true }));
-  ok(/[Tt]ransferencia/.test(texto('[data-ck-metodo-pago]')),
-    `${donde} · se eligió transferencia y la tarjeta sigue diciendo «${texto('[data-ck-metodo-pago]')}»`);
+  if (transferencia) {
+    transferencia.checked = true;
+    transferencia.dispatchEvent(new dom.window.Event('change', { bubbles: true }));
+    ok(/[Tt]ransferencia/.test(texto('[data-ck-metodo-pago]')),
+      `${donde} · se eligió transferencia y la tarjeta sigue diciendo «${texto('[data-ck-metodo-pago]')}»`);
+  } else {
+    ok(!d.querySelector('[data-descuento-transferencia]'),
+      `${donde} · no está el botón de transferencia pero sí quedó su renglón de descuento`);
+    console.log(`  (${donde}: sin datos bancarios, la transferencia no se ofrece)`);
+  }
 
   /* Y el retiro en sucursal, cuando está disponible.
      ------------------------------------------------------------------

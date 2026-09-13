@@ -87,6 +87,21 @@ function tarjeta(p: PedidoPanel): string {
       <div class="pedido__items">${items}</div>
     </div>
 
+    ${p.metodoPago === 'transferencia' && p.estado === 'pendiente' ? `
+    <div class="pedido__envio pedido__envio--cobrar">
+      <span class="pedido__envio-titulo">Esperando transferencia de ${esc(fPrecio(p.total))}</span>
+      <input type="text" placeholder="Comprobante del banco"
+             aria-label="Comprobante de la transferencia del pedido ${esc(p.numero)}" data-campo-transferencia />
+      <button class="boton" type="button" data-cobrar-transferencia>
+        <span class="boton__texto">Ya llegó la plata</span>
+      </button>
+      <p class="pedido__envio-aviso" hidden data-aviso-transferencia></p>
+      <p class="pedido__envio-nota">
+        Confirmalo recién con el dinero acreditado en tu cuenta, no con la captura que
+        te mande el comprador: una transferencia se puede revertir antes de acreditar.
+      </p>
+    </div>` : ''}
+
     <div class="pedido__envio">
       <span class="pedido__envio-titulo">Número de seguimiento</span>
       <input type="text" value="${esc(p.seguimiento ?? '')}" placeholder="Pegar el del proveedor"
@@ -182,6 +197,42 @@ document.addEventListener('click', async (e) => {
     aviso.textContent = r.status === 401
       ? 'La sesión venció. Recargá la página.'
       : 'No se pudo guardar.';
+  }
+});
+
+/* ---- Dar por cobrada una transferencia ----
+   El único cobro que se confirma a mano, porque es el único sin
+   pasarela que avise. Pide confirmación antes de mandar: marcar
+   cobrado algo que no se cobró despacha mercadería regalada, y es
+   de las pocas acciones de este panel que no se puede deshacer con
+   otro clic. */
+document.addEventListener('click', async (e) => {
+  const boton = (e.target as HTMLElement).closest('[data-cobrar-transferencia]');
+  if (!boton) return;
+
+  const tarjetaDom = boton.closest<HTMLElement>('[data-pedido]');
+  const campo = tarjetaDom?.querySelector<HTMLInputElement>('[data-campo-transferencia]');
+  const aviso = tarjetaDom?.querySelector<HTMLElement>('[data-aviso-transferencia]');
+  if (!tarjetaDom || !campo || !aviso) return;
+
+  const numero = tarjetaDom.dataset.pedido!;
+  if (!confirm(`¿La plata del pedido ${numero} ya está acreditada en tu cuenta?\n\nAl confirmar, el pedido pasa a cobrado y se puede despachar.`)) return;
+
+  const r = await fetch('/api/admin?accion=cobro-transferencia', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ numero, comprobante: campo.value }),
+  });
+
+  aviso.hidden = false;
+  if (r.ok) {
+    aviso.textContent = 'Cobrado. El pedido ya se puede despachar.';
+    await cargar();
+  } else {
+    const d = (await r.json().catch(() => ({}))) as { error?: string };
+    aviso.textContent = r.status === 401
+      ? 'La sesión venció. Recargá la página.'
+      : d.error ?? 'No se pudo confirmar.';
   }
 });
 

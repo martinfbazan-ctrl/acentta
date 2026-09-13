@@ -205,6 +205,13 @@ import Campo from '@componentes/Campo.astro';
     border: 1px solid var(--gris-500); border-radius: var(--r-tarjeta);
     background: var(--papel); font-size: 0.9375rem;
   }
+  /* El bloque de cobro por transferencia se distingue: es lo único de
+     la tarjeta que reclama una decisión y no un dato a completar. */
+  .panel__lista :global(.pedido__envio--cobrar) {
+    border: 2px solid var(--tinta);
+    border-radius: var(--r-tarjeta);
+    padding: var(--e-4);
+  }
   .panel__lista :global(.pedido__envio-aviso) { font-size: var(--t-meta); color: var(--verde); font-weight: 500; }
   .panel__lista :global(.pedido__envio-nota) { font-size: var(--t-meta); color: var(--gris-texto); line-height: 1.45; }
 </style>

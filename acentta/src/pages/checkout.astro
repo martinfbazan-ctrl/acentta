@@ -22,10 +22,17 @@ import { CUOTAS_SIN_INTERES } from '@lib/formato';
 import { DESCUENTO_TRANSFERENCIA } from '@lib/cotizacion';
 import { haySucursalASucursal } from '@lib/oca';
 import { nombreDeLogistica } from '@lib/logistica';
+import { hayTransferencia } from '@lib/transferencia';
 
 /* Sólo OCA sabe cotizar sucursal a sucursal, y sólo si esa operativa
    está contratada. Envíopack, en este proyecto, no. */
 const haySucursal = nombreDeLogistica() === 'oca' && haySucursalASucursal();
+
+/* La transferencia se ofrece sólo con los datos bancarios cargados.
+   Misma regla que el retiro en sucursal: una opción que el sitio no
+   puede completar cuesta más que no tenerla, porque el comprador la
+   descubre después de decidir. */
+const hayTransfer = hayTransferencia();
 
 const pasos = [
   { n: 1, nombre: 'Tus datos' },
@@ -111,62 +118,21 @@ const pasos = [
           <h2 class="t-seccion">¿A dónde lo llevamos?</h2>
           <p class="paso__nota" data-envio-resumen></p>
 
-          <fieldset class="metodos">
-            <legend class="metodos__titulo">Forma de entrega</legend>
-            <label class="metodo">
-              <input type="radio" name="metodo-envio" value="domicilio" checked />
-              <span class="metodo__cuerpo">
-                <span class="metodo__nombre">A domicilio</span>
-                <span class="metodo__detalle" data-metodo-domicilio>Lo entrega el correo en la dirección que indiques.</span>
-              </span>
-              <span class="metodo__precio tabular" data-precio-domicilio></span>
-            </label>
-            <!-- El retiro en sucursal aparece sólo si OCA tiene dada
-                 de alta la operativa sucursal a sucursal, que es un
-                 producto aparte del que ya está contratado.
+          <!-- [ORDEN CORREGIDO] La forma de entrega estaba ARRIBA de la
+               dirección, y las dos cosas que dependen del código postal
+               —el precio del envío y la lista de sucursales— quedaban
+               del lado equivocado.
 
-                 Sin ella, elegir esta opción cobraba exactamente lo
-                 mismo que a domicilio y prometía los mismos días,
-                 mientras /envios anunciaba $ 1.200 menos y un día
-                 antes. Una opción que no cumple lo que ofrece cuesta
-                 más que no tenerla: la descubre el comprador cuando
-                 ya pagó. Se decide al construir el sitio, así que
-                 después de cargar la variable hay que volver a
-                 publicar. -->
-            {haySucursal && (
-              <label class="metodo">
-                <input type="radio" name="metodo-envio" value="sucursal" />
-                <span class="metodo__cuerpo">
-                  <span class="metodo__nombre">Retiro en sucursal del correo</span>
-                  <span class="metodo__detalle">Lo retiras con DNI en la sucursal de OCA que elijas.</span>
-                </span>
-                <span class="metodo__precio tabular" data-precio-sucursal></span>
-              </label>
-            )}
-          </fieldset>
+               Marcar «retiro en sucursal» antes de escribir el código
+               postal mostraba una lista vacía con un cartel pidiendo
+               bajar a completarlo, y después había que volver a subir.
+               El formulario pedía los datos en el orden inverso al que
+               los necesita.
 
-          <!-- Elegir a cuál sucursal.
-               Aparece sólo al marcar «retiro en sucursal», y sólo con
-               un código postal escrito: sin eso no hay lista que pedir.
-               Arranca vacío porque la lista sale de OCA y depende de lo
-               que la persona escriba.
-
-               El comentario va ACÁ y no adentro del `{haySucursal && …}`.
-               Dentro de las llaves se espera JSX, donde un comentario se
-               escribe `{/* … */}`; un `<!-- -->` ahí adentro no es un
-               comentario sino tokens sueltos, y el compilador corta con
-               «Unexpected token» señalando la línea del comentario, no
-               la de la llave que cambió el contexto. -->
-          {haySucursal && (
-            <fieldset class="sucursales" data-sucursales hidden>
-              <legend class="metodos__titulo">¿En cuál la retirás?</legend>
-              <p class="sucursales__nota" data-sucursales-nota>
-                Escribí tu código postal más abajo y te mostramos las de tu zona.
-              </p>
-              <div class="sucursales__lista" data-sucursales-lista role="radiogroup" aria-label="Sucursal de retiro"></div>
-            </fieldset>
-          )}
-
+               Ahora primero la dirección, después cómo se entrega. Con
+               el código postal ya escrito, las dos opciones muestran su
+               precio de entrada y la lista de sucursales aparece
+               cargada en el mismo lugar donde se la elige. -->
           <div class="paso__campos">
             <div class="paso__par">
               <!-- Los dos llevan ejemplo, no valor. Un ejemplo se
@@ -206,6 +172,58 @@ const pasos = [
                    marcador="Portón negro, timbre 2. Si no estoy, dejar con el encargado."
                    ayuda="Esto es lo que más ayuda a que la primera visita no falle." />
           </div>
+
+          <fieldset class="metodos">
+            <legend class="metodos__titulo">Forma de entrega</legend>
+            <label class="metodo">
+              <input type="radio" name="metodo-envio" value="domicilio" checked />
+              <span class="metodo__cuerpo">
+                <span class="metodo__nombre">A domicilio</span>
+                <span class="metodo__detalle" data-metodo-domicilio>Lo entrega el correo en la dirección que indicaste.</span>
+              </span>
+              <span class="metodo__precio tabular" data-precio-domicilio></span>
+            </label>
+            <!-- El retiro en sucursal aparece sólo si OCA tiene dada
+                 de alta la operativa sucursal a sucursal, que es un
+                 producto aparte del que ya está contratado.
+
+                 Sin ella, elegir esta opción cobraba exactamente lo
+                 mismo que a domicilio y prometía los mismos días,
+                 mientras /envios anunciaba $ 1.200 menos y un día
+                 antes. Una opción que no cumple lo que ofrece cuesta
+                 más que no tenerla: la descubre el comprador cuando
+                 ya pagó. Se decide al construir el sitio, así que
+                 después de cargar la variable hay que volver a
+                 publicar. -->
+            {haySucursal && (
+              <label class="metodo">
+                <input type="radio" name="metodo-envio" value="sucursal" />
+                <span class="metodo__cuerpo">
+                  <span class="metodo__nombre">Retiro en sucursal del correo</span>
+                  <span class="metodo__detalle">Lo retiras con DNI en la sucursal de OCA que elijas.</span>
+                </span>
+                <span class="metodo__precio tabular" data-precio-sucursal></span>
+              </label>
+            )}
+          </fieldset>
+
+          <!-- La lista de sucursales, justo debajo de la opción que la
+               abre. Con la dirección ya completa, el código postal está
+               escrito y la lista llega cargada: se elige sin moverse
+               del lugar donde se tomó la decisión.
+
+               El comentario va acá afuera y no adentro de la llave:
+               dentro de una expresión se espera JSX, donde los
+               comentarios se escriben con la forma de JavaScript. -->
+          {haySucursal && (
+            <fieldset class="sucursales" data-sucursales hidden>
+              <legend class="metodos__titulo">¿En cuál la retirás?</legend>
+              <p class="sucursales__nota" data-sucursales-nota>
+                Completá tu código postal arriba y te mostramos las de tu zona.
+              </p>
+              <div class="sucursales__lista" data-sucursales-lista role="radiogroup" aria-label="Sucursal de retiro"></div>
+            </fieldset>
+          )}
 
           <div class="paso__acciones">
             <button class="paso__volver" type="button" data-atras>Volver a tus datos</button>
@@ -248,14 +266,19 @@ const pasos = [
                 <span class="metodo__detalle">Hasta {CUOTAS_SIN_INTERES} cuotas sin interés con bancos seleccionados.</span>
               </span>
             </label>
-            <label class="metodo">
-              <input type="radio" name="metodo-pago" value="transferencia" />
-              <span class="metodo__cuerpo">
-                <span class="metodo__nombre">Transferencia bancaria</span>
-                <span class="metodo__detalle">{Math.round(DESCUENTO_TRANSFERENCIA * 100)} % de descuento. Te enviamos los datos por correo.</span>
-              </span>
-              <span class="metodo__precio metodo__precio--verde tabular" data-descuento-transferencia></span>
-            </label>
+            {hayTransfer && (
+              <label class="metodo">
+                <input type="radio" name="metodo-pago" value="transferencia" />
+                <span class="metodo__cuerpo">
+                  <span class="metodo__nombre">Transferencia bancaria</span>
+                  <span class="metodo__detalle">
+                    {Math.round(DESCUENTO_TRANSFERENCIA * 100)} % de descuento. Al confirmar te
+                    mostramos el CBU y el alias; el pedido queda reservado 48 horas.
+                  </span>
+                </span>
+                <span class="metodo__precio metodo__precio--verde tabular" data-descuento-transferencia></span>
+              </label>
+            )}
           </fieldset>
 
           <label class="acuerdo">

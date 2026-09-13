@@ -103,6 +103,13 @@ export interface PedidoGuardado {
   seguimiento?: string | null;
   /** Qué correo lo lleva: «OCA». Sin esto, el número no sirve. */
   correo?: string | null;
+  /**
+   * Cómo se pagó. Sólo hace falta distinguir la transferencia, que
+   * es la única que deja algo pendiente del lado del comprador: con
+   * tarjeta la plata ya salió, con transferencia todavía la tiene
+   * que mandar él, y la confirmación tiene que decirle a dónde.
+   */
+  metodoPago?: 'tarjeta' | 'transferencia';
   items: {
     slug: string;
     nombre: string;

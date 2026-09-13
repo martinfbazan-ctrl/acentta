@@ -227,7 +227,7 @@ if (contenedor) {
         if (notaSucursales) {
           notaSucursales.textContent = cpConsultado
             ? 'Elegí en cuál sucursal la vas a retirar.'
-            : 'Escribí tu código postal para ver las sucursales, o elegí entrega a domicilio.';
+            : 'Completá tu código postal arriba para ver las sucursales, o elegí entrega a domicilio.';
           notaSucursales.dataset.error = 'true';
         }
         const primera = listaSucursales?.querySelector<HTMLInputElement>('input')
@@ -501,7 +501,7 @@ if (contenedor) {
 
     if (!cp) {
       listaSucursales.innerHTML = '';
-      notaSucursales.textContent = 'Escribí tu código postal más abajo y te mostramos las de tu zona.';
+      notaSucursales.textContent = 'Completá tu código postal arriba y te mostramos las de tu zona.';
       cpConsultado = '';
       return;
     }
@@ -653,11 +653,25 @@ if (contenedor) {
    * decidir si creerle, y la respuesta correcta a esa pregunta
    * siempre es que no.
    *
-   * Devuelve el enlace de Mercado Pago, o null si el cobro todavía no
-   * está configurado en este despliegue —y entonces sigue el camino
-   * simulado, que es lo que hace hoy el sitio publicado—.
+   * Devuelve a dónde ir después, y son tres destinos distintos:
+   *
+   *   · `pasarela`      → el enlace de Mercado Pago
+   *   · `transferencia` → no hay a dónde redirigir; se paga por
+   *                       fuera y hay que mostrar los datos
+   *   · `null`          → el cobro no está configurado en este
+   *                       despliegue, y sigue el camino simulado
+   *
+   * Antes devolvía sólo el enlace, y eso alcanzaba mientras todo
+   * pasaba por la pasarela. Con la transferencia hay una respuesta
+   * legítima que no trae enlace, y con la firma vieja se leía como
+   * una falla: el comprador veía «No pudimos abrir el pago» sobre un
+   * pedido que se había guardado bien.
    */
-  async function pedirCobro(): Promise<string | null> {
+  type Cobro =
+    | { tipo: 'pasarela'; enlace: string }
+    | { tipo: 'transferencia'; numero: string };
+
+  async function pedirCobro(): Promise<Cobro | null> {
     const campo = (id: string) => (document.querySelector<HTMLInputElement>(`#${id}`)?.value ?? '').trim();
 
     const cuerpo = JSON.stringify({
@@ -718,19 +732,27 @@ if (contenedor) {
        lado, el sitio se comporta como la demostración que es. */
     if (respuesta.status === 503 || respuesta.status === 404 || respuesta.status === 405) return null;
 
-    let datos: { enlace?: string; error?: string };
+    let datos: { enlace?: string; numero?: string; transferencia?: unknown; error?: string };
     try {
-      datos = (await respuesta.json()) as { enlace?: string; error?: string };
+      datos = (await respuesta.json()) as typeof datos;
     } catch {
       /* Contestó algo que no es JSON: es la página 404 del sitio, no
          nuestra función. */
       return null;
     }
 
-    if (!respuesta.ok || !datos.enlace) {
+    if (!respuesta.ok) {
       throw new Error(datos.error ?? 'No pudimos abrir el pago. Probá de nuevo en un momento.');
     }
-    return datos.enlace;
+    /* La transferencia se reconoce por lo que TRAE y no por lo que le
+       falta: un pedido sin enlace y sin datos de transferencia es una
+       respuesta rota, no un pago por transferencia. */
+    if (datos.transferencia && datos.numero) {
+      return { tipo: 'transferencia', numero: datos.numero };
+    }
+    if (datos.enlace) return { tipo: 'pasarela', enlace: datos.enlace };
+
+    throw new Error(datos.error ?? 'No pudimos abrir el pago. Probá de nuevo en un momento.');
   }
 
   /**
@@ -771,9 +793,9 @@ if (contenedor) {
       boton.appendChild(girador);
     }
 
-    let enlace: string | null = null;
+    let cobro: Cobro | null = null;
     try {
-      enlace = await pedirCobro();
+      cobro = await pedirCobro();
     } catch (err) {
       boton.dataset.cargando = 'false';
       boton.removeAttribute('aria-busy');
@@ -782,12 +804,50 @@ if (contenedor) {
       return;
     }
 
-    if (enlace) {
+    if (cobro?.tipo === 'pasarela') {
       /* El carrito NO se vacía acá. Todavía no se pagó nada: si la
          persona vuelve atrás desde Mercado Pago, tiene que encontrar
          su carrito donde lo dejó. Se vacía en la confirmación, con el
          pedido ya registrado. */
-      location.href = enlace;
+      location.href = cobro.enlace;
+      return;
+    }
+
+    if (cobro?.tipo === 'transferencia') {
+      /* No hay a dónde redirigir: la plata va del banco de la persona
+         al tuyo, sin nadie en el medio. El pedido ya quedó registrado
+         del lado del servidor; acá se guarda la copia local que usan
+         la confirmación y el seguimiento, y se va a la página donde
+         están los datos para transferir.
+
+         El carrito SÍ se vacía en este caso, y es la diferencia con
+         el camino de la pasarela: con Mercado Pago la compra todavía
+         puede no completarse y hay que poder volver: acá el pedido
+         está tomado y esperando el depósito. Un carrito que sigue
+         lleno después de eso invita a comprar dos veces. */
+      const items = leer();
+      const r = resumen(leerCP(), items);
+      try {
+        /* La misma clave y la misma forma que el camino simulado de
+           más abajo. Se escribe con `localStorage` directo, igual que
+           allá, para no tener dos maneras de guardar lo mismo. */
+        localStorage.setItem('acentta:pedido:v1', JSON.stringify({
+          numero: cobro.numero,
+          fecha: new Date().toISOString(),
+          items,
+          total: r.subtotal + (r.envioGratis ? 0 : r.envio) - descuentoTransferencia(),
+          envio: r.envioGratis ? 0 : r.envio,
+          zona: r.zona ?? '',
+          email: (document.querySelector<HTMLInputElement>('#email')?.value ?? '').trim(),
+          diasExtra: r.diasExtra,
+          /* Lo que la confirmación necesita para mostrar los datos
+             bancarios en vez del «ya está, te avisamos». */
+          metodoPago: 'transferencia',
+        }));
+      } catch { /* sin almacenamiento: la confirmación igual lo busca por número */ }
+
+      vaciar();
+      location.href = '/confirmacion';
       return;
     }
 

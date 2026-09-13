@@ -16,7 +16,7 @@
  */
 
 import type { APIRoute } from 'astro';
-import { actualizarPedido, hayAlmacen, listarPedidos } from '@lib/pedidos';
+import { actualizarPedido, hayAlmacen, listarPedidos, leerPedido } from '@lib/pedidos';
 import { elegirPasarela } from '@lib/pasarela';
 import { aplicarPago } from '@lib/conciliacion';
 import {
@@ -146,6 +146,56 @@ export const POST: APIRoute = async ({ request, url }) => {
     if (!actualizado) return json({ error: 'No encontramos ese pedido.' }, 404);
 
     return json({ ok: true, numero, seguimiento: actualizado.seguimiento ?? null, estado: actualizado.estado });
+  }
+
+  /* ---- Dar por cobrada una transferencia ----
+     ------------------------------------------------------------
+     La regla de arriba —«aprobado lo pone la pasarela y nadie más»—
+     es correcta y se mantiene. Pero con transferencia **no hay
+     pasarela que avise**: la plata va del banco del comprador al
+     tuyo, y el único que puede confirmar que llegó sos vos mirando
+     el resumen.
+
+     Sin esta acción, un pedido por transferencia quedaba pendiente
+     para siempre. Con ella, la regla original sigue viva donde
+     importa: esto **sólo** toca pedidos cuyo método de pago es
+     transferencia. Un pedido con tarjeta no se puede marcar cobrado
+     desde acá ni por error ni a propósito, que es exactamente lo
+     que la regla protegía.
+
+     Se pide el comprobante del banco. No es burocracia: es lo único
+     que queda como prueba de que el depósito existió, y si mañana
+     alguien reclama, la alternativa es tu memoria. */
+  if (accion === 'cobro-transferencia') {
+    let cuerpo: { numero?: string; comprobante?: string };
+    try { cuerpo = (await request.json()) as typeof cuerpo; } catch { return json({ error: 'Pedido mal formado.' }, 400); }
+
+    const numero = String(cuerpo.numero ?? '').trim().toUpperCase();
+    if (!/^AC-\d{6}-[A-Z0-9]{6}$/.test(numero)) return json({ error: 'Número de pedido inválido.' }, 400);
+
+    const pedido = await leerPedido(numero);
+    if (!pedido) return json({ error: 'No encontramos ese pedido.' }, 404);
+
+    if (pedido.metodoPago !== 'transferencia') {
+      return json({
+        error: 'Ese pedido no se pagó por transferencia. Los cobros con tarjeta los confirma la pasarela.',
+      }, 409);
+    }
+    if (pedido.estado === 'aprobado') {
+      return json({ ok: true, numero, estado: 'aprobado', yaEstaba: true });
+    }
+    if (pedido.estado !== 'pendiente') {
+      return json({ error: `Ese pedido está «${pedido.estado}». Sólo se puede cobrar uno pendiente.` }, 409);
+    }
+
+    const actualizado = await actualizarPedido(numero, {
+      estado: 'aprobado',
+      detallePago: 'Transferencia bancaria confirmada a mano',
+      comprobante: String(cuerpo.comprobante ?? '').trim().slice(0, 60) || undefined,
+    });
+    if (!actualizado) return json({ error: 'No encontramos ese pedido.' }, 404);
+
+    return json({ ok: true, numero, estado: actualizado.estado });
   }
 
   /* ---- Preguntarle a la pasarela por los pedidos pendientes ----

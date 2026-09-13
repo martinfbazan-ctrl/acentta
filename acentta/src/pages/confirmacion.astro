@@ -16,6 +16,13 @@ import Base from '@layouts/Base.astro';
 import Encabezado from '@componentes/Encabezado.astro';
 import Pie from '@componentes/Pie.astro';
 import Boton from '@componentes/Boton.astro';
+import { datosDeTransferencia } from '@lib/transferencia';
+
+/* Los datos bancarios se leen al construir el sitio, no viajan en la
+   respuesta del servidor ni se guardan en el navegador. Son públicos
+   —se los das a cualquiera que te compre— pero no hay razón para
+   pasearlos por el circuito de pago cuando pueden imprimirse acá. */
+const banco = datosDeTransferencia();
 ---
 
 <Base
@@ -55,6 +62,34 @@ import Boton from '@componentes/Boton.astro';
     <p class="t-texto" data-mensaje-pedido>
       Guarda ese número: con él puedes consultar el estado del envío en cualquier momento.
     </p>
+
+    <!-- Cómo transferir.
+         Se imprime siempre que haya datos bancarios cargados y el
+         guion la muestra sólo si el pedido se pagó así. Va ARRIBA de
+         «qué pasa ahora» a propósito: mientras no entre la plata no
+         pasa nada, y lo primero que la persona necesita es a dónde
+         mandarla. -->
+    {banco && (
+      <div class="confirmacion__caja transferir" data-transferir hidden>
+        <h2 class="confirmacion__subtitulo">Cómo completar el pago</h2>
+        <p class="t-texto">
+          Transferí el total a esta cuenta. <b>Poné tu número de pedido en el concepto</b>:
+          es con lo que reconocemos tu depósito.
+        </p>
+        <dl class="transferir__datos">
+          <div><dt>Alias</dt><dd class="tabular" data-copiar={banco.alias}>{banco.alias}</dd></div>
+          <div><dt>CBU</dt><dd class="tabular" data-copiar={banco.cbu}>{banco.cbu}</dd></div>
+          <div><dt>Titular</dt><dd>{banco.titular}</dd></div>
+          {banco.cuit && <div><dt>CUIT</dt><dd class="tabular">{banco.cuit}</dd></div>}
+          {banco.banco && <div><dt>Banco</dt><dd>{banco.banco}</dd></div>}
+          <div><dt>Concepto</dt><dd class="tabular" data-transferir-numero>—</dd></div>
+        </dl>
+        <p class="transferir__nota">
+          Tenés 48 horas para transferir. Después revisamos el banco y te confirmamos
+          por correo; recién ahí preparamos el pedido.
+        </p>
+      </div>
+    )}
 
     <div class="confirmacion__caja">
       <h2 class="confirmacion__subtitulo">Qué pasa ahora</h2>
@@ -173,6 +208,27 @@ import Boton from '@componentes/Boton.astro';
     margin-top: var(--e-4);
   }
   .confirmacion__subtitulo { font-size: 1rem; font-weight: 700; margin-bottom: var(--e-4); }
+
+  /* La caja de transferencia se distingue del resto: es lo único de
+     esta página que pide una acción. Todo lo demás es información. */
+  .transferir { border-color: var(--tinta); border-width: 2px; }
+  .transferir__datos {
+    display: grid; gap: var(--e-2);
+    margin-top: var(--e-4);
+  }
+  .transferir__datos > div {
+    /* `minmax(0, 1fr)` y no `1fr`: un CBU son 22 dígitos seguidos sin
+       espacios, y una columna `auto` no se achica por debajo de su
+       contenido. En un teléfono angosto eso corta la caja. */
+    display: grid; grid-template-columns: 90px minmax(0, 1fr); gap: var(--e-3);
+    align-items: baseline;
+  }
+  .transferir__datos dt { font-size: var(--t-meta); color: var(--gris-texto); }
+  .transferir__datos dd { font-weight: 600; overflow-wrap: anywhere; }
+  .transferir__nota {
+    margin-top: var(--e-4);
+    font-size: var(--t-meta); color: var(--gris-texto); line-height: 1.5;
+  }
   .pasos-siguientes { display: flex; flex-direction: column; gap: var(--e-3); counter-reset: p; }
   .pasos-siguientes li {
     display: flex; gap: var(--e-3);
