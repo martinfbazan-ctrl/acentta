@@ -70,7 +70,11 @@ import Boton from '@componentes/Boton.astro';
 </script>
 
 <style>
-  .mis-pedidos { padding-block: var(--e-6) var(--e-16); max-width: 70ch; }
+  /* 84ch, el mismo que /confirmacion. Las dos son la pantalla donde
+     alguien revisa su pedido, y una cambiaba de ancho respecto de la
+     otra sin ninguna razón: eran 70ch acá y 68ch allá, dos números
+     puestos en momentos distintos. */
+  .mis-pedidos { padding-block: var(--e-6) var(--e-16); max-width: 84ch; }
   .mis-pedidos__bajada { margin-block: var(--e-4) var(--e-8); color: var(--gris-800); }
 
   .mis-pedidos__forma { display: flex; flex-direction: column; gap: var(--e-5); align-items: flex-start; }

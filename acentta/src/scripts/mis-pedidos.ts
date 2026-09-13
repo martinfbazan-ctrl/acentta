@@ -27,6 +27,8 @@ interface Respuesta {
   seguimiento: string | null;
   /** Qué correo lo lleva. `null` mientras la tarifa salió de la tabla. */
   correo?: string | null;
+  /** Con transferencia, «pendiente» significa otra cosa. */
+  metodoPago?: string;
   verificado?: boolean;
   entrega?: { calle: string; numero: string; piso: string | null; ciudad: string; provincia: string; cp: string; metodo: string };
   items: { nombre: string; variante: string; cantidad: number; precio: number }[];
@@ -34,11 +36,32 @@ interface Respuesta {
 
 const QUE_SIGNIFICA: Record<string, string> = {
   aprobado: 'El pago entró. Estamos preparando el pedido.',
-  pendiente: 'El pago todavía se está acreditando. Si pagaste en efectivo o por transferencia, puede tardar hasta 3 días hábiles.',
+  pendiente: 'El pago todavía se está acreditando. Puede tardar hasta 3 días hábiles.',
   rechazado: 'El pago no se completó. Podés intentar de nuevo desde el carrito.',
   cancelado: 'Este pedido se canceló. No se cobró nada.',
   devuelto: 'Se devolvió el dinero al medio de pago que usaste.',
 };
+
+/**
+ * Qué significa «pendiente», que no es lo mismo en los dos casos.
+ *
+ * Con tarjeta, la plata ya salió y sólo falta que el banco la
+ * acredite: no hay nada que hacer más que esperar. Con transferencia
+ * **la pelota está del lado del comprador**, y decirle «el pago se
+ * está acreditando» lo deja esperando algo que nunca va a pasar
+ * porque todavía no transfirió.
+ *
+ * Es la misma frase describiendo dos situaciones opuestas. La
+ * diferencia entre las dos son varios días de pedido detenido y un
+ * mensaje preguntando qué pasó.
+ */
+function queSignifica(p: Respuesta): string {
+  if (p.estado === 'pendiente' && p.metodoPago === 'transferencia') {
+    return 'Estamos esperando tu transferencia. Cuando la hagas, poné el número de '
+      + 'pedido en el concepto; revisamos el banco y te confirmamos por correo.';
+  }
+  return QUE_SIGNIFICA[p.estado] ?? '';
+}
 
 function tarjeta(p: Respuesta): string {
   const extra = p.diasExtra ?? 0;
@@ -60,7 +83,7 @@ function tarjeta(p: Respuesta): string {
       <span class="pedido-visto__estado" data-e="${esc(p.estado)}">${esc(p.estado)}</span>
     </div>
 
-    <p class="pedido-visto__linea">${esc(QUE_SIGNIFICA[p.estado] ?? '')}</p>
+    <p class="pedido-visto__linea">${esc(queSignifica(p))}</p>
 
     ${p.seguimiento
       ? `<p class="pedido-visto__seguimiento">

@@ -93,10 +93,24 @@ const banco = datosDeTransferencia();
 
     <div class="confirmacion__caja">
       <h2 class="confirmacion__subtitulo">Qué pasa ahora</h2>
+      <!-- [ERROR CORREGIDO] El texto de cada paso quedaba partido en
+           dos columnas angostas: «Preparamos el / pedido.» a la
+           izquierda y el resto a la derecha.
+
+           La causa no era el ancho de la página. El `li` es un
+           contenedor flex —para poner el número en un círculo al
+           costado— y en un contenedor flex **cada nodo de texto suelto
+           se convierte en un elemento más**. Así, el `<b>` era un hijo
+           y la frase que le sigue era otro, y cada uno se medía por su
+           cuenta como si fueran dos columnas.
+
+           Con el contenido envuelto en un `<span>`, el flex ve dos
+           hijos —el número y el párrafo— y el texto vuelve a fluir
+           como un texto. -->
       <ol class="pasos-siguientes">
-        <li><b>Preparamos el pedido.</b> Entre hoy y mañana lo empaquetamos en el depósito.</li>
-        <li><b>Sale y te avisamos.</b> Cuando lo despachamos te llega el número de seguimiento por correo.</li>
-        <li><b>Llega a tu casa</b><span data-fecha-entrega></span>. Si no hay nadie, el correo deja aviso y reintenta al día siguiente.</li>
+        <li><span><b>Preparamos el pedido.</b> Entre hoy y mañana lo empaquetamos en el depósito.</span></li>
+        <li><span><b>Sale y te avisamos.</b> Cuando lo despachamos te llega el número de seguimiento por correo.</span></li>
+        <li><span><b>Llega a tu casa</b><span data-fecha-entrega></span>. Si no hay nadie, el correo deja aviso y reintenta al día siguiente.</span></li>
       </ol>
     </div>
 
@@ -141,7 +155,15 @@ const banco = datosDeTransferencia();
 
 <style>
   .confirmacion {
-    max-width: 68ch;
+    /* 68ch era el ancho de una columna de lectura, y está bien para
+       texto corrido. Pero esta página dejó de ser texto: tiene una
+       tabla de datos bancarios, una lista numerada y un resumen con
+       precios alineados a la derecha. Todo eso en 68ch se amontona.
+
+       Mismo valor que /mis-pedidos, y es a propósito: son las dos
+       pantallas donde alguien vuelve a mirar su compra, y que cambien
+       de ancho entre una y otra se nota. */
+    max-width: 84ch;
     padding-block: var(--e-16) var(--e-24);
     display: flex;
     flex-direction: column;
@@ -235,6 +257,11 @@ const banco = datosDeTransferencia();
     font-size: 0.9375rem; line-height: 1.55; color: var(--gris-800);
     counter-increment: p;
   }
+  /* El párrafo ocupa lo que sobra. `minmax` no aplica en flex, así que
+     el equivalente es `min-width: 0`: sin eso, un hijo de flex no se
+     achica por debajo de su contenido más ancho. Es el mismo cuidado
+     que las grillas del carrito. */
+  .pasos-siguientes li > span { flex: 1; min-width: 0; }
   .pasos-siguientes li::before {
     content: counter(p);
     flex: none;
